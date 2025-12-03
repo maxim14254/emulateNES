@@ -355,12 +355,12 @@ void CPU::ORA_indX()
 
 uint8_t CPU::ASL_base(uint8_t val)
 {
-    set_flag(StatusFlags::C, (val & 0x80) != 0);
+    set_flag(StatusFlags::C, val & 0x80);
 
     val = (val << 1) & 0xFF;
 
-    set_flag(StatusFlags::Z, val = 0);
-    set_flag(StatusFlags::N, (val & 0x80) != 0);
+    set_flag(StatusFlags::Z, val == 0);
+    set_flag(StatusFlags::N, val & 0x80);
 
     cycles +=2;
     return val;
