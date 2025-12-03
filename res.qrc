@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>games/Super Mario Bros. (World).nes</file>
+        <file>nintendoNES.ico</file>
+    </qresource>
+</RCC>
