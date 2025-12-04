@@ -15,12 +15,12 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(fmt);
 
     QApplication a(argc, argv);
-//    MainWindow w;
-//    w.show();
+    MainWindow w;
+    w.show();
 
-    MyOpenGL ll;
-    ll.resize(800, 600);
-    ll.show();
+//    MyOpenGL ll;
+//    ll.resize(800, 600);
+//    ll.show();
 
     CPU cpu;
     bool rez = cpu.init_new_cartridge(":/games/Super Mario Bros. (World).nes");
