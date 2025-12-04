@@ -1,4 +1,4 @@
-#ifndef CPU_H
+﻿#ifndef CPU_H
 #define CPU_H
 
 
@@ -180,6 +180,132 @@
 
 
 
+
+//0x03  SLO   ind,x+
+//0x07  SLO   zp+
+//0x0F  SLO   abs+
+//0x13  SLO   ind,y+
+//0x17  SLO   zp,x+
+//0x1B  SLO   abs,y+
+//0x1F  SLO   abs,x+
+
+//0x23  RLA   ind,x+
+//0x27  RLA   zp+
+//0x2F  RLA   abs+
+//0x33  RLA   ind,y+
+//0x37  RLA   zp,x+
+//0x3B  RLA   abs,y+
+//0x3F  RLA   abs,x+
+
+//0x43  SRE   ind,x+
+//0x47  SRE   zp+
+//0x4F  SRE   abs+
+//0x53  SRE   ind,y+
+//0x57  SRE   zp,x+
+//0x5B  SRE   abs,y+
+//0x5F  SRE   abs,x+
+
+//0x63  RRA   ind,x+
+//0x67  RRA   zp+
+//0x6F  RRA   abs+
+//0x73  RRA   ind,y+
+//0x77  RRA   zp,x+
+//0x7B  RRA   abs,y+
+//0x7F  RRA   abs,x+
+
+//0xC3  DCP   ind,x+
+//0xC7  DCP   zp+
+//0xCF  DCP   abs+
+//0xD3  DCP   ind,y+
+//0xD7  DCP   zp,x+
+//0xDB  DCP   abs,y+
+//0xDF  DCP   abs,x+
+
+//0xE3  ISC   ind,x+
+//0xE7  ISC   zp+
+//0xEF  ISC   abs+
+//0xF3  ISC   ind,y+
+//0xF7  ISC   zp,x+
+//0xFB  ISC   abs,y+
+//0xFF  ISC   abs,x+
+
+//0xA3  LAX   ind,x+
+//0xA7  LAX   zp+
+//0xAF  LAX   abs+
+//0xB3  LAX   ind,y+
+//0xB7  LAX   zp,y+
+//0xBF  LAX   abs,y+
+
+//0x83  SAX   ind,x+
+//0x87  SAX   zp+
+//0x8F  SAX   abs+
+//0x97  SAX   zp,y+
+
+//0x1A  NOP   imp+
+//0x3A  NOP   imp+
+//0x5A  NOP   imp+
+//0x7A  NOP   imp+
+//0xDA  NOP   imp+
+//0xFA  NOP   imp+
+
+//0x04  NOP   zp+
+//0x44  NOP   zp+
+//0x64  NOP   zp+
+
+//0x14  NOP   zp,x+
+//0x34  NOP   zp,x+
+//0x54  NOP   zp,x+
+//0x74  NOP   zp,x+
+//0xD4  NOP   zp,x+
+//0xF4  NOP   zp,x+
+
+//0x0C  NOP   abs+
+
+//0x1C  NOP   abs,x+
+//0x3C  NOP   abs,x+
+//0x5C  NOP   abs,x+
+//0x7C  NOP   abs,x+
+//0xDC  NOP   abs,x+
+//0xFC  NOP   abs,x+
+
+//0x80  NOP   #imm+
+
+//0x0B  ANC   #imm+
+//0x2B  ANC   #imm+
+
+//0x4B  ALR   #imm+
+//0x6B  ARR   #imm+
+//0x8B  XAA   #imm+
+
+//0x93  AHX   ind,y+
+//0x9F  AHX   abs,y+
+
+//0x9C  SHY   abs,x+
+//0x9E  SHX   abs,y+
+//0x9B  TAS   abs,y+
+
+//0xBB  LAS   abs,y+
+
+//0x02  KIL   imp+
+//0x12  KIL   imp+
+//0x22  KIL   imp+
+//0x32  KIL   imp+
+//0x42  KIL   imp+
+//0x52  KIL   imp+
+//0x62  KIL   imp+
+//0x72  KIL   imp+
+//0x92  KIL   imp+
+//0xB2  KIL   imp+
+//0xD2  KIL   imp+
+//0xF2  KIL   imp+
+
+//0x82  NOP   #imm+
+//0x89  BIT   #imm+
+//0xC2  NOP   #imm+
+//0xE2  NOP   #imm+
+
+
+
 class Bus;
 
 enum StatusFlags
@@ -286,6 +412,7 @@ private:
     void BIT_base(uint8_t val);     // 1 цикл
     void BIT_zp();                  // 3 цикла
     void BIT_abs();                 // 4 цикла
+    void BIT_imm();                 // 2 цикла
 
     uint8_t ROL_base(uint8_t val);  // 2 цикла
     void ROL_zp();                  // 5 циклов
@@ -471,6 +598,102 @@ private:
     void TAX_impl();                // 2 цикла
 
     void NOP_impl();                // 2 цикла
+    void NOP_zp();                  // 3 цикла
+    void NOP_zpX();                 // 4 цикла
+    void NOP_abs();                 // 4 цикла
+    void NOP_absX();                // 4-5 цикла
+    void NOP_imm();                 // 2 цикла
+
+    void SLO_base(uint8_t val, uint16_t addr);    // 3 цикла
+    void SLO_indX();                // 8 циклов
+    void SLO_zp();                  // 5 циклов
+    void SLO_abs();                 // 6 циклов
+    void SLO_indY();                // 8 циклов
+    void SLO_zpX();                 // 6 циклов
+    void SLO_absY();                // 7 циклов
+    void SLO_absX();                // 7 циклов
+
+    void RLA_base(uint8_t val, uint16_t addr);    // 3 цикла
+    void RLA_indX();                // 8 циклов
+    void RLA_zp();                  // 5 циклов
+    void RLA_abs();                 // 6 циклов
+    void RLA_indY();                // 8 циклов
+    void RLA_zpX();                 // 6 циклов
+    void RLA_absY();                // 7 циклов
+    void RLA_absX();                // 7 циклов
+
+    void SRE_base(uint8_t val, uint16_t addr);    // 3 цикла
+    void SRE_indX();                // 8 циклов
+    void SRE_zp();                  // 5 циклов
+    void SRE_abs();                 // 6 циклов
+    void SRE_indY();                // 8 циклов
+    void SRE_zpX();                 // 6 циклов
+    void SRE_absY();                // 7 циклов
+    void SRE_absX();                // 7 циклов
+
+    void RRA_base(uint8_t val, uint16_t addr);   // 3 цикла
+    void RRA_indX();                // 8 циклов
+    void RRA_zp();                  // 5 циклов
+    void RRA_abs();                 // 6 циклов
+    void RRA_indY();                // 8 циклов
+    void RRA_zpX();                 // 6 циклов
+    void RRA_absY();                // 7 циклов
+    void RRA_absX();                // 7 циклов
+
+    void DCP_base(uint8_t val, uint16_t addr);   // 3 цикла
+    void DCP_indX();                // 8 циклов
+    void DCP_zp();                  // 5 циклов
+    void DCP_abs();                 // 6 циклов
+    void DCP_indY();                // 8 циклов
+    void DCP_zpX();                 // 6 циклов
+    void DCP_absY();                // 7 циклов
+    void DCP_absX();                // 7 циклов
+
+    void ISC_base(uint8_t val, uint16_t addr);   // 3 цикла
+    void ISC_indX();                // 8 циклов
+    void ISC_zp();                  // 5 циклов
+    void ISC_abs();                 // 6 циклов
+    void ISC_indY();                // 8 циклов
+    void ISC_zpX();                 // 6 циклов
+    void ISC_absY();                // 7 циклов
+    void ISC_absX();                // 7 циклов
+
+    void LAX_base(uint8_t val);     // 1 цикла
+    void LAX_indX();                // 6 циклов
+    void LAX_zp();                  // 3 циклов
+    void LAX_abs();                 // 4 циклов
+    void LAX_indY();                // 5 циклов
+    void LAX_absY();                // 4-5 циклов
+    void LAX_zpY();                 // 4 циклов
+
+    void SAX_base(uint16_t addr);   // 1 цикл
+    void SAX_indX();                // 6 циклов
+    void SAX_zp();                  // 3 цикла
+    void SAX_abs();                 // 4 цикла
+    void SAX_zpY();                 // 4 цикла
+
+    void ANC_imm();                 // 2 цикла
+
+    void ALR_imm();                 // 2 цикла
+
+    void ARR_imm();                 // 2 цикла
+
+    void XAA_imm();                 // 2 цикла
+
+    void AHX_base(uint16_t addr);   // 2 цикла
+    void AHX_indY();                // 6 циклов
+    void AHX_absY();                // 5 циклов
+
+    void SHY_absX();                // 5 циклов
+
+    void TAS_absY();                // 5 циклов
+
+    void SHX_absY();                // 5 циклов
+
+    void LAS_absY();                // 4-5 циклов
+
+    void KIL_imp();
+
 };
 
 #endif // CPU_H

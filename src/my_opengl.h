@@ -12,11 +12,11 @@ public:
     explicit MyOpenGL(QWidget* parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
     virtual ~MyOpenGL();
 
+
 protected:
     void initializeGL() override;
     void resizeGL(int w, int h) override;
     void paintGL() override;
-    void paintEvent(QPaintEvent *event) override;
 
 };
 

@@ -1,6 +1,6 @@
 ﻿#include "cpu.h"
 #include "bus.h"
-
+#include <QMessageBox>
 
 
 CPU::CPU()
@@ -357,7 +357,7 @@ uint8_t CPU::ASL_base(uint8_t val)
 {
     set_flag(StatusFlags::C, val & 0x80);
 
-    val = (val << 1) & 0xFF;
+    val = val << 1;
 
     set_flag(StatusFlags::Z, val == 0);
     set_flag(StatusFlags::N, val & 0x80);
@@ -563,8 +563,6 @@ void CPU::BIT_base(uint8_t val)
     uint8_t tmp = A & val;
 
     set_flag(StatusFlags::Z, tmp == 0);
-    set_flag(StatusFlags::N, val & 0x80);
-    set_flag(StatusFlags::V, val & 0x40);
 
     ++cycles;
 }
@@ -583,6 +581,15 @@ void CPU::BIT_abs()
     ++PC;
 
     uint8_t val = absolute();
+
+    BIT_base(val);
+}
+
+void CPU::BIT_imm()
+{
+    ++PC;
+
+    uint8_t val = immediate();
 
     BIT_base(val);
 }
@@ -866,6 +873,8 @@ void CPU::PHA_impl()
 
     uint16_t addr = 0x0100 | SP--;
     bus->write(addr, A);
+
+    cycles += 3;
 }
 
 void CPU::JMP_abs()
@@ -2078,4 +2087,786 @@ void CPU::TAX_impl()
 void CPU::NOP_impl()
 {
     ++PC;
+
+    cycles += 2;
 }
+
+void CPU::NOP_zp()
+{
+    ++PC;
+
+    cycles += 3;
+}
+
+void CPU::NOP_zpX()
+{
+    ++PC;
+
+    cycles += 4;
+}
+
+void CPU::NOP_abs()
+{
+    ++PC;
+
+    cycles += 4;
+}
+
+void CPU::NOP_absX()
+{
+    ++PC;
+
+    absoluteX();
+
+    cycles += 4;
+}
+
+void CPU::NOP_imm()
+{
+    ++PC;
+
+    cycles += 2;
+}
+
+void CPU::SLO_base(uint8_t val, uint16_t addr)
+{
+    set_flag(StatusFlags::C, val & 0x80);
+
+    val = val << 1;
+    bus->write(addr, val);
+    A = A | val;
+
+    set_flag(StatusFlags::Z, A == 0);
+    set_flag(StatusFlags::N, A & 0x80);
+
+    cycles += 3;
+}
+
+void CPU::SLO_indX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectX(&addr);
+
+    SLO_base(val, addr);
+}
+
+void CPU::SLO_zp()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_page(&addr);
+
+    SLO_base(val, addr);
+}
+
+void CPU::SLO_abs()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absolute(&addr);
+
+    SLO_base(val, addr);
+}
+
+void CPU::SLO_indY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectY(&addr);
+
+    SLO_base(val, addr);
+}
+
+void CPU::SLO_zpX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_pageX(&addr);
+
+    SLO_base(val, addr);
+}
+
+void CPU::SLO_absY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteY(&addr);
+
+    SLO_base(val, addr);
+}
+
+void CPU::SLO_absX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteX(&addr);
+
+    SLO_base(val, addr);
+}
+
+void CPU::RLA_base(uint8_t val, uint16_t addr)
+{
+    bool oldC = get_flag(C);
+
+    set_flag(StatusFlags::C, val & 0x80);
+    val = ((val << 1) | oldC);
+    bus->write(addr, val);
+
+    A = A & val;
+
+    set_flag(StatusFlags::Z, A == 0);
+    set_flag(StatusFlags::N, A & 0x80);
+
+    cycles += 3;
+}
+
+void CPU::RLA_indX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectX(&addr);
+
+    RLA_base(val, addr);
+}
+
+void CPU::RLA_zp()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_page(&addr);
+
+    RLA_base(val, addr);
+}
+
+void CPU::RLA_abs()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absolute(&addr);
+
+    RLA_base(val, addr);
+}
+
+void CPU::RLA_indY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectY(&addr);
+
+    RLA_base(val, addr);
+}
+
+void CPU::RLA_zpX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_pageX(&addr);
+
+    RLA_base(val, addr);
+}
+
+void CPU::RLA_absY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteY(&addr);
+
+    RLA_base(val, addr);
+}
+
+void CPU::RLA_absX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteX(&addr);
+
+    RLA_base(val, addr);
+}
+
+void CPU::SRE_base(uint8_t val, uint16_t addr)
+{
+    uint8_t oldC = val & 0x01;
+
+    val = val >> 1;
+    bus->write(addr, val);
+
+    A = A ^ val;
+
+    set_flag(StatusFlags::C, oldC);
+    set_flag(StatusFlags::Z, A == 0);
+    set_flag(StatusFlags::N, A & 0x80);
+
+    cycles += 3;
+}
+
+void CPU::SRE_indX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectX(&addr);
+
+    SRE_base(val, addr);
+}
+
+void CPU::SRE_zp()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_page(&addr);
+
+    SRE_base(val, addr);
+}
+
+void CPU::SRE_abs()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absolute(&addr);
+
+    SRE_base(val, addr);
+}
+
+void CPU::SRE_indY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectY(&addr);
+
+    SRE_base(val, addr);
+}
+
+void CPU::SRE_zpX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_pageX(&addr);
+
+    SRE_base(val, addr);
+}
+
+void CPU::SRE_absY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteY(&addr);
+
+    SRE_base(val, addr);
+}
+
+void CPU::SRE_absX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteX(&addr);
+
+    SRE_base(val, addr);
+}
+
+void CPU::RRA_base(uint8_t val, uint16_t addr)
+{
+    uint8_t oldC = get_flag(StatusFlags::C);
+
+    bool oldBit0 = val & 0x01;
+    val = (val >> 1) | (oldC ? 0x80 : 0x00);
+    bus->write(addr, val);
+
+    uint16_t sum = (uint16_t)A + (uint16_t)val + (oldBit0 ? 1 : 0);
+
+    set_flag(StatusFlags::C, sum > 0xFF);
+    set_flag(StatusFlags::V, ~(A ^ val) & (A ^ sum));
+    A = sum;
+
+    set_flag(StatusFlags::Z, A == 0);
+    set_flag(StatusFlags::N, A & 0x80);
+
+    cycles += 3;
+}
+
+void CPU::RRA_indX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectX(&addr);
+
+    RRA_base(val, addr);
+}
+
+void CPU::RRA_zp()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_page(&addr);
+
+    RRA_base(val, addr);
+}
+
+void CPU::RRA_abs()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absolute(&addr);
+
+    RRA_base(val, addr);
+}
+
+void CPU::RRA_indY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectY(&addr);
+
+    RRA_base(val, addr);
+}
+
+void CPU::RRA_zpX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_pageX(&addr);
+
+    RRA_base(val, addr);
+}
+
+void CPU::RRA_absY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteY(&addr);
+
+    RRA_base(val, addr);
+}
+
+void CPU::RRA_absX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteX(&addr);
+
+    RRA_base(val, addr);
+}
+
+void CPU::DCP_base(uint8_t val, uint16_t addr)
+{
+    val = (val - 1);
+    bus->write(addr, val);
+
+    uint8_t tmp = (A - val);
+
+    set_flag(StatusFlags::C, A >= val);
+    set_flag(StatusFlags::Z, tmp == 0);
+    set_flag(StatusFlags::N, tmp & 0x80);
+
+    cycles += 3;
+}
+
+void CPU::DCP_indX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectX(&addr);
+
+    DCP_base(val, addr);
+}
+
+void CPU::DCP_zp()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_page(&addr);
+
+    DCP_base(val, addr);
+}
+
+void CPU::DCP_abs()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absolute(&addr);
+
+    DCP_base(val, addr);
+}
+
+void CPU::DCP_indY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectY(&addr);
+
+    DCP_base(val, addr);
+}
+
+void CPU::DCP_zpX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_pageX(&addr);
+
+    DCP_base(val, addr);
+}
+
+void CPU::DCP_absY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteY(&addr);
+
+    DCP_base(val, addr);
+}
+
+void CPU::DCP_absX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteX(&addr);
+
+    DCP_base(val, addr);
+}
+
+void CPU::ISC_base(uint8_t val, uint16_t addr)
+{
+    val = (val + 1);
+    bus->write(addr, val);
+
+    uint16_t value = (uint16_t)val ^ 0x00FF;
+    uint16_t sum   = (uint16_t)A + value + (get_flag(C) ? 1 : 0);
+
+    set_flag(StatusFlags::C, sum & 0x100);
+    set_flag(StatusFlags::V, ~(A ^ value) & (A ^ sum));
+    A = sum;
+
+    set_flag(StatusFlags::Z, A == 0);
+    set_flag(StatusFlags::N, A & 0x80);
+
+    cycles += 3;
+}
+
+void CPU::LAX_base(uint8_t val)
+{
+    A = val;
+    X = val;
+
+    set_flag(StatusFlags::Z, val == 0);
+    set_flag(StatusFlags::N, val & 0x80);
+
+    ++cycles;
+}
+
+void CPU::LAX_indX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectX(&addr);
+
+    LAX_base(val);
+}
+
+void CPU::LAX_zp()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_page(&addr);
+
+    LAX_base(val);
+}
+
+void CPU::LAX_abs()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absolute(&addr);
+
+    LAX_base(val);
+}
+
+void CPU::LAX_indY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectY(&addr);
+
+    LAX_base(val);
+}
+
+void CPU::LAX_absY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteY(&addr);
+
+    LAX_base(val);
+}
+
+void CPU::LAX_zpY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_pageY(&addr);
+
+    LAX_base(val);
+}
+
+void CPU::SAX_base(uint16_t addr)
+{
+    uint8_t val = A & X;
+    bus->write(addr, val);
+
+    ++cycles;
+}
+
+void CPU::SAX_indX()
+{
+    ++PC;
+
+    uint16_t addr;
+    indexed_inderectX(&addr);
+
+    SAX_base(addr);
+}
+
+void CPU::SAX_zp()
+{
+    ++PC;
+
+    uint16_t addr;
+    zero_page(&addr);
+
+    SAX_base(addr);
+}
+
+void CPU::SAX_abs()
+{
+    ++PC;
+
+    uint16_t addr;
+    absolute(&addr);
+
+    SAX_base(addr);
+}
+
+void CPU::SAX_zpY()
+{
+    ++PC;
+
+    uint16_t addr;
+    zero_pageY(&addr);
+
+    SAX_base(addr);
+}
+
+void CPU::ANC_imm()
+{
+    ++PC;
+
+    uint8_t val = immediate();
+
+    A = A & val;
+
+    set_flag(StatusFlags::Z, A == 0);
+    set_flag(StatusFlags::N, A & 0x80);
+    set_flag(StatusFlags::C, A & 0x80);
+
+    ++cycles;
+}
+
+void CPU::ALR_imm()
+{
+    ++PC;
+
+    uint8_t val = immediate();
+
+    A = A & val;
+
+    set_flag(StatusFlags::C, A & 0x01);
+
+    A = A >> 1;
+    set_flag(StatusFlags::Z, A == 0);
+    set_flag(StatusFlags::N, false);
+
+    ++cycles;
+}
+
+void CPU::ARR_imm()
+{
+    ++PC;
+
+    uint8_t val = immediate();
+
+    if(!get_flag(StatusFlags::D))
+    {
+        A = A & val;
+
+        bool C = get_flag(StatusFlags::C);
+        set_flag(StatusFlags::C, A & 0x01);
+
+        A = (A >> 1) | (C ? 0x80 : 0);
+
+        set_flag(StatusFlags::Z, A == 0);
+        set_flag(StatusFlags::N, A & 0x80);
+        set_flag(StatusFlags::V, (A ^ (A << 1)) & 0x40);
+    }
+
+    cycles += 2;
+}
+
+void CPU::XAA_imm()
+{
+    ++PC;
+
+    uint8_t val = immediate();
+
+    A = A & val;
+
+    set_flag(StatusFlags::Z, A == 0);
+    set_flag(StatusFlags::N, A & 0x80);
+
+    ++cycles;
+}
+
+void CPU::AHX_base(uint16_t addr)
+{
+    uint8_t highp1 = (uint8_t)((addr >> 8) + 1);
+    uint8_t val = A & X & highp1;
+
+    bus->write(addr, val);
+
+    cycles += 2;
+}
+
+void CPU::AHX_indY()
+{
+    ++PC;
+
+    uint16_t addr;
+    indexed_inderectY(&addr);
+
+    AHX_base(addr);
+}
+
+void CPU::AHX_absY()
+{
+    ++PC;
+
+    uint16_t addr;
+    absoluteY(&addr);
+
+    AHX_base(addr);
+}
+
+void CPU::SHY_absX()
+{
+    ++PC;
+
+    uint16_t addr;
+    absoluteX(&addr);
+
+    uint16_t eff = (uint16_t)(addr + X);
+    uint8_t highp1 = (uint8_t)((eff >> 8) + 1);
+    uint8_t val = Y & highp1;
+    bus->write(eff, val);
+
+    cycles += 2;
+}
+
+void CPU::TAS_absY()
+{
+    ++PC;
+
+    uint16_t addr;
+    absoluteY(&addr);
+
+    uint16_t eff = addr + Y;
+    uint8_t highp1 = (uint8_t)((eff >> 8) + 1);
+    uint8_t val = SP & highp1;
+    bus->write(eff, val);
+
+    cycles += 2;
+}
+
+void CPU::SHX_absY()
+{
+    ++PC;
+
+    uint16_t base;
+    absoluteY(&base);
+
+    uint16_t addr = base + Y;
+    uint8_t highp1 = (uint8_t)((addr >> 8) + 1);
+    uint8_t val = X & highp1;
+    bus->write(addr, val);
+
+    cycles += 2;
+}
+
+void CPU::LAS_absY()
+{
+    ++PC;
+
+    uint8_t val = absoluteY();
+
+    uint8_t tmp = val & SP;
+    A  = tmp;
+    X  = tmp;
+    SP = tmp;
+
+    set_flag(StatusFlags::Z, tmp == 0);
+    set_flag(StatusFlags::N, tmp & 0x80);
+
+    ++cycles;
+}
+
+void CPU::KIL_imp()
+{
+    QMessageBox message(QMessageBox::Icon::Critical, "Error", "Ошибка эмуляции KIL", QMessageBox::StandardButton::Ok);
+    message.exec();
+
+    {
+        std::lock_guard<std::mutex> lock(mutex_stop);
+        start = false;
+    }
+
+    if(run_t.joinable())
+        run_t.join();
+}
+
