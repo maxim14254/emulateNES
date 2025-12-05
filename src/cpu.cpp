@@ -6,6 +6,285 @@
 CPU::CPU()
 {
     bus.reset(new Bus());
+
+    table_instructions.resize(256);
+
+
+    {
+        table_instructions[0x00] = &CPU::BRK_impl;
+        table_instructions[0x01] = &CPU::ORA_indX;
+        table_instructions[0x02] = &CPU::KIL_imp;
+        table_instructions[0x03] = &CPU::SLO_indX;
+        table_instructions[0x04] = &CPU::NOP_zp;
+        table_instructions[0x05] = &CPU::ORA_zp;
+        table_instructions[0x06] = &CPU::ASL_zp;
+        table_instructions[0x07] = &CPU::SLO_zp;
+        table_instructions[0x08] = &CPU::PHP_impl;
+        table_instructions[0x09] = &CPU::ORA_imm;
+        table_instructions[0x0A] = &CPU::ASL_A;
+        table_instructions[0x0B] = &CPU::ANC_imm;
+        table_instructions[0x0C] = &CPU::NOP_abs;
+        table_instructions[0x0D] = &CPU::ORA_abs;
+        table_instructions[0x0E] = &CPU::ASL_abs;
+        table_instructions[0x0F] = &CPU::SLO_abs;
+
+        table_instructions[0x10] = &CPU::BPL_rel;
+        table_instructions[0x11] = &CPU::ORA_indX;
+        table_instructions[0x12] = &CPU::KIL_imp;
+        table_instructions[0x13] = &CPU::SLO_indY;
+        table_instructions[0x14] = &CPU::NOP_zp;
+        table_instructions[0x15] = &CPU::ORA_zpX;
+        table_instructions[0x16] = &CPU::ASL_zpX;
+        table_instructions[0x17] = &CPU::SLO_zpX;
+        table_instructions[0x18] = &CPU::CLC_impl;
+        table_instructions[0x19] = &CPU::ORA_absY;
+        table_instructions[0x1A] = &CPU::NOP_imm;
+        table_instructions[0x1B] = &CPU::SLO_absY;
+        table_instructions[0x1C] = &CPU::NOP_absX;
+        table_instructions[0x1D] = &CPU::ORA_absX;
+        table_instructions[0x1E] = &CPU::ASL_absX;
+        table_instructions[0x1F] = &CPU::SLO_absX;
+
+        table_instructions[0x20] = &CPU::JSR_abs;
+        table_instructions[0x21] = &CPU::AND_indX;
+        table_instructions[0x22] = &CPU::KIL_imp;
+        table_instructions[0x23] = &CPU::RLA_indX;
+        table_instructions[0x24] = &CPU::BIT_zp;
+        table_instructions[0x25] = &CPU::AND_zp;
+        table_instructions[0x26] = &CPU::ROL_zp;
+        table_instructions[0x27] = &CPU::RLA_zp;
+        table_instructions[0x28] = &CPU::PLP_impl;
+        table_instructions[0x29] = &CPU::AND_imm;
+        table_instructions[0x2A] = &CPU::ROL_A;
+        table_instructions[0x2B] = &CPU::ANC_imm;
+        table_instructions[0x2C] = &CPU::BIT_abs;
+        table_instructions[0x2D] = &CPU::AND_abs;
+        table_instructions[0x2E] = &CPU::ROL_abs;
+        table_instructions[0x2F] = &CPU::RLA_abs;
+
+        table_instructions[0x30] = &CPU::BMI_rel;
+        table_instructions[0x31] = &CPU::AND_indY;
+        table_instructions[0x32] = &CPU::KIL_imp;
+        table_instructions[0x33] = &CPU::RLA_indY;
+        table_instructions[0x34] = &CPU::NOP_zpX;
+        table_instructions[0x35] = &CPU::AND_zpX;
+        table_instructions[0x36] = &CPU::ROL_zpX;
+        table_instructions[0x37] = &CPU::RLA_zpX;
+        table_instructions[0x38] = &CPU::SEC_impl;
+        table_instructions[0x39] = &CPU::AND_absY;
+        table_instructions[0x3A] = &CPU::NOP_imm;
+        table_instructions[0x3B] = &CPU::RLA_absY;
+        table_instructions[0x3C] = &CPU::NOP_absX;
+        table_instructions[0x3D] = &CPU::AND_absX;
+        table_instructions[0x3E] = &CPU::ROL_absX;
+        table_instructions[0x3F] = &CPU::RLA_absX;
+
+        table_instructions[0x40] = &CPU::RTI_impl;
+        table_instructions[0x41] = &CPU::EOR_indX;
+        table_instructions[0x42] = &CPU::KIL_imp;
+        table_instructions[0x43] = &CPU::SRE_indX;
+        table_instructions[0x44] = &CPU::NOP_zp;
+        table_instructions[0x45] = &CPU::EOR_zp;
+        table_instructions[0x46] = &CPU::LSR_zp;
+        table_instructions[0x47] = &CPU::SRE_zp;
+        table_instructions[0x48] = &CPU::PHA_impl;
+        table_instructions[0x49] = &CPU::EOR_imm;
+        table_instructions[0x4A] = &CPU::LSR_A;
+        table_instructions[0x4B] = &CPU::ALR_imm;
+        table_instructions[0x4C] = &CPU::JMP_abs;
+        table_instructions[0x4D] = &CPU::EOR_abs;
+        table_instructions[0x4E] = &CPU::LSR_abs;
+        table_instructions[0x4F] = &CPU::SRE_abs;
+
+        table_instructions[0x50] = &CPU::BVC_rel;
+        table_instructions[0x51] = &CPU::EOR_indY;
+        table_instructions[0x52] = &CPU::KIL_imp;
+        table_instructions[0x53] = &CPU::SRE_indY;
+        table_instructions[0x54] = &CPU::NOP_zpX;
+        table_instructions[0x55] = &CPU::EOR_zpX;
+        table_instructions[0x56] = &CPU::LSR_zpX;
+        table_instructions[0x57] = &CPU::SRE_zpX;
+        table_instructions[0x58] = &CPU::CLI_impl;
+        table_instructions[0x59] = &CPU::EOR_absY;
+        table_instructions[0x5A] = &CPU::NOP_imm;
+        table_instructions[0x5B] = &CPU::SRE_absY;
+        table_instructions[0x5C] = &CPU::NOP_absX;
+        table_instructions[0x5D] = &CPU::EOR_absX;
+        table_instructions[0x5E] = &CPU::LSR_absX;
+        table_instructions[0x5F] = &CPU::SRE_absX;
+
+        table_instructions[0x60] = &CPU::RTS_impl;
+        table_instructions[0x61] = &CPU::ADC_indX;
+        table_instructions[0x62] = &CPU::KIL_imp;
+        table_instructions[0x63] = &CPU::RRA_indX;
+        table_instructions[0x64] = &CPU::NOP_zp;
+        table_instructions[0x65] = &CPU::ADC_zp;
+        table_instructions[0x66] = &CPU::ROR_zp;
+        table_instructions[0x67] = &CPU::RRA_zp;
+        table_instructions[0x68] = &CPU::PLA_impl;
+        table_instructions[0x69] = &CPU::ADC_imm;
+        table_instructions[0x6A] = &CPU::ROR_A;
+        table_instructions[0x6B] = &CPU::ARR_imm;
+        table_instructions[0x6C] = &CPU::JMP_ind;
+        table_instructions[0x6D] = &CPU::ADC_abs;
+        table_instructions[0x6E] = &CPU::ROR_abs;
+        table_instructions[0x6F] = &CPU::RRA_abs;
+
+        table_instructions[0x70] = &CPU::BVS_rel;
+        table_instructions[0x71] = &CPU::ADC_indY;
+        table_instructions[0x72] = &CPU::KIL_imp;
+        table_instructions[0x73] = &CPU::RRA_indY;
+        table_instructions[0x74] = &CPU::NOP_zpX;
+        table_instructions[0x75] = &CPU::ADC_zpX;
+        table_instructions[0x76] = &CPU::ROR_zpX;
+        table_instructions[0x77] = &CPU::RRA_zpX;
+        table_instructions[0x78] = &CPU::SEI_impl;
+        table_instructions[0x79] = &CPU::ADC_absY;
+        table_instructions[0x7A] = &CPU::NOP_imm;
+        table_instructions[0x7B] = &CPU::RRA_absY;
+        table_instructions[0x7C] = &CPU::NOP_absX;
+        table_instructions[0x7D] = &CPU::ADC_absX;
+        table_instructions[0x7E] = &CPU::ROR_absX;
+        table_instructions[0x7F] = &CPU::RRA_absX;
+
+        table_instructions[0x80] = &CPU::NOP_imm;
+        table_instructions[0x81] = &CPU::STA_indX;
+        table_instructions[0x82] = &CPU::NOP_imm;
+        table_instructions[0x83] = &CPU::SAX_indX;
+        table_instructions[0x84] = &CPU::STY_zp;
+        table_instructions[0x85] = &CPU::STA_zp;
+        table_instructions[0x86] = &CPU::STX_zp;
+        table_instructions[0x87] = &CPU::SAX_zp;
+        table_instructions[0x88] = &CPU::DEY_impl;
+        table_instructions[0x89] = &CPU::BIT_imm;
+        table_instructions[0x8A] = &CPU::TXA_impl;
+        table_instructions[0x8B] = &CPU::XAA_imm;
+        table_instructions[0x8C] = &CPU::STY_abs;
+        table_instructions[0x8D] = &CPU::STA_abs;
+        table_instructions[0x8E] = &CPU::STX_abs;
+        table_instructions[0x8F] = &CPU::SAX_abs;
+
+        table_instructions[0x90] = &CPU::BCC_rel;
+        table_instructions[0x91] = &CPU::STA_indY;
+        table_instructions[0x92] = &CPU::KIL_imp;
+        table_instructions[0x93] = &CPU::AHX_indY;
+        table_instructions[0x94] = &CPU::STY_zpX;
+        table_instructions[0x95] = &CPU::STA_zpX;
+        table_instructions[0x96] = &CPU::STX_zpX;
+        table_instructions[0x97] = &CPU::SAX_zpY;
+        table_instructions[0x98] = &CPU::TYA_impl;
+        table_instructions[0x99] = &CPU::STA_absY;
+        table_instructions[0x9A] = &CPU::TXS_impl;
+        table_instructions[0x9B] = &CPU::TAS_absY;
+        table_instructions[0x9C] = &CPU::SHY_absX;
+        table_instructions[0x9D] = &CPU::STA_absX;
+        table_instructions[0x9E] = &CPU::SHX_absY;
+        table_instructions[0x9F] = &CPU::AHX_absY;
+
+        table_instructions[0xA0] = &CPU::LDY_imm;
+        table_instructions[0xA1] = &CPU::LDA_indX;
+        table_instructions[0xA2] = &CPU::LDX_imm;
+        table_instructions[0xA3] = &CPU::LAX_indX;
+        table_instructions[0xA4] = &CPU::LDY_zp;
+        table_instructions[0xA5] = &CPU::LDA_zp;
+        table_instructions[0xA6] = &CPU::LDX_zp;
+        table_instructions[0xA7] = &CPU::LAX_zp;
+        table_instructions[0xA8] = &CPU::TAY_impl;
+        table_instructions[0xA9] = &CPU::LDA_imm;
+        table_instructions[0xAA] = &CPU::TAX_impl;
+        table_instructions[0xAB] = &CPU::LAX_imm;
+        table_instructions[0xAC] = &CPU::LDY_abs;
+        table_instructions[0xAD] = &CPU::LDA_abs;
+        table_instructions[0xAE] = &CPU::LDX_abs;
+        table_instructions[0xAF] = &CPU::LAX_abs;
+
+        table_instructions[0xB0] = &CPU::BCS_rel;
+        table_instructions[0xB1] = &CPU::LDA_indY;
+        table_instructions[0xB2] = &CPU::KIL_imp;
+        table_instructions[0xB3] = &CPU::LAX_indY;
+        table_instructions[0xB4] = &CPU::LDY_zpX;
+        table_instructions[0xB5] = &CPU::LDA_zpX;
+        table_instructions[0xB6] = &CPU::LDX_zpY;
+        table_instructions[0xB7] = &CPU::LAX_zpY;
+        table_instructions[0xB8] = &CPU::CLV_impl;
+        table_instructions[0xB9] = &CPU::LDA_absY;
+        table_instructions[0xBA] = &CPU::TSX_impl;
+        table_instructions[0xBB] = &CPU::LAS_absY;
+        table_instructions[0xBC] = &CPU::LDY_absX;
+        table_instructions[0xBD] = &CPU::LDA_absX;
+        table_instructions[0xBE] = &CPU::LDX_absY;
+        table_instructions[0xBF] = &CPU::LAX_absY;
+
+        table_instructions[0xC0] = &CPU::CPY_imm;
+        table_instructions[0xC1] = &CPU::CMP_indX;
+        table_instructions[0xC2] = &CPU::NOP_imm;
+        table_instructions[0xC3] = &CPU::DCP_indX;
+        table_instructions[0xC4] = &CPU::CPY_zp;
+        table_instructions[0xC5] = &CPU::CMP_zp;
+        table_instructions[0xC6] = &CPU::DEC_zp;
+        table_instructions[0xC7] = &CPU::DCP_zp;
+        table_instructions[0xC8] = &CPU::INY_impl;
+        table_instructions[0xC9] = &CPU::CMP_imm;
+        table_instructions[0xCA] = &CPU::DEX_impl;
+        table_instructions[0xCB] = &CPU::SAX_imm;
+        table_instructions[0xCC] = &CPU::CPY_abs;
+        table_instructions[0xCD] = &CPU::CMP_abs;
+        table_instructions[0xCE] = &CPU::DEC_abs;
+        table_instructions[0xCF] = &CPU::DCP_abs;
+
+        table_instructions[0xD0] = &CPU::BNE_rel;
+        table_instructions[0xD1] = &CPU::CMP_indY;
+        table_instructions[0xD2] = &CPU::KIL_imp;
+        table_instructions[0xD3] = &CPU::DCP_indY;
+        table_instructions[0xD4] = &CPU::NOP_zpX;
+        table_instructions[0xD5] = &CPU::CMP_zpX;
+        table_instructions[0xD6] = &CPU::DEC_zpX;
+        table_instructions[0xD7] = &CPU::DCP_zpX;
+        table_instructions[0xD8] = &CPU::CLD_impl;
+        table_instructions[0xD9] = &CPU::CMP_absY;
+        table_instructions[0xDA] = &CPU::NOP_impl;
+        table_instructions[0xDB] = &CPU::DCP_absY;
+        table_instructions[0xDC] = &CPU::NOP_absX;
+        table_instructions[0xDD] = &CPU::CMP_absX;
+        table_instructions[0xDE] = &CPU::DEC_absX;
+        table_instructions[0xDF] = &CPU::DCP_absX;
+
+        table_instructions[0xE0] = &CPU::CPX_imm;
+        table_instructions[0xE1] = &CPU::SBC_indX;
+        table_instructions[0xE2] = &CPU::NOP_imm;
+        table_instructions[0xE3] = &CPU::ISC_indX;
+        table_instructions[0xE4] = &CPU::CPX_zp;
+        table_instructions[0xE5] = &CPU::SBC_zp;
+        table_instructions[0xE6] = &CPU::INC_zp;
+        table_instructions[0xE7] = &CPU::ISC_zp;
+        table_instructions[0xE8] = &CPU::INX_impl;
+        table_instructions[0xE9] = &CPU::SBC_imm;
+        table_instructions[0xEA] = &CPU::NOP_impl;
+        table_instructions[0xEB] = &CPU::SBC_imm;
+        table_instructions[0xEC] = &CPU::CPX_abs;
+        table_instructions[0xED] = &CPU::SBC_abs;
+        table_instructions[0xEE] = &CPU::DEC_absX;
+        table_instructions[0xEF] = &CPU::ISC_abs;
+
+        table_instructions[0xF0] = &CPU::BEQ_rel;
+        table_instructions[0xF1] = &CPU::SBC_indY;
+        table_instructions[0xF2] = &CPU::KIL_imp;
+        table_instructions[0xF3] = &CPU::ISC_indY;
+        table_instructions[0xF4] = &CPU::NOP_zpX;
+        table_instructions[0xF5] = &CPU::SBC_zpX;
+        table_instructions[0xF6] = &CPU::INC_zpX;
+        table_instructions[0xF7] = &CPU::ISC_zpX;
+        table_instructions[0xF8] = &CPU::SED_impl;
+        table_instructions[0xF9] = &CPU::SBC_absY;
+        table_instructions[0xFA] = &CPU::NOP_impl;
+        table_instructions[0xFB] = &CPU::ISC_absY;
+        table_instructions[0xFC] = &CPU::NOP_absX;
+        table_instructions[0xFD] = &CPU::SBC_absX;
+        table_instructions[0xFE] = &CPU::INC_absX;
+        table_instructions[0xFF] = &CPU::ISC_absX;
+
+    }
+
 }
 
 CPU::~CPU()
@@ -49,7 +328,7 @@ bool CPU::init_new_cartridge(const QString& path)
     std::call_once(start_once_flag, [&]
     {
         start = true;
-        run_t = std::thread ([&]() { run(); });
+        run_t = std::thread(&CPU::run, this);
     });
 
     return true;
@@ -72,7 +351,8 @@ void CPU::run()
 
         uint8_t val = bus->read(PC);
 
-       // table_instructions[val];
+        auto instr_func = table_instructions[val];
+        instr_func(*this);
     }
 }
 
@@ -1518,6 +1798,14 @@ void CPU::LDX_zpX()
     LDX_base(val);
 }
 
+void CPU::LDX_zpY()
+{
+    ++PC;
+
+    uint8_t val = zero_pageY();
+    LDX_base(val);
+}
+
 void CPU::LDX_imm()
 {
     ++PC;
@@ -2576,6 +2864,76 @@ void CPU::ISC_base(uint8_t val, uint16_t addr)
     cycles += 3;
 }
 
+void CPU::ISC_indX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectX(&addr);
+
+    ISC_base(val, addr);
+}
+
+void CPU::ISC_zp()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_page(&addr);
+
+    ISC_base(val, addr);
+}
+
+void CPU::ISC_abs()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absolute(&addr);
+
+    ISC_base(val, addr);
+}
+
+void CPU::ISC_indY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = indexed_inderectY(&addr);
+
+    ISC_base(val, addr);
+}
+
+void CPU::ISC_zpX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_pageX(&addr);
+
+    ISC_base(val, addr);
+}
+
+void CPU::ISC_absY()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteY(&addr);
+
+    ISC_base(val, addr);
+}
+
+void CPU::ISC_absX()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteX(&addr);
+
+    ISC_base(val, addr);
+}
+
 void CPU::LAX_base(uint8_t val)
 {
     A = val;
@@ -2647,6 +3005,16 @@ void CPU::LAX_zpY()
     LAX_base(val);
 }
 
+void CPU::LAX_imm()
+{
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = immediate(&addr);
+
+    LAX_base(val);
+}
+
 void CPU::SAX_base(uint16_t addr)
 {
     uint8_t val = A & X;
@@ -2691,6 +3059,16 @@ void CPU::SAX_zpY()
 
     uint16_t addr;
     zero_pageY(&addr);
+
+    SAX_base(addr);
+}
+
+void CPU::SAX_imm()
+{
+    ++PC;
+
+    uint16_t addr;
+    immediate(&addr);
 
     SAX_base(addr);
 }

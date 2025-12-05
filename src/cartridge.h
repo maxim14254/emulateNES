@@ -29,6 +29,7 @@ public:
     ~Cartridge();
 
     uint8_t mapper_read_prg(uint16_t addr);
+    uint8_t read_prg_ram(uint16_t addr);
 
     uint16_t get_NMI();
     uint16_t get_RESET();
@@ -37,6 +38,7 @@ public:
 
 private:
     NESHeader header;               // Заголовок
+    std::vector<uint8_t> prg_ram;   // ОЗУ картриджа
     std::vector<uint8_t> prg_rom;   // код
     std::vector<uint8_t> chr_rom;   // (графика), мапперы
 

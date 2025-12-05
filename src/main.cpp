@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 //    ll.show();
 
     CPU cpu;
-    bool rez = cpu.init_new_cartridge(":/games/Super Mario Bros. (World).nes");
+    bool rez = cpu.init_new_cartridge(":/games/nestest.nes");
 
     return a.exec();
 }

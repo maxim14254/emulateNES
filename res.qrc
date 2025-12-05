@@ -2,5 +2,7 @@
     <qresource prefix="/">
         <file>games/Super Mario Bros. (World).nes</file>
         <file>nintendoNES.ico</file>
+        <file>games/01-implied.nes</file>
+        <file>games/nestest.nes</file>
     </qresource>
 </RCC>

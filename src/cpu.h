@@ -10,45 +10,45 @@
 #include <thread>
 
 
-//0x00  BRK   impl+
-//0x01  ORA   (ind,X)+
-//0x05  ORA   zp+
-//0x06  ASL   zp+
-//0x08  PHP   impl+
-//0x09  ORA   #imm+
-//0x0A  ASL   A+
-//0x0D  ORA   abs+
-//0x0E  ASL   abs+
+//0x00  BRK   impl++
+//0x01  ORA   (ind,X)++
+//0x05  ORA   zp++
+//0x06  ASL   zp++
+//0x08  PHP   impl++
+//0x09  ORA   #imm++
+//0x0A  ASL   A++
+//0x0D  ORA   abs++
+//0x0E  ASL   abs++
 
-//0x10  BPL   rel+
-//0x11  ORA   (ind),Y+
-//0x15  ORA   zp,X+
-//0x16  ASL   zp,X+
-//0x18  CLC   impl+
-//0x19  ORA   abs,Y+
-//0x1D  ORA   abs,X+
-//0x1E  ASL   abs,X+
+//0x10  BPL   rel++
+//0x11  ORA   (ind),Y++
+//0x15  ORA   zp,X++
+//0x16  ASL   zp,X++
+//0x18  CLC   impl++
+//0x19  ORA   abs,Y++
+//0x1D  ORA   abs,X++
+//0x1E  ASL   abs,X++
 
-//0x20  JSR   abs+
-//0x21  AND   (ind,X)+
-//0x24  BIT   zp+
-//0x25  AND   zp+
-//0x26  ROL   zp+
-//0x28  PLP   impl+
-//0x29  AND   #imm+
-//0x2A  ROL   A+
-//0x2C  BIT   abs+
-//0x2D  AND   abs+
-//0x2E  ROL   abs+
+//0x20  JSR   abs++
+//0x21  AND   (ind,X)++
+//0x24  BIT   zp++
+//0x25  AND   zp++
+//0x26  ROL   zp++
+//0x28  PLP   impl++
+//0x29  AND   #imm++
+//0x2A  ROL   A++
+//0x2C  BIT   abs++
+//0x2D  AND   abs++
+//0x2E  ROL   abs++
 
-//0x30  BMI   rel+
-//0x31  AND   (ind),Y+
-//0x35  AND   zp,X+
-//0x36  ROL   zp,X+
-//0x38  SEC   impl+
-//0x39  AND   abs,Y+
-//0x3D  AND   abs,X+
-//0x3E  ROL   abs,X+
+//0x30  BMI   rel++
+//0x31  AND   (ind),Y++
+//0x35  AND   zp,X++
+//0x36  ROL   zp,X++
+//0x38  SEC   impl++
+//0x39  AND   abs,Y++
+//0x3D  AND   abs,X++
+//0x3E  ROL   abs,X++
 
 //0x40  RTI   impl+
 //0x41  EOR   (ind,X)+
@@ -163,6 +163,7 @@
 //0xE6  INC   zp+
 //0xE8  INX   impl+
 //0xE9  SBC   #imm+
+//0xEB  SBC   #imm+
 //0xEA  NOP   impl+
 //0xEC  CPX   abs+
 //0xED  SBC   abs+
@@ -181,21 +182,21 @@
 
 
 
-//0x03  SLO   ind,x+
-//0x07  SLO   zp+
-//0x0F  SLO   abs+
-//0x13  SLO   ind,y+
-//0x17  SLO   zp,x+
-//0x1B  SLO   abs,y+
-//0x1F  SLO   abs,x+
+//0x03  SLO   ind,x++
+//0x07  SLO   zp++
+//0x0F  SLO   abs++
+//0x13  SLO   ind,y++
+//0x17  SLO   zp,x++
+//0x1B  SLO   abs,y++
+//0x1F  SLO   abs,x++
 
-//0x23  RLA   ind,x+
-//0x27  RLA   zp+
-//0x2F  RLA   abs+
-//0x33  RLA   ind,y+
-//0x37  RLA   zp,x+
-//0x3B  RLA   abs,y+
-//0x3F  RLA   abs,x+
+//0x23  RLA   ind,x++
+//0x27  RLA   zp++
+//0x2F  RLA   abs++
+//0x33  RLA   ind,y++
+//0x37  RLA   zp,x++
+//0x3B  RLA   abs,y++
+//0x3F  RLA   abs,x++
 
 //0x43  SRE   ind,x+
 //0x47  SRE   zp+
@@ -231,6 +232,7 @@
 
 //0xA3  LAX   ind,x+
 //0xA7  LAX   zp+
+//0xAB  LAX   imm
 //0xAF  LAX   abs+
 //0xB3  LAX   ind,y+
 //0xB7  LAX   zp,y+
@@ -240,41 +242,43 @@
 //0x87  SAX   zp+
 //0x8F  SAX   abs+
 //0x97  SAX   zp,y+
+//0xCB  SAX   imm+
 
-//0x1A  NOP   imp+
-//0x3A  NOP   imp+
-//0x5A  NOP   imp+
+
+//0x1A  NOP   imp++
+//0x3A  NOP   imp++
+//0x5A  NOP   imp++
 //0x7A  NOP   imp+
 //0xDA  NOP   imp+
 //0xFA  NOP   imp+
 
-//0x04  NOP   zp+
-//0x44  NOP   zp+
-//0x64  NOP   zp+
+//0x04  NOP   zp++
+//0x44  NOP   zp++
+//0x64  NOP   zp++
 
-//0x14  NOP   zp,x+
-//0x34  NOP   zp,x+
-//0x54  NOP   zp,x+
+//0x14  NOP   zp,x++
+//0x34  NOP   zp,x++
+//0x54  NOP   zp,x++
 //0x74  NOP   zp,x+
 //0xD4  NOP   zp,x+
 //0xF4  NOP   zp,x+
 
-//0x0C  NOP   abs+
+//0x0C  NOP   abs++
 
-//0x1C  NOP   abs,x+
+//0x1C  NOP   abs,x++
 //0x3C  NOP   abs,x+
-//0x5C  NOP   abs,x+
+//0x5C  NOP   abs,x++
 //0x7C  NOP   abs,x+
 //0xDC  NOP   abs,x+
 //0xFC  NOP   abs,x+
 
 //0x80  NOP   #imm+
 
-//0x0B  ANC   #imm+
+//0x0B  ANC   #imm++
 //0x2B  ANC   #imm+
 
 //0x4B  ALR   #imm+
-//0x6B  ARR   #imm+
+//0x6B  ARR   #imm++
 //0x8B  XAA   #imm+
 
 //0x93  AHX   ind,y+
@@ -286,13 +290,13 @@
 
 //0xBB  LAS   abs,y+
 
-//0x02  KIL   imp+
-//0x12  KIL   imp+
+//0x02  KIL   imp++
+//0x12  KIL   imp++
 //0x22  KIL   imp+
-//0x32  KIL   imp+
-//0x42  KIL   imp+
+//0x32  KIL   imp++
+//0x42  KIL   imp++
 //0x52  KIL   imp+
-//0x62  KIL   imp+
+//0x62  KIL   imp++
 //0x72  KIL   imp+
 //0x92  KIL   imp+
 //0xB2  KIL   imp+
@@ -350,7 +354,7 @@ private:
     std::thread run_t;
     bool start;
 
-    std::vector<std::function<void()>> table_instructions;  // таблица инструкции
+    std::vector<std::function<void(CPU&)>> table_instructions;  // таблица инструкции
 
     void run();
     void reset();
@@ -527,6 +531,7 @@ private:
     void LDX_base(uint8_t val);     // 1 цикл
     void LDX_zp();                  // 3 цикла
     void LDX_zpX();                 // 4 цикла
+    void LDX_zpY();                 // 4 цикла
     void LDX_imm();                 // 2 цикла
     void LDX_abs();                 // 4 цикла
     void LDX_absY();                // 4-5 циклов
@@ -665,12 +670,14 @@ private:
     void LAX_indY();                // 5 циклов
     void LAX_absY();                // 4-5 циклов
     void LAX_zpY();                 // 4 циклов
+    void LAX_imm();                 // 2 цикла
 
     void SAX_base(uint16_t addr);   // 1 цикл
     void SAX_indX();                // 6 циклов
     void SAX_zp();                  // 3 цикла
     void SAX_abs();                 // 4 цикла
     void SAX_zpY();                 // 4 цикла
+    void SAX_imm();                 // 2 цикла
 
     void ANC_imm();                 // 2 цикла
 

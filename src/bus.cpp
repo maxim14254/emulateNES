@@ -18,13 +18,17 @@ uint8_t Bus::read(uint16_t addr)
     {
         return ram[addr & 0x07FF];
     }
-    else if(addr < 0x2007) //PPU
+    else if(addr < 0x4000) //PPU
     {
 
     }
-    else if(addr < 0x4016) //APU и ввода/вывода
+    else if(addr < 0x4020) //APU и ввода/вывода
     {
 
+    }
+    else if(addr < 0x8000) // ОЗУ картриджа
+    {
+        return cartridge->read_prg_ram(addr);
     }
     else  //область картриджа
     {
@@ -48,7 +52,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     }
     else //область картриджа
     {
-
+        int f = 0;
     }
 }
 

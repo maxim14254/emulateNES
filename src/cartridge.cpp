@@ -16,9 +16,15 @@ Cartridge::Cartridge(const QString& path, bool* status)
         {
             prg_rom.resize(header.prg_rom * 0x4000);
             chr_rom.resize(header.chr_rom * 0x2000);
+            prg_ram.resize(0x2000);
 
             file.read(reinterpret_cast<char*>(prg_rom.data()), prg_rom.size());
             file.read(reinterpret_cast<char*>(chr_rom.data()), chr_rom.size());
+
+            uint8_t map_lo =  header.flags6 >> 4;
+            uint8_t map_hi =  header.flags7 & 0xF0;
+
+            uint8_t mapper = (map_hi << 8) | map_lo;
 
             *status = true;
         }
@@ -56,6 +62,13 @@ uint8_t Cartridge::mapper_read_prg(uint16_t addr)
         uint32_t offset = addr - 0x8000;
         return prg_rom[offset];
     }
+}
+
+uint8_t Cartridge::read_prg_ram(uint16_t addr)
+{
+    uint32_t offset = addr - 0x6000;
+    return prg_ram[offset];
+
 }
 
 uint16_t Cartridge::get_NMI()
