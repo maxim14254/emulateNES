@@ -14,9 +14,16 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowIcon(QIcon(":/nintendoNES.ico"));
 
     ui->verticalLayout->addWidget(new MyOpenGL(this));
+
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::slot_show_error_message()
+{
+    QMessageBox message(QMessageBox::Icon::Critical, "Error", "Ошибка эмуляции KIL", QMessageBox::StandardButton::Ok);
+    message.exec();
 }

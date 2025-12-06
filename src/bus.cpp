@@ -1,5 +1,8 @@
 #include "bus.h"
 #include "cartridge.h"
+#include <QString>
+#include <QFile>
+#include <QDir>
 
 
 Bus::Bus()
@@ -52,7 +55,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     }
     else //область картриджа
     {
-        int f = 0;
+
     }
 }
 
@@ -63,7 +66,7 @@ void Bus::init_new_cartridge(const QString& path, bool* status)
     if(!status)
         return;
 
-    ram.clear();
+    std::fill(ram.begin(), ram.end(), 0);
 }
 
 uint16_t Bus::get_NMI()

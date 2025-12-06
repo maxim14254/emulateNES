@@ -1,11 +1,17 @@
 ﻿#include "cpu.h"
 #include "bus.h"
 #include <QMessageBox>
+#include "log.h"
+#include <QMetaObject>
+#include "mainwindow.h"
 
 
-CPU::CPU()
+
+CPU::CPU(MainWindow* _window) : window(_window)
 {
     bus.reset(new Bus());
+
+    connect(this, &CPU::signal_error_show, window, &MainWindow::slot_show_error_message, Qt::QueuedConnection);
 
     table_instructions.resize(256);
 
@@ -286,6 +292,7 @@ CPU::CPU()
 
 CPU::~CPU()
 {
+
     {
         std::lock_guard<std::mutex> lock(mutex_stop);
         start = false;
@@ -332,7 +339,7 @@ bool CPU::init_new_cartridge(const QString& path)
 
 }
 
-QSharedPointer<Bus> CPU::get_bus()
+ std::shared_ptr<Bus> CPU::get_bus()
 {
     return bus;
 }
@@ -343,7 +350,7 @@ void CPU::run()
     {
         std::lock_guard<std::mutex> lock(mutex_stop);
 
-        if(PC == bus->get_RESET())
+        if(PC == 0xC000)//bus->get_RESET())
             reset();
 
         uint8_t val = bus->read(PC);
@@ -359,10 +366,14 @@ void CPU::reset()
     RESET = bus->get_RESET();
     IRQ = bus->get_IRQ();
 
-    PC = RESET;
+    A  = 0x00;
+    X  = 0x00;
+    Y  = 0x00;
+
+    PC = 0xC000; //RESET;
 
     SP = 0xFD;
-    status = 0x34;
+    status = 0x24; //0x34;
 
     cycles = 7;
 }
@@ -546,6 +557,12 @@ void CPU::BRK_impl()
     PC = bus->get_IRQ();
 
     cycles += 6;
+
+#if LOG_ON
+    int16_t ddd[] = {0x00, -1, -1};
+    LOG::Write(PC, ddd, QString("BRK"), A, X, Y, status, SP, cycles);
+#endif
+
 }
 
 void CPU::ORA_base(uint8_t val)
@@ -562,9 +579,16 @@ void CPU::ORA_zpX()
 {
     ++PC;
 
-    uint8_t val = zero_pageX();
+    uint16_t addr;
+    uint8_t val = zero_pageX(&addr);
 
     ORA_base(val);
+
+#if LOG_ON
+    int16_t ss = (addr - X) & 0xFF;
+    int16_t ddd[] = {0x15, ss, -1};//LDA $10,X @ 20 = F
+    LOG::Write(PC, ddd, QString("ORA $%1,X @ %2 = %3").arg(ss).arg(addr).arg(val), A, X, Y, status, SP, cycles);
+#endif
 }
 
 void CPU::ORA_zp()
@@ -1429,6 +1453,11 @@ void CPU::SEI_impl()
     set_flag(StatusFlags::I, true);
 
     cycles += 2;
+
+#if LOG_ON
+    int16_t ddd[] = {0x78, -1, -1};
+    LOG::Write(PC, ddd, QString("SEI"), A, X, Y, status, SP, cycles);
+#endif
 }
 
 void CPU::STA_indX()
@@ -3233,15 +3262,8 @@ void CPU::LAS_absY()
 
 void CPU::KIL_imp()
 {
-    QMessageBox message(QMessageBox::Icon::Critical, "Error", "Ошибка эмуляции KIL", QMessageBox::StandardButton::Ok);
-    message.exec();
+    emit signal_error_show();
 
-    {
-        std::lock_guard<std::mutex> lock(mutex_stop);
-        start = false;
-    }
-
-    if(run_t.joinable())
-        run_t.join();
+    start = false;
 }
 

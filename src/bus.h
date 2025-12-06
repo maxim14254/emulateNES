@@ -2,10 +2,11 @@
 #define BUS_H
 
 #include <vector>
-#include <QScopedPointer>
+#include <memory>
 
 
 class Cartridge;
+class QString;
 
 class Bus
 {
@@ -24,7 +25,7 @@ public:
 
 private:
     std::vector<uint8_t> ram;               //ОЗУ
-    QScopedPointer<Cartridge> cartridge;   //Картридж
+    std::shared_ptr<Cartridge> cartridge;   //Картридж
 };
 
 #endif // BUS_H

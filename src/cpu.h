@@ -2,11 +2,12 @@
 #define CPU_H
 
 
+#include "QObject"
 #include <vector>
 #include <functional>
 #include <mutex>
 #include <QString>
-#include <QSharedPointer>
+#include <memory>
 #include <thread>
 
 
@@ -311,6 +312,7 @@
 
 
 class Bus;
+class MainWindow;
 
 enum StatusFlags
 {
@@ -324,10 +326,12 @@ enum StatusFlags
     N = 0x80
 };
 
-class CPU
+class CPU : public QObject
 {
+    Q_OBJECT
+
 public:
-    CPU();
+    CPU(MainWindow* _window);
     ~CPU();
 
     void set_flag(StatusFlags f, bool value);
@@ -335,15 +339,18 @@ public:
 
     bool init_new_cartridge(const QString& path);
 
-    QSharedPointer<Bus> get_bus();
+    std::shared_ptr<Bus> get_bus();
+
+signals:
+    void signal_error_show();
 
 private:
     uint8_t  A, X, Y;           // регистры
     uint8_t  SP;                // стек
     uint16_t PC;                // счетчик команд
     uint8_t  status;            // флаги
-    QSharedPointer<Bus> bus;    // шина
-    uint8_t  cycles;            // счетчик циклов
+    std::shared_ptr<Bus> bus;   // шина
+    uint32_t  cycles;           // счетчик циклов
 
     uint16_t NMI;
     uint16_t RESET;
@@ -353,6 +360,7 @@ private:
     std::once_flag start_once_flag;
     std::thread run_t;
     bool start;
+    MainWindow* window;
 
     std::vector<std::function<void(CPU&)>> table_instructions;  // таблица инструкции
 

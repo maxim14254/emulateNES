@@ -17,6 +17,9 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+public slots:
+    void slot_show_error_message();
+
 private:
     Ui::MainWindow *ui;
 };
