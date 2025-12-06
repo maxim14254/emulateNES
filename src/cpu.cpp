@@ -540,6 +540,11 @@ int8_t CPU::relative(uint16_t* addr)
 
 void CPU::BRK_impl()
 {
+#if LOG_ON
+    int16_t ddd[] = {0x00, -1, -1};
+    LOG::Write(PC, ddd, QString("BRK"), A, X, Y, status, SP, cycles);
+#endif
+
     ++PC;
 
     immediate();
@@ -557,12 +562,6 @@ void CPU::BRK_impl()
     PC = bus->get_IRQ();
 
     cycles += 6;
-
-#if LOG_ON
-    int16_t ddd[] = {0x00, -1, -1};
-    LOG::Write(PC, ddd, QString("BRK"), A, X, Y, status, SP, cycles);
-#endif
-
 }
 
 void CPU::ORA_base(uint8_t val)
@@ -577,6 +576,16 @@ void CPU::ORA_base(uint8_t val)
 
 void CPU::ORA_zpX()
 {
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
     ++PC;
 
     uint16_t addr;
@@ -587,7 +596,7 @@ void CPU::ORA_zpX()
 #if LOG_ON
     int16_t ss = (addr - X) & 0xFF;
     int16_t ddd[] = {0x15, ss, -1};//LDA $10,X @ 20 = F
-    LOG::Write(PC, ddd, QString("ORA $%1,X @ %2 = %3").arg(ss).arg(addr).arg(val), A, X, Y, status, SP, cycles);
+    LOG::Write(old_PC, ddd, QString("ORA $%1,X @ %2 = %3").arg(ss, 0, 16,QLatin1Char('0')).toUpper().arg(addr, 0, 16).arg(val, 0, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
 
@@ -1180,13 +1189,29 @@ void CPU::PHA_impl()
 
 void CPU::JMP_abs()
 {
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
     ++PC;
 
     uint8_t a1 = immediate();
     uint8_t a2 = immediate();
+
     PC = (a2 << 8) | a1;
 
     ++cycles;
+
+#if LOG_ON
+    int16_t ddd[] = {0x4C, a1, a2};
+    LOG::Write(old_PC, ddd, QString("JMP $%1%2").arg(a2, 0, 16, QLatin1Char('0')).toUpper().arg(a1, 0, 16, QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+#endif
 }
 
 void CPU::JMP_ind()
@@ -1448,6 +1473,16 @@ void CPU::BVS_rel()
 
 void CPU::SEI_impl()
 {
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
     ++PC;
 
     set_flag(StatusFlags::I, true);
@@ -1456,7 +1491,7 @@ void CPU::SEI_impl()
 
 #if LOG_ON
     int16_t ddd[] = {0x78, -1, -1};
-    LOG::Write(PC, ddd, QString("SEI"), A, X, Y, status, SP, cycles);
+    LOG::Write(old_PC, ddd, QString("SEI"), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
 
