@@ -377,7 +377,7 @@ private:
     uint8_t absolute(uint16_t* addr = nullptr);             // 3 цикла
     uint8_t absoluteX(uint16_t* addr = nullptr);            // 3-4 цикла
     uint8_t absoluteY(uint16_t* addr = nullptr);            // 3-4 цикла
-    uint16_t indirect();                                    // 4 цикла
+    uint16_t indirect(uint16_t* addr = nullptr);            // 4 цикла
     uint8_t indexed_inderectX(uint16_t* addr = nullptr);    // 5 циклов
     uint8_t indexed_inderectY(uint16_t* addr = nullptr);    // 4-5 циклов
     int8_t relative(uint16_t* addr = nullptr);              // 1 цикл
@@ -496,7 +496,6 @@ private:
     void STA_indY();                // 5-6 циклов
     void STA_zp();                  // 3 цикла
     void STA_zpX();                 // 4 цикла
-    void STA_imm();                 // 2 цикла
     void STA_abs();                 // 4 цикла
     void STA_absX();                // 4-5 циклов
     void STA_absY();                // 4-5 циклов
@@ -538,7 +537,6 @@ private:
 
     void LDX_base(uint8_t val);     // 1 цикл
     void LDX_zp();                  // 3 цикла
-    void LDX_zpX();                 // 4 цикла
     void LDX_zpY();                 // 4 цикла
     void LDX_imm();                 // 2 цикла
     void LDX_abs();                 // 4 цикла
