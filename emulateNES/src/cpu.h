@@ -608,7 +608,9 @@ private:
 
     void TAX_impl();                // 2 цикла
 
-    void NOP_impl();                // 2 цикла
+    void NOP_impl_DA();             // 2 цикла
+    void NOP_impl_EA();             // 2 цикла
+    void NOP_impl_FA();             // 2 цикла
     void NOP_zp();                  // 3 цикла
     void NOP_zpX();                 // 4 цикла
     void NOP_abs();                 // 4 цикла

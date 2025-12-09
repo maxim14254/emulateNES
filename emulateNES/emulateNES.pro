@@ -1,3 +1,7 @@
+include(../NES.pro)
+
+TEMPLATE = app
+
 #QT       += core gui openglwidgets opengl
 QT       += core gui opengl
 
@@ -6,12 +10,6 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 CONFIG += c++17
 
 RC_ICONS = nintendoNES.ico
-
-LOG = 1
-
-equals(LOG, 1) {
-    DEFINES += LOG_ON
-}
 
 
 # You can make your code fail to compile if it uses deprecated APIs.
