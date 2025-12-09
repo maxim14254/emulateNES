@@ -15,6 +15,3 @@ equals(LOG, 1)
     QMAKE_POST_LINK += $$QMAKE_COPY "$$PWD/testNES/benchmark_log.txt" "$$BIN_DIR/benchmark_log.txt"
 }
 
-message("Other build dir: $$PWD/testNES/benchmark_log.txt")
-
-
