@@ -1954,9 +1954,9 @@ void CPU::LSR_zp()
 
     uint16_t addr;
     uint8_t val = zero_page(&addr);
-    val = LSR_base(val);
+    auto ff = LSR_base(val);
 
-    bus->write(addr, val);
+    bus->write(addr, ff);
     ++cycles;
 
 #if LOG_ON
@@ -2350,7 +2350,7 @@ void CPU::ADC_zp()
 
 #if LOG_ON
     int16_t ss = (addr) & 0xFF;
-    int16_t ddd[] = {0x46, ss, -1};//ORA $10 = 00
+    int16_t ddd[] = {0x65, ss, -1};//ORA $10 = 00
     LOG::Write(old_PC, ddd, QString("ADC $%1 = %2").arg(ss, 2, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
@@ -2754,14 +2754,18 @@ void CPU::STA_indX()
     ++cycles;
 
 #if LOG_ON
+    uint8_t a1 = bus->read(old_PC + 1);
     int16_t ddd[] = { 0x81,
                       bus->read(old_PC + 1),
                       -1
                     }; //ORA ($80,X) @ 80 = 0200 = AA
 
     LOG::Write(old_PC, ddd,
-               QString("STA ($%1,X)").
-                    arg(bus->read(old_PC + 1), 2, 16,QLatin1Char('0')).toUpper(),
+               QString("STA ($%1,X) @ %2 = %3 = %4").
+               arg(a1, 2, 16,QLatin1Char('0')).toUpper().
+               arg((uint8_t)(a1 + X), 2, 16,QLatin1Char('0')).toUpper().
+               arg(addr, 4, 16,QLatin1Char('0')).toUpper().
+               arg(val, 2, 16,QLatin1Char('0')).toUpper(),
                old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
@@ -2968,7 +2972,7 @@ void CPU::STY_zp()
     ++PC;
 
     uint16_t addr;
-    zero_page(&addr);
+    uint8_t val = zero_page(&addr);
 
     bus->write(addr, Y);
     ++cycles;
@@ -2976,7 +2980,7 @@ void CPU::STY_zp()
 #if LOG_ON
     int16_t ss = (addr) & 0xFF;
     int16_t ddd[] = {0x84, ss, -1};//ORA $10 = 00
-    LOG::Write(old_PC, ddd, QString("STY $%1 = %2").arg(ss, 2, 16,QLatin1Char('0')).toUpper().arg(Y, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+    LOG::Write(old_PC, ddd, QString("STY $%1 = %2").arg(ss, 2, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
 
@@ -3056,7 +3060,7 @@ void CPU::STX_zp()
     ++PC;
 
     uint16_t addr;
-    zero_page(&addr);
+    uint8_t val = zero_page(&addr);
 
     bus->write(addr, X);
     ++cycles;
@@ -3064,7 +3068,7 @@ void CPU::STX_zp()
 #if LOG_ON
     int16_t ss = (addr) & 0xFF;
     int16_t ddd[] = {0x86, ss, -1};//ORA $10 = 00
-    LOG::Write(old_PC, ddd, QString("STX $%1 = %2").arg(ss, 2, 16,QLatin1Char('0')).toUpper().arg(X, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+    LOG::Write(old_PC, ddd, QString("STX $%1 = %2").arg(ss, 2, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
 
@@ -3381,9 +3385,6 @@ void CPU::LDA_indX()
     auto old_status = status;
     auto old_SP = SP;
 #endif
-
-    if(PC == 0xCFFA)
-        int d = 9;
 
     ++PC;
 
