@@ -504,8 +504,8 @@ uint8_t CPU::indexed_inderectX(uint16_t* addr)
 {
     uint8_t a1 = immediate();
 
-    uint8_t al = bus->read(a1 + X);
-    uint8_t ah = bus->read(a1 + X + 1);
+    uint8_t al = bus->read((a1 + X) & 0xFF);
+    uint8_t ah = bus->read((a1 + X + 1) & 0xFF);
     uint16_t addr2 = (ah << 8) | al;
 
     cycles += 4;
@@ -521,7 +521,7 @@ uint8_t CPU::indexed_inderectY(uint16_t* addr)
     uint8_t a1 = immediate();
 
     uint8_t al = bus->read(a1);
-    uint8_t ah = bus->read(a1 + 1);
+    uint8_t ah = bus->read((a1 + 1) & 0xFF);
     uint16_t base = (ah << 8) | al;
     uint16_t addr2 = base + Y;
 
@@ -874,7 +874,7 @@ void CPU::ASL_A()
 
     ++PC;
 
-    ASL_base(A);
+    A = ASL_base(A);
 
 #if LOG_ON
     int16_t ddd[] = {0x0A, -1, -1};//ORA $10 = 00
@@ -1514,7 +1514,7 @@ void CPU::ROL_A()
 
     ++PC;
 
-    ROL_base(A);
+    A = ROL_base(A);
 
 #if LOG_ON
     int16_t ddd[] = {0x2A, -1, -1};//ORA $10 = 00
@@ -1600,6 +1600,7 @@ void CPU::PLP_impl()
     ++PC;
 
     status = bus->read(0x0100 + ++SP);
+    status = (status & 0xEF) | 0x20;
 
     cycles += 4;
 }
@@ -1662,6 +1663,9 @@ void CPU::RTI_impl()
     ++PC;
 
     status = bus->read(0x0100 + ++SP);
+
+    status |= 0x20;
+
     uint8_t PCl = bus->read(0x0100 + ++SP);
     uint8_t PCh = bus->read(0x0100 + ++SP);
 
@@ -2004,7 +2008,7 @@ void CPU::LSR_A()
 
     ++PC;
 
-    LSR_base(A);
+    A = LSR_base(A);
 
 #if LOG_ON
     int16_t ddd[] = {0x4A, -1, -1};//ORA $10 = 00
@@ -2120,7 +2124,7 @@ void CPU::JMP_abs()
 
 #if LOG_ON
     int16_t ddd[] = {0x4C, a1, a2};
-    LOG::Write(old_PC, ddd, QString("JMP $%1%2").arg(a2, 0, 16, QLatin1Char('0')).toUpper().arg(a1, 0, 16, QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+    LOG::Write(old_PC, ddd, QString("JMP $%1%2").arg(a2, 2, 16, QLatin1Char('0')).toUpper().arg(a1, 2, 16, QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
 
@@ -2220,14 +2224,15 @@ void CPU::RTS_impl()
 void CPU::ADC_base(uint8_t val)
 {
     uint16_t tmp = A + val + (get_flag(StatusFlags::C) ? 1 : 0);
-    bool overflow = (~(A ^ val) & (A ^ tmp) & 0x80) != 0;
+    uint8_t result = (uint8_t)(tmp & 0xFF);
+    bool overflow = (~(A ^ val) & (A ^ result) & 0x80) != 0;
 
     if(!get_flag(StatusFlags::D))
     {
         set_flag(StatusFlags::C, tmp > 0xFF);
         set_flag(StatusFlags::V, overflow);
 
-        A = tmp;
+        A = result;
 
         set_flag(StatusFlags::Z, A == 0);
         set_flag(StatusFlags::N, A & 0x80);
@@ -2244,7 +2249,7 @@ void CPU::ADC_base(uint8_t val)
 
         set_flag(StatusFlags::C, tmp > 0xFF);
 
-        A = tmp;
+        A = result;
 
         set_flag(StatusFlags::Z, A == 0);
         set_flag(StatusFlags::N, A & 0x80);
@@ -2396,9 +2401,9 @@ void CPU::ADC_imm()
     ADC_base(val);
 
 #if LOG_ON
-    int16_t ss = (addr) & 0xFF;
-    int16_t ddd[] = {0x69, ss, -1}; //ORA $10 = 00
-    LOG::Write(old_PC, ddd, QString("ADC $%1 = %2").arg(ss, 2, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+
+    int16_t ddd[] = {0x69, val, -1}; //ORA $10 = 00
+    LOG::Write(old_PC, ddd, QString("ADC #$%1").arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
 
@@ -2585,7 +2590,7 @@ void CPU::ROR_A()
 
     ++PC;
 
-    ROR_base(A);
+    A = ROR_base(A);
 
 #if LOG_ON
     int16_t ddd[] = {0x6A, -1, -1}; //ORA $10 = 00
@@ -3105,15 +3110,17 @@ void CPU::STX_abs()
     ++PC;
 
     uint16_t addr;
-    absolute(&addr);
+    uint8_t val = absolute(&addr);
 
     bus->write(addr, X);
     ++cycles;
 
 #if LOG_ON
     int16_t ss = (addr) & 0xFF;
-    int16_t ddd[] = {0x8E, ss, -1};//ORA $10 = 00
-    LOG::Write(old_PC, ddd, QString("STX $%1 = %2").arg(ss, 2, 16,QLatin1Char('0')).toUpper().arg(X, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+    int16_t ddd[] = {0x8E,
+                     ss,
+                     (int16_t)(addr >> 8)};//ORA $10 = 00
+    LOG::Write(old_PC, ddd, QString("STX $%1 = %2").arg(addr, 4, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
 
@@ -3375,6 +3382,9 @@ void CPU::LDA_indX()
     auto old_SP = SP;
 #endif
 
+    if(PC == 0xCFFA)
+        int d = 9;
+
     ++PC;
 
     uint16_t addr;
@@ -3382,15 +3392,16 @@ void CPU::LDA_indX()
     LDA_base(val);
 
 #if LOG_ON
+    uint8_t a1 = bus->read(old_PC + 1);
     int16_t ddd[] = { 0xA1,
-                      bus->read(old_PC + 1),
+                      a1,
                       -1
                     }; //ORA ($80,X) @ 80 = 0200 = AA
 
     LOG::Write(old_PC, ddd,
                QString("LDA ($%1,X) @ %2 = %3 = %4").
-                    arg(bus->read(old_PC + 1), 2, 16,QLatin1Char('0')).toUpper().
-                    arg((bus->read(old_PC + 1) + X) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
+                    arg(a1, 2, 16,QLatin1Char('0')).toUpper().
+                    arg((uint8_t)(a1 + X), 2, 16,QLatin1Char('0')).toUpper().
                     arg(addr, 4, 16,QLatin1Char('0')).toUpper().
                     arg(val, 2, 16,QLatin1Char('0')).toUpper(),
                old_A, old_X, old_Y, old_status, old_SP, old_cycles);
@@ -3524,8 +3535,8 @@ void CPU::LDA_abs()
 
 #if LOG_ON
     int16_t ss = (addr) & 0xFF;
-    int16_t ddd[] = {0xAD, ss, -1};//ORA $10 = 00
-    LOG::Write(old_PC, ddd, QString("LDA $%1 = %2").arg(ss, 2, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+    int16_t ddd[] = {0xAD, ss, (int16_t)(addr >> 8)}; //ORA $10 = 00
+    LOG::Write(old_PC, ddd, QString("LDA $%1 = %2").arg(addr, 4, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
 
@@ -3695,8 +3706,8 @@ void CPU::LDX_abs()
 
 #if LOG_ON
     int16_t ss = (addr) & 0xFF;
-    int16_t ddd[] = {0xAE, ss, -1};//ORA $10 = 00
-    LOG::Write(old_PC, ddd, QString("LDX $%1 = %2").arg(ss, 2, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+    int16_t ddd[] = {0xAE, ss, (int16_t)(addr >> 8)};//ORA $10 = 00
+    LOG::Write(old_PC, ddd, QString("LDX $%1 = %2").arg(addr, 4, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
 
@@ -4279,7 +4290,7 @@ void CPU::INY_impl()
 #endif
 
     ++PC;
-    --Y;
+    ++Y;
 
     set_flag(StatusFlags::Z, Y == 0);
     set_flag(StatusFlags::N, Y & 0x80);
@@ -4484,6 +4495,8 @@ void CPU::SBC_base(uint8_t val)
 
         A = result;
     }
+
+    ++cycles;
 }
 
 void CPU::SBC_indX()
@@ -4894,7 +4907,7 @@ void CPU::BEQ_rel()
         ++cycles;
         PC += val;
 
-        if(PC >> 8 != (PC - 2 - val) >> 8)
+        if(PC >> 8 != (PC - val) >> 8)
             ++cycles;
     }
 

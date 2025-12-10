@@ -30,7 +30,7 @@ int main()
 
             int j = 0;
             int i = 0;
-            for(; i < line_benchmark.size() && j < line_log.size(); j = ++i )
+            for(; i < line_benchmark.size() && j < line_log.size(); ++j, ++i )
             {
                 if(i == 73)
                     i += 12;
