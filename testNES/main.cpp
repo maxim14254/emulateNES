@@ -38,7 +38,7 @@ int main()
 
                 if(line_benchmark[i] != line_log[j])
                 {
-                    cout << "A mismatch in a string:" << count_lines << " symbol No." << j << " " << line_log[j].toLatin1() << "!=" << line_benchmark[i].toLatin1() << std::endl;
+                    cout << "A mismatch in a line:" << count_lines << " symbol No." << j << " " << line_log[j].toLatin1() << "!=" << line_benchmark[i].toLatin1() << std::endl;
                     return 0;
                 }
                 //73
