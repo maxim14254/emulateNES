@@ -20,7 +20,7 @@ CPU::CPU(MainWindow* _window) : window(_window)
     table_instructions[0x01] = &CPU::ORA_indX;
     table_instructions[0x02] = &CPU::KIL_imp;
     table_instructions[0x03] = &CPU::SLO_indX;
-    table_instructions[0x04] = &CPU::NOP_zp;
+    table_instructions[0x04] = &CPU::NOP_zp_04;
     table_instructions[0x05] = &CPU::ORA_zp;
     table_instructions[0x06] = &CPU::ASL_zp;
     table_instructions[0x07] = &CPU::SLO_zp;
@@ -37,15 +37,15 @@ CPU::CPU(MainWindow* _window) : window(_window)
     table_instructions[0x11] = &CPU::ORA_indY;
     table_instructions[0x12] = &CPU::KIL_imp;
     table_instructions[0x13] = &CPU::SLO_indY;
-    table_instructions[0x14] = &CPU::NOP_zpX;
+    table_instructions[0x14] = &CPU::NOP_zpX_14;
     table_instructions[0x15] = &CPU::ORA_zpX;
     table_instructions[0x16] = &CPU::ASL_zpX;
     table_instructions[0x17] = &CPU::SLO_zpX;
     table_instructions[0x18] = &CPU::CLC_impl;
     table_instructions[0x19] = &CPU::ORA_absY;
-    table_instructions[0x1A] = &CPU::NOP_imm;
+    table_instructions[0x1A] = &CPU::NOP_imm_1A;
     table_instructions[0x1B] = &CPU::SLO_absY;
-    table_instructions[0x1C] = &CPU::NOP_absX;
+    table_instructions[0x1C] = &CPU::NOP_absX_1C;
     table_instructions[0x1D] = &CPU::ORA_absX;
     table_instructions[0x1E] = &CPU::ASL_absX;
     table_instructions[0x1F] = &CPU::SLO_absX;
@@ -71,15 +71,15 @@ CPU::CPU(MainWindow* _window) : window(_window)
     table_instructions[0x31] = &CPU::AND_indY;
     table_instructions[0x32] = &CPU::KIL_imp;
     table_instructions[0x33] = &CPU::RLA_indY;
-    table_instructions[0x34] = &CPU::NOP_zpX;
+    table_instructions[0x34] = &CPU::NOP_zpX_34;
     table_instructions[0x35] = &CPU::AND_zpX;
     table_instructions[0x36] = &CPU::ROL_zpX;
     table_instructions[0x37] = &CPU::RLA_zpX;
     table_instructions[0x38] = &CPU::SEC_impl;
     table_instructions[0x39] = &CPU::AND_absY;
-    table_instructions[0x3A] = &CPU::NOP_imm;
+    table_instructions[0x3A] = &CPU::NOP_imm_3A;
     table_instructions[0x3B] = &CPU::RLA_absY;
-    table_instructions[0x3C] = &CPU::NOP_absX;
+    table_instructions[0x3C] = &CPU::NOP_absX_3C;
     table_instructions[0x3D] = &CPU::AND_absX;
     table_instructions[0x3E] = &CPU::ROL_absX;
     table_instructions[0x3F] = &CPU::RLA_absX;
@@ -88,7 +88,7 @@ CPU::CPU(MainWindow* _window) : window(_window)
     table_instructions[0x41] = &CPU::EOR_indX;
     table_instructions[0x42] = &CPU::KIL_imp;
     table_instructions[0x43] = &CPU::SRE_indX;
-    table_instructions[0x44] = &CPU::NOP_zp;
+    table_instructions[0x44] = &CPU::NOP_zp_44;
     table_instructions[0x45] = &CPU::EOR_zp;
     table_instructions[0x46] = &CPU::LSR_zp;
     table_instructions[0x47] = &CPU::SRE_zp;
@@ -105,15 +105,15 @@ CPU::CPU(MainWindow* _window) : window(_window)
     table_instructions[0x51] = &CPU::EOR_indY;
     table_instructions[0x52] = &CPU::KIL_imp;
     table_instructions[0x53] = &CPU::SRE_indY;
-    table_instructions[0x54] = &CPU::NOP_zpX;
+    table_instructions[0x54] = &CPU::NOP_zpX_54;
     table_instructions[0x55] = &CPU::EOR_zpX;
     table_instructions[0x56] = &CPU::LSR_zpX;
     table_instructions[0x57] = &CPU::SRE_zpX;
     table_instructions[0x58] = &CPU::CLI_impl;
     table_instructions[0x59] = &CPU::EOR_absY;
-    table_instructions[0x5A] = &CPU::NOP_imm;
+    table_instructions[0x5A] = &CPU::NOP_imm_5A;
     table_instructions[0x5B] = &CPU::SRE_absY;
-    table_instructions[0x5C] = &CPU::NOP_absX;
+    table_instructions[0x5C] = &CPU::NOP_absX_5C;
     table_instructions[0x5D] = &CPU::EOR_absX;
     table_instructions[0x5E] = &CPU::LSR_absX;
     table_instructions[0x5F] = &CPU::SRE_absX;
@@ -122,7 +122,7 @@ CPU::CPU(MainWindow* _window) : window(_window)
     table_instructions[0x61] = &CPU::ADC_indX;
     table_instructions[0x62] = &CPU::KIL_imp;
     table_instructions[0x63] = &CPU::RRA_indX;
-    table_instructions[0x64] = &CPU::NOP_zp;
+    table_instructions[0x64] = &CPU::NOP_zp_64;
     table_instructions[0x65] = &CPU::ADC_zp;
     table_instructions[0x66] = &CPU::ROR_zp;
     table_instructions[0x67] = &CPU::RRA_zp;
@@ -139,22 +139,22 @@ CPU::CPU(MainWindow* _window) : window(_window)
     table_instructions[0x71] = &CPU::ADC_indY;
     table_instructions[0x72] = &CPU::KIL_imp;
     table_instructions[0x73] = &CPU::RRA_indY;
-    table_instructions[0x74] = &CPU::NOP_zpX;
+    table_instructions[0x74] = &CPU::NOP_zpX_74;
     table_instructions[0x75] = &CPU::ADC_zpX;
     table_instructions[0x76] = &CPU::ROR_zpX;
     table_instructions[0x77] = &CPU::RRA_zpX;
     table_instructions[0x78] = &CPU::SEI_impl;
     table_instructions[0x79] = &CPU::ADC_absY;
-    table_instructions[0x7A] = &CPU::NOP_imm;
+    table_instructions[0x7A] = &CPU::NOP_imm_7A;
     table_instructions[0x7B] = &CPU::RRA_absY;
-    table_instructions[0x7C] = &CPU::NOP_absX;
+    table_instructions[0x7C] = &CPU::NOP_absX_7C;
     table_instructions[0x7D] = &CPU::ADC_absX;
     table_instructions[0x7E] = &CPU::ROR_absX;
     table_instructions[0x7F] = &CPU::RRA_absX;
 
-    table_instructions[0x80] = &CPU::NOP_imm;
+    table_instructions[0x80] = &CPU::NOP_imm_80;
     table_instructions[0x81] = &CPU::STA_indX;
-    table_instructions[0x82] = &CPU::NOP_imm;
+    table_instructions[0x82] = &CPU::NOP_imm_80;
     table_instructions[0x83] = &CPU::SAX_indX;
     table_instructions[0x84] = &CPU::STY_zp;
     table_instructions[0x85] = &CPU::STA_zp;
@@ -222,7 +222,7 @@ CPU::CPU(MainWindow* _window) : window(_window)
 
     table_instructions[0xC0] = &CPU::CPY_imm;
     table_instructions[0xC1] = &CPU::CMP_indX;
-    table_instructions[0xC2] = &CPU::NOP_imm;
+    table_instructions[0xC2] = &CPU::NOP_imm_80;
     table_instructions[0xC3] = &CPU::DCP_indX;
     table_instructions[0xC4] = &CPU::CPY_zp;
     table_instructions[0xC5] = &CPU::CMP_zp;
@@ -241,7 +241,7 @@ CPU::CPU(MainWindow* _window) : window(_window)
     table_instructions[0xD1] = &CPU::CMP_indY;
     table_instructions[0xD2] = &CPU::KIL_imp;
     table_instructions[0xD3] = &CPU::DCP_indY;
-    table_instructions[0xD4] = &CPU::NOP_zpX;
+    table_instructions[0xD4] = &CPU::NOP_zpX_D4;
     table_instructions[0xD5] = &CPU::CMP_zpX;
     table_instructions[0xD6] = &CPU::DEC_zpX;
     table_instructions[0xD7] = &CPU::DCP_zpX;
@@ -249,14 +249,14 @@ CPU::CPU(MainWindow* _window) : window(_window)
     table_instructions[0xD9] = &CPU::CMP_absY;
     table_instructions[0xDA] = &CPU::NOP_impl_DA;
     table_instructions[0xDB] = &CPU::DCP_absY;
-    table_instructions[0xDC] = &CPU::NOP_absX;
+    table_instructions[0xDC] = &CPU::NOP_absX_DC;
     table_instructions[0xDD] = &CPU::CMP_absX;
     table_instructions[0xDE] = &CPU::DEC_absX;
     table_instructions[0xDF] = &CPU::DCP_absX;
 
     table_instructions[0xE0] = &CPU::CPX_imm;
     table_instructions[0xE1] = &CPU::SBC_indX;
-    table_instructions[0xE2] = &CPU::NOP_imm;
+    table_instructions[0xE2] = &CPU::NOP_imm_80;
     table_instructions[0xE3] = &CPU::ISC_indX;
     table_instructions[0xE4] = &CPU::CPX_zp;
     table_instructions[0xE5] = &CPU::SBC_zp;
@@ -275,7 +275,7 @@ CPU::CPU(MainWindow* _window) : window(_window)
     table_instructions[0xF1] = &CPU::SBC_indY;
     table_instructions[0xF2] = &CPU::KIL_imp;
     table_instructions[0xF3] = &CPU::ISC_indY;
-    table_instructions[0xF4] = &CPU::NOP_zpX;
+    table_instructions[0xF4] = &CPU::NOP_zpX_F4;
     table_instructions[0xF5] = &CPU::SBC_zpX;
     table_instructions[0xF6] = &CPU::INC_zpX;
     table_instructions[0xF7] = &CPU::ISC_zpX;
@@ -283,7 +283,7 @@ CPU::CPU(MainWindow* _window) : window(_window)
     table_instructions[0xF9] = &CPU::SBC_absY;
     table_instructions[0xFA] = &CPU::NOP_impl_FA;
     table_instructions[0xFB] = &CPU::ISC_absY;
-    table_instructions[0xFC] = &CPU::NOP_absX;
+    table_instructions[0xFC] = &CPU::NOP_absX_FC;
     table_instructions[0xFD] = &CPU::SBC_absX;
     table_instructions[0xFE] = &CPU::INC_absX;
     table_instructions[0xFF] = &CPU::ISC_absX;
@@ -3606,15 +3606,15 @@ void CPU::LDA_absY()
 
 #if LOG_ON
     int16_t ddd[] = { 0xB9,
-                      (int16_t)((addr - Y) & 0xFF),
-                     (int16_t)((uint16_t)(addr - Y) >> 8)
-                    }; //ORA $C000,Y @ C010 = 42
+        (int16_t)((addr - Y) & 0xFF),
+        (int16_t)((uint16_t)(addr - Y) >> 8)
+    }; //ORA $C000,Y @ C010 = 42
 
     LOG::Write(old_PC, ddd,
                QString("LDA $%1,Y @ %2 = %3").
-                            arg((uint16_t)(addr - Y), 4, 16,QLatin1Char('0')).toUpper().
-                            arg(addr, 4, 16,QLatin1Char('0')).toUpper().
-                            arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               arg((uint16_t)(addr - Y), 4, 16,QLatin1Char('0')).toUpper().
+               arg(addr, 4, 16,QLatin1Char('0')).toUpper().
+               arg(val, 2, 16,QLatin1Char('0')).toUpper(),
                old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
@@ -3749,11 +3749,11 @@ void CPU::LDX_absY()
 #if LOG_ON
     int16_t ddd[] = { 0xBE,
                       (int16_t)((addr - Y) & 0xFF),
-                      (int16_t)(addr >> 8)
+                     (int16_t)((addr - Y) >> 8)
                     }; //ORA $C000,Y @ C010 = 42
 
     LOG::Write(old_PC, ddd,
-               QString("LDX $%1%2,Y @ %3 = %4").arg((addr >> 8), 2, 16,QLatin1Char('0')).toUpper().arg((addr - Y) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().arg(addr, 4, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               QString("LDX $%1%2,Y @ %3 = %4").arg(((addr - Y) >> 8), 2, 16,QLatin1Char('0')).toUpper().arg((addr - Y) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().arg(addr, 4, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(),
                old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
@@ -4346,7 +4346,7 @@ void CPU::BNE_rel()
 
     ++PC;
 
-    uint8_t val = relative();
+    int8_t val = relative();
 
     if(!get_flag(StatusFlags::Z))
     {
@@ -4361,7 +4361,7 @@ void CPU::BNE_rel()
 
 #if LOG_ON
     //val = std::abs(val);
-    int16_t ddd[] = {0xD0, val, -1};
+    int16_t ddd[] = {0xD0, (uint8_t)val, -1};
     LOG::Write(old_PC, ddd, QString("BNE $%1").arg(old_PC + 2 + val, 4, 16, QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
@@ -4876,7 +4876,7 @@ void CPU::INC_absX()
 #if LOG_ON
     int16_t ddd[] = { 0xFE,
                       (int16_t)((addr - X) & 0xFF),
-                     (int16_t)((addr - X) >> 8)
+                      (int16_t)((addr - X) >> 8)
                     }; //ORA $2000
 
     LOG::Write(old_PC, ddd,
@@ -4966,6 +4966,78 @@ void CPU::TAX_impl()
     cycles += 2;
 }
 
+void CPU::NOP_imm_1A()
+{
+#if LOG_ON
+    int16_t ddd[] = {0x1A, -1, -1};
+    LOG::Write(PC, ddd, QString("NOP"), A, X, Y, status, SP, cycles);
+#endif
+
+    ++PC;
+
+    cycles += 2;
+}
+
+void CPU::NOP_imm_3A()
+{
+#if LOG_ON
+    int16_t ddd[] = {0x3A, -1, -1};
+    LOG::Write(PC, ddd, QString("NOP"), A, X, Y, status, SP, cycles);
+#endif
+
+    ++PC;
+
+    cycles += 2;
+}
+
+void CPU::NOP_imm_5A()
+{
+#if LOG_ON
+    int16_t ddd[] = {0x5A, -1, -1};
+    LOG::Write(PC, ddd, QString("NOP"), A, X, Y, status, SP, cycles);
+#endif
+
+    ++PC;
+
+    cycles += 2;
+}
+
+void CPU::NOP_imm_7A()
+{
+#if LOG_ON
+    int16_t ddd[] = {0x7A, -1, -1};
+    LOG::Write(PC, ddd, QString("NOP"), A, X, Y, status, SP, cycles);
+#endif
+
+    ++PC;
+
+    cycles += 2;
+}
+
+void CPU::NOP_imm_80()
+{
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
+    ++PC;
+
+    uint8_t val = immediate();
+
+    ++cycles;
+
+#if LOG_ON
+    int16_t ddd[] = {0x80, val, -1};//ORA #$00
+    LOG::Write(old_PC, ddd, QString("NOP #$%1").arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+#endif
+}
+
 void CPU::NOP_impl_DA()
 {
 #if LOG_ON
@@ -5002,7 +5074,7 @@ void CPU::NOP_impl_FA()
     cycles += 2;
 }
 
-void CPU::NOP_zp()
+void CPU::NOP_zp_04()
 {
 #if LOG_ON
     uint16_t old_PC = PC;
@@ -5019,8 +5091,6 @@ void CPU::NOP_zp()
     uint16_t addr;
     uint8_t val = zero_page(&addr);
 
-    --PC;
-
     ++cycles;
 
 #if LOG_ON
@@ -5030,7 +5100,59 @@ void CPU::NOP_zp()
 #endif
 }
 
-void CPU::NOP_zpX()
+void CPU::NOP_zp_44()
+{
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_page(&addr);
+
+    ++cycles;
+
+#if LOG_ON
+    int16_t ss = (addr) & 0xFF;
+    int16_t ddd[] = {0x44, ss, -1}; //ORA $10 = 00
+    LOG::Write(old_PC, ddd, QString("NOP $%1 = %2").arg(ss, 2, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+#endif
+}
+
+void CPU::NOP_zp_64()
+{
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_page(&addr);
+
+    ++cycles;
+
+#if LOG_ON
+    int16_t ss = (addr) & 0xFF;
+    int16_t ddd[] = {0x64, ss, -1}; //ORA $10 = 00
+    LOG::Write(old_PC, ddd, QString("NOP $%1 = %2").arg(ss, 2, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+#endif
+}
+
+void CPU::NOP_zpX_14()
 {
 #if LOG_ON
     uint16_t old_PC = PC;
@@ -5047,12 +5169,141 @@ void CPU::NOP_zpX()
     uint16_t addr;
     uint8_t val = zero_pageX(&addr);
 
-    --PC;
+    ++cycles;
+
+#if LOG_ON
+    int16_t ss = (addr - X) & 0xFF;
+    int16_t ddd[] = {0x14, ss, -1}; //LDA $10,X @ 20 = F
+    LOG::Write(old_PC, ddd, QString("NOP $%1,X @ %2 = %3").arg(ss, 2, 16, QLatin1Char('0')).toUpper().arg(addr, 2, 16).arg(val, 2, 16, QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+#endif
+}
+
+void CPU::NOP_zpX_34()
+{
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_pageX(&addr);
+
     ++cycles;
 
 #if LOG_ON
     int16_t ss = (addr - X) & 0xFF;
     int16_t ddd[] = {0x34, ss, -1}; //LDA $10,X @ 20 = F
+    LOG::Write(old_PC, ddd, QString("NOP $%1,X @ %2 = %3").arg(ss, 2, 16, QLatin1Char('0')).toUpper().arg(addr, 2, 16).arg(val, 2, 16, QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+#endif
+}
+
+void CPU::NOP_zpX_54()
+{
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_pageX(&addr);
+
+    ++cycles;
+
+#if LOG_ON
+    int16_t ss = (addr - X) & 0xFF;
+    int16_t ddd[] = {0x54, ss, -1}; //LDA $10,X @ 20 = F
+    LOG::Write(old_PC, ddd, QString("NOP $%1,X @ %2 = %3").arg(ss, 2, 16, QLatin1Char('0')).toUpper().arg(addr, 2, 16).arg(val, 2, 16, QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+#endif
+}
+
+void CPU::NOP_zpX_74()
+{
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_pageX(&addr);
+
+    ++cycles;
+
+#if LOG_ON
+    int16_t ss = (addr - X) & 0xFF;
+    int16_t ddd[] = {0x74, ss, -1}; //LDA $10,X @ 20 = F
+    LOG::Write(old_PC, ddd, QString("NOP $%1,X @ %2 = %3").arg(ss, 2, 16, QLatin1Char('0')).toUpper().arg(addr, 2, 16).arg(val, 2, 16, QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+#endif
+}
+
+void CPU::NOP_zpX_D4()
+{
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_pageX(&addr);
+
+    ++cycles;
+
+#if LOG_ON
+    int16_t ss = (addr - X) & 0xFF;
+    int16_t ddd[] = {0xD4, ss, -1}; //LDA $10,X @ 20 = F
+    LOG::Write(old_PC, ddd, QString("NOP $%1,X @ %2 = %3").arg(ss, 2, 16, QLatin1Char('0')).toUpper().arg(addr, 2, 16).arg(val, 2, 16, QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+#endif
+}
+
+void CPU::NOP_zpX_F4()
+{
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = zero_pageX(&addr);
+
+    ++cycles;
+
+#if LOG_ON
+    int16_t ss = (addr - X) & 0xFF;
+    int16_t ddd[] = {0xF4, ss, -1}; //LDA $10,X @ 20 = F
     LOG::Write(old_PC, ddd, QString("NOP $%1,X @ %2 = %3").arg(ss, 2, 16, QLatin1Char('0')).toUpper().arg(addr, 2, 16).arg(val, 2, 16, QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
@@ -5074,18 +5325,18 @@ void CPU::NOP_abs()
     uint16_t addr;
     uint8_t val = absolute(&addr);
 
-    PC -= 2;
+    PC -= 0;
 
     ++cycles;
 
 #if LOG_ON
     int16_t ss = (addr) & 0xFF;
-    int16_t ddd[] = {0x0C, ss, -1};//ORA $10 = 00
-    LOG::Write(old_PC, ddd, QString("NOP $%1 = %2").arg(ss, 2, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+    int16_t ddd[] = {0x0C, ss, (int16_t)((addr) >> 8)};//ORA $10 = 00
+    LOG::Write(old_PC, ddd, QString("NOP $%1 = %2").arg(addr, 4, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
 
-void CPU::NOP_absX()
+void CPU::NOP_absX_1C()
 {
 #if LOG_ON
     uint16_t old_PC = PC;
@@ -5106,19 +5357,20 @@ void CPU::NOP_absX()
 
 #if LOG_ON
     int16_t ddd[] = { 0x1C,
-                      (int16_t)((addr) & 0xFF),
-                      (int16_t)(addr >> 8)
-                    }; //ORA $2000
+        (int16_t)((addr - X) & 0xFF),
+        (int16_t)((addr - X) >> 8)
+    }; //ORA $2000
 
     LOG::Write(old_PC, ddd,
-               QString("NOP $%1%2 = %3").arg(addr >> 8, 2, 16,QLatin1Char('0')).toUpper().
-                    arg((addr) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
-                    arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               QString("NOP $%1,X @ %2%3 = %4").arg((addr - X), 4, 16,QLatin1Char('0')).toUpper().
+               arg(addr >> 8, 2, 16,QLatin1Char('0')).toUpper().
+               arg((addr) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
+               arg(val, 2, 16,QLatin1Char('0')).toUpper(),
                old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
 
-void CPU::NOP_imm()
+void CPU::NOP_absX_3C()
 {
 #if LOG_ON
     uint16_t old_PC = PC;
@@ -5132,13 +5384,159 @@ void CPU::NOP_imm()
 
     ++PC;
 
-    uint8_t val = immediate();
+    uint16_t addr;
+    uint8_t val = absoluteX(&addr);
 
     ++cycles;
 
 #if LOG_ON
-    int16_t ddd[] = {0x1A, val, -1};//ORA #$00
-    LOG::Write(old_PC, ddd, QString("NOP #$%1").arg(val, 2, 16,QLatin1Char('0')).toUpper(), old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+    int16_t ddd[] = { 0x3C,
+        (int16_t)((addr - X) & 0xFF),
+        (int16_t)((addr - X) >> 8)
+    }; //ORA $2000
+
+    LOG::Write(old_PC, ddd,
+               QString("NOP $%1,X @ %2%3 = %4").arg((addr - X), 4, 16,QLatin1Char('0')).toUpper().
+               arg(addr >> 8, 2, 16,QLatin1Char('0')).toUpper().
+               arg((addr) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
+               arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+#endif
+}
+
+void CPU::NOP_absX_5C()
+{
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteX(&addr);
+
+    ++cycles;
+
+#if LOG_ON
+    int16_t ddd[] = { 0x5C,
+        (int16_t)((addr - X) & 0xFF),
+        (int16_t)((addr - X) >> 8)
+    }; //ORA $2000
+
+    LOG::Write(old_PC, ddd,
+               QString("NOP $%1,X @ %2%3 = %4").arg((addr - X), 4, 16,QLatin1Char('0')).toUpper().
+               arg(addr >> 8, 2, 16,QLatin1Char('0')).toUpper().
+               arg((addr) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
+               arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+#endif
+}
+
+void CPU::NOP_absX_7C()
+{
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteX(&addr);
+
+    ++cycles;
+
+#if LOG_ON
+    int16_t ddd[] = { 0x7C,
+        (int16_t)((addr - X) & 0xFF),
+        (int16_t)((addr - X) >> 8)
+    }; //ORA $2000
+
+    LOG::Write(old_PC, ddd,
+               QString("NOP $%1,X @ %2%3 = %4").arg((addr - X), 4, 16,QLatin1Char('0')).toUpper().
+               arg(addr >> 8, 2, 16,QLatin1Char('0')).toUpper().
+               arg((addr) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
+               arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+#endif
+}
+
+void CPU::NOP_absX_DC()
+{
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteX(&addr);
+
+    ++cycles;
+
+#if LOG_ON
+    int16_t ddd[] = { 0xDC,
+        (int16_t)((addr - X) & 0xFF),
+        (int16_t)((addr - X) >> 8)
+    }; //ORA $2000
+
+    LOG::Write(old_PC, ddd,
+               QString("NOP $%1,X @ %2%3 = %4").arg((addr - X), 4, 16,QLatin1Char('0')).toUpper().
+               arg(addr >> 8, 2, 16,QLatin1Char('0')).toUpper().
+               arg((addr) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
+               arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               old_A, old_X, old_Y, old_status, old_SP, old_cycles);
+#endif
+}
+
+void CPU::NOP_absX_FC()
+{
+#if LOG_ON
+    uint16_t old_PC = PC;
+    auto old_cycles = cycles;
+    auto old_A = A;
+    auto old_X = X;
+    auto old_Y = Y;
+    auto old_status = status;
+    auto old_SP = SP;
+#endif
+
+    ++PC;
+
+    uint16_t addr;
+    uint8_t val = absoluteX(&addr);
+
+    ++cycles;
+
+#if LOG_ON
+    int16_t ddd[] = { 0xFC,
+        (int16_t)((addr - X) & 0xFF),
+        (int16_t)((addr - X) >> 8)
+    }; //ORA $2000
+
+    LOG::Write(old_PC, ddd,
+               QString("NOP $%1,X @ %2%3 = %4").arg((addr - X), 4, 16,QLatin1Char('0')).toUpper().
+               arg(addr >> 8, 2, 16,QLatin1Char('0')).toUpper().
+               arg((addr) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
+               arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
 
@@ -5356,14 +5754,12 @@ void CPU::SLO_absX()
 
 #if LOG_ON
     int16_t ddd[] = { 0x1F,
-                      (int16_t)((addr) & 0xFF),
-                      (int16_t)(addr >> 8)
+                      (int16_t)((addr - X) & 0xFF),
+                     (int16_t)((addr - X) >> 8)
                     }; //ORA $2000
 
     LOG::Write(old_PC, ddd,
-               QString("SLO $%1%2 = %3").arg(addr >> 8, 2, 16,QLatin1Char('0')).toUpper().
-                    arg((addr) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
-                    arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               QString("SLO $%1%2,X @ %3 = %4").arg(((addr - X) >> 8), 2, 16,QLatin1Char('0')).toUpper().arg((addr - X) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().arg(addr, 4, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(),
                old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
@@ -5814,14 +6210,12 @@ void CPU::SRE_absX()
 
 #if LOG_ON
     int16_t ddd[] = { 0x5F,
-                      (int16_t)((addr) & 0xFF),
-                      (int16_t)(addr >> 8)
+                      (int16_t)((addr - X) & 0xFF),
+                     (int16_t)((addr - X) >> 8)
                     }; //ORA $2000
 
     LOG::Write(old_PC, ddd,
-               QString("SRE $%1%2 = %3").arg(addr >> 8, 2, 16,QLatin1Char('0')).toUpper().
-                    arg((addr) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
-                    arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               QString("SRE $%1%2,X @ %3 = %4").arg(((addr - X) >> 8), 2, 16,QLatin1Char('0')).toUpper().arg((addr - X) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().arg(addr, 4, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(),
                old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
@@ -6047,14 +6441,12 @@ void CPU::RRA_absX()
 
 #if LOG_ON
     int16_t ddd[] = { 0x7F,
-                      (int16_t)((addr) & 0xFF),
-                      (int16_t)(addr >> 8)
+                      (int16_t)((addr - X) & 0xFF),
+                     (int16_t)((addr - X) >> 8)
                     }; //ORA $2000
 
     LOG::Write(old_PC, ddd,
-               QString("RPA $%1%2 = %3").arg(addr >> 8, 2, 16,QLatin1Char('0')).toUpper().
-                    arg((addr) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
-                    arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               QString("RRA $%1%2,X @ %3 = %4").arg(((addr - X) >> 8), 2, 16,QLatin1Char('0')).toUpper().arg((addr - X) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().arg(addr, 4, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(),
                old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
@@ -6273,14 +6665,12 @@ void CPU::DCP_absX()
 
 #if LOG_ON
     int16_t ddd[] = { 0xDF,
-                      (int16_t)((addr) & 0xFF),
-                      (int16_t)(addr >> 8)
+                      (int16_t)((addr - X) & 0xFF),
+                     (int16_t)((addr - X) >> 8)
                     }; //ORA $2000
 
     LOG::Write(old_PC, ddd,
-               QString("DCP $%1%2 = %3").arg(addr >> 8, 2, 16,QLatin1Char('0')).toUpper().
-                    arg((addr) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
-                    arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               QString("DCP $%1%2,X @ %3 = %4").arg(((addr - X) >> 8), 2, 16,QLatin1Char('0')).toUpper().arg((addr - X) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().arg(addr, 4, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(),
                old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
@@ -6503,14 +6893,12 @@ void CPU::ISC_absX()
 
 #if LOG_ON
     int16_t ddd[] = { 0xFF,
-                      (int16_t)((addr) & 0xFF),
-                      (int16_t)(addr >> 8)
+                      (int16_t)((addr - X) & 0xFF),
+                     (int16_t)((addr - X) >> 8)
                     }; //ORA $2000
 
     LOG::Write(old_PC, ddd,
-               QString("ISC $%1%2 = %3").arg(addr >> 8, 2, 16,QLatin1Char('0')).toUpper().
-                    arg((addr) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
-                    arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               QString("ISC $%1%2,X @ %3 = %4").arg(((addr - X) >> 8), 2, 16,QLatin1Char('0')).toUpper().arg((addr - X) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().arg(addr, 4, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(),
                old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }
@@ -7107,14 +7495,12 @@ void CPU::SHY_absX()
 
 #if LOG_ON
     int16_t ddd[] = { 0x9C,
-                      (int16_t)((addr) & 0xFF),
-                      (int16_t)(addr >> 8)
+                      (int16_t)((addr - X) & 0xFF),
+                     (int16_t)((addr - X) >> 8)
                     }; //ORA $2000
 
     LOG::Write(old_PC, ddd,
-               QString("SHY $%1%2 = %3").arg(addr >> 8, 2, 16,QLatin1Char('0')).toUpper().
-                    arg((addr) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().
-                    arg(val, 2, 16,QLatin1Char('0')).toUpper(),
+               QString("SHY $%1%2,X @ %3 = %4").arg(((addr - X) >> 8), 2, 16,QLatin1Char('0')).toUpper().arg((addr - X) & 0xFF, 2, 16,QLatin1Char('0')).toUpper().arg(addr, 4, 16,QLatin1Char('0')).toUpper().arg(val, 2, 16,QLatin1Char('0')).toUpper(),
                old_A, old_X, old_Y, old_status, old_SP, old_cycles);
 #endif
 }

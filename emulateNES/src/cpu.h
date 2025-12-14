@@ -608,14 +608,30 @@ private:
 
     void TAX_impl();                // 2 цикла
 
+    void NOP_imm_1A();              // 2 цикла
+    void NOP_imm_3A();              // 2 цикла
+    void NOP_imm_5A();              // 2 цикла
+    void NOP_imm_7A();              // 2 цикла
+    void NOP_imm_80();              // 2 цикла
     void NOP_impl_DA();             // 2 цикла
     void NOP_impl_EA();             // 2 цикла
     void NOP_impl_FA();             // 2 цикла
-    void NOP_zp();                  // 3 цикла
-    void NOP_zpX();                 // 4 цикла
+    void NOP_zp_04();               // 3 цикла
+    void NOP_zp_44();               // 3 цикла
+    void NOP_zp_64();               // 3 цикла
+    void NOP_zpX_14();              // 4 цикла
+    void NOP_zpX_34();              // 4 цикла
+    void NOP_zpX_54();              // 4 цикла
+    void NOP_zpX_74();              // 4 цикла
+    void NOP_zpX_D4();              // 4 цикла
+    void NOP_zpX_F4();              // 4 цикла
     void NOP_abs();                 // 4 цикла
-    void NOP_absX();                // 4-5 цикла
-    void NOP_imm();                 // 2 цикла
+    void NOP_absX_1C();             // 4-5 цикла
+    void NOP_absX_3C();             // 4-5 цикла
+    void NOP_absX_5C();             // 4-5 цикла
+    void NOP_absX_7C();             // 4-5 цикла
+    void NOP_absX_DC();             // 4-5 цикла
+    void NOP_absX_FC();             // 4-5 цикла
 
     void SLO_base(uint8_t val, uint16_t addr);    // 3 цикла
     void SLO_indX();                // 8 циклов
