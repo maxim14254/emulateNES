@@ -9,6 +9,7 @@ using namespace std;
 
 int main()
 {
+
     QString path_log = QString("%1/log.txt").arg(QDir::currentPath());
     QFile file_log(path_log);
 
@@ -37,7 +38,7 @@ int main()
 
                 if(line_benchmark[i] != line_log[j])
                 {
-                    cout << "Несовподение в строке:" << count_lines << " символ №" << j << " " << line_log[j].toLatin1() << "!=" << line_benchmark[i].toLatin1() << std::endl;
+                    cout << "A mismatch in a string:" << count_lines << " symbol No." << j << " " << line_log[j].toLatin1() << "!=" << line_benchmark[i].toLatin1() << std::endl;
                     return 0;
                 }
                 //73
@@ -48,7 +49,7 @@ int main()
     }
     else
     {
-        cout << "Не удалось открыть логи\n";
+        cout << "Couldn't open logs\n";
     }
 
     return 0;

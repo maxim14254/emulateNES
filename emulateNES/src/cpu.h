@@ -505,7 +505,7 @@ private:
     void STY_abs();                 // 4 цикла
 
     void STX_zp();                  // 3 цикла
-    void STX_zpX();                 // 4 цикла
+    void STX_zpY();                 // 4 цикла
     void STX_abs();                 // 4 цикла
 
     void DEY_impl();                // 2 цикла
