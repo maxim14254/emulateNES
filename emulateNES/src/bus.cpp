@@ -27,7 +27,7 @@ uint8_t Bus::read(uint16_t addr)
     }
     else if(addr < 0x4020) //APU и ввода/вывода
     {
-
+        return 0xFF;
     }
     else if(addr < 0x8000) // ОЗУ картриджа
     {
@@ -41,6 +41,7 @@ uint8_t Bus::read(uint16_t addr)
 
 void Bus::write(uint16_t addr, uint8_t data)
 {
+
     if (addr < 0x2000) // ОЗУ
     {
         ram[addr & 0x07FF] = data;

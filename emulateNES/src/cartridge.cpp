@@ -74,17 +74,17 @@ uint8_t Cartridge::read_prg_ram(uint16_t addr)
 uint16_t Cartridge::get_NMI()
 {
     if(prg_rom.size() > 0)
-        return prg_rom[prg_rom.size() - 6] | (prg_rom[prg_rom.size() - 5] << 8);
+        return mapper_read_prg(0xFFFA) | mapper_read_prg(0xFFFB) << 8;
 }
 
 uint16_t Cartridge::get_RESET()
 {
     if(prg_rom.size() > 0)
-        return prg_rom[prg_rom.size() - 4] | (prg_rom[prg_rom.size() - 3] << 8);
+        return mapper_read_prg(0xFFFC) | mapper_read_prg(0xFFFD) << 8;
 }
 
 uint16_t Cartridge::get_IRQ()
 {
     if(prg_rom.size() > 0)
-        return prg_rom[prg_rom.size() - 2] | (prg_rom[prg_rom.size() - 1] << 8);
+        return mapper_read_prg(0xFFFE) | mapper_read_prg(0xFFFF) << 8;
 }

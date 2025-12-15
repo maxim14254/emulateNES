@@ -589,7 +589,8 @@ private:
     void SBC_indY();                // 5-6 циклов
     void SBC_zp();                  // 3 цикла
     void SBC_zpX();                 // 4 цикла
-    void SBC_imm();                 // 2 цикла
+    void SBC_imm_E9();              // 2 цикла
+    void SBC_imm_EB();              // 2 цикла
     void SBC_abs();                 // 4 цикла
     void SBC_absX();                // 4-5 циклов
     void SBC_absY();                // 4-5 циклов
