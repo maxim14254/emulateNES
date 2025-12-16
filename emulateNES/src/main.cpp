@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 //    ll.show();
 
     CPU cpu(&w);
-    bool rez = cpu.init_new_cartridge(":/games/nestest.nes");
+    bool rez = cpu.init_new_cartridge(":/games/2-branch_timing.nes");
 
     return a.exec();
 }

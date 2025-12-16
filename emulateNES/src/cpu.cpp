@@ -4,7 +4,8 @@
 #include "log.h"
 #include <QMetaObject>
 #include "mainwindow.h"
-
+#include <chrono>
+#include <QDebug>
 
 
 CPU::CPU(MainWindow* _window) : window(_window)
@@ -292,7 +293,6 @@ CPU::CPU(MainWindow* _window) : window(_window)
 
 CPU::~CPU()
 {
-
     {
         std::lock_guard<std::mutex> lock(mutex_stop);
         start = false;
@@ -339,24 +339,38 @@ bool CPU::init_new_cartridge(const QString& path)
 
 }
 
- std::shared_ptr<Bus> CPU::get_bus()
+std::shared_ptr<Bus> CPU::get_bus()
 {
     return bus;
 }
 
 void CPU::run()
 {
+    auto start_time = std::chrono::steady_clock::now();
+
+    int FPS = 0;
+
     while (start)
     {
         std::lock_guard<std::mutex> lock(mutex_stop);
-
-        if(PC == 0xC000)//bus->get_RESET())
-            reset();
 
         uint8_t val = bus->read(PC);
 
         std::function<void(CPU&)> instr_func = table_instructions[val];
         instr_func(*this);
+
+        ++FPS;
+
+        if(FPS >= 60)
+        {
+            FPS = 0;
+
+            auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time);
+            //std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(1000 - elapsed_ms.count())));
+
+            start_time = std::chrono::steady_clock::now();
+        }
+
     }
 }
 
@@ -370,10 +384,10 @@ void CPU::reset()
     X  = 0x00;
     Y  = 0x00;
 
-    PC = 0xC000; //RESET;
+    PC = RESET;
 
     SP = 0xFD;
-    status = 0x24; //0x34;
+    status = 0x34;
 
     cycles = 7;
 }
@@ -919,9 +933,10 @@ void CPU::ASL_abs()
 
 void CPU::ASL_absX()
 {
+    auto old_cycles = cycles;
+
 #if LOG_ON
     uint16_t old_PC = PC;
-    auto old_cycles = cycles;
     auto old_A = A;
     auto old_X = X;
     auto old_Y = Y;
@@ -1562,9 +1577,9 @@ void CPU::ROL_abs()
 
 void CPU::ROL_absX()
 {
+    auto old_cycles = cycles;
 #if LOG_ON
     uint16_t old_PC = PC;
-    auto old_cycles = cycles;
     auto old_A = A;
     auto old_X = X;
     auto old_Y = Y;
@@ -2058,9 +2073,9 @@ void CPU::LSR_abs()
 
 void CPU::LSR_absX()
 {
+    auto old_cycles = cycles;
 #if LOG_ON
     uint16_t old_PC = PC;
-    auto old_cycles = cycles;
     auto old_A = A;
     auto old_X = X;
     auto old_Y = Y;
@@ -2641,9 +2656,10 @@ void CPU::ROR_abs()
 
 void CPU::ROR_absX()
 {
+    auto old_cycles = cycles;
+
 #if LOG_ON
     uint16_t old_PC = PC;
-    auto old_cycles = cycles;
     auto old_A = A;
     auto old_X = X;
     auto old_Y = Y;
@@ -2906,9 +2922,10 @@ void CPU::STA_abs()
 
 void CPU::STA_absX()
 {
+    auto old_cycles = cycles;
+
 #if LOG_ON
     uint16_t old_PC = PC;
-    auto old_cycles = cycles;
     auto old_A = A;
     auto old_X = X;
     auto old_Y = Y;
@@ -2941,9 +2958,10 @@ void CPU::STA_absX()
 
 void CPU::STA_absY()
 {
+    auto old_cycles = cycles;
+
 #if LOG_ON
     uint16_t old_PC = PC;
-    auto old_cycles = cycles;
     auto old_A = A;
     auto old_X = X;
     auto old_Y = Y;
@@ -4263,9 +4281,10 @@ void CPU::DEC_abs()
 
 void CPU::DEC_absX()
 {
+    auto old_cycles = cycles;
+
 #if LOG_ON
     uint16_t old_PC = PC;
-    auto old_cycles = cycles;
     auto old_A = A;
     auto old_X = X;
     auto old_Y = Y;
@@ -4875,9 +4894,10 @@ void CPU::INC_abs()
 
 void CPU::INC_absX()
 {
+    auto old_cycles = cycles;
+
 #if LOG_ON
     uint16_t old_PC = PC;
-    auto old_cycles = cycles;
     auto old_A = A;
     auto old_X = X;
     auto old_Y = Y;

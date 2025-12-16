@@ -3,6 +3,7 @@
 #include <QString>
 #include <QFile>
 #include <QDir>
+#include <QDebug>
 
 
 Bus::Bus()
@@ -54,10 +55,15 @@ void Bus::write(uint16_t addr, uint8_t data)
     {
 
     }
+    else if(addr < 0x8000) // ОЗУ картриджа
+    {
+        cartridge->write_prg_ram(addr, data);
+    }
     else //область картриджа
     {
 
     }
+
 }
 
 void Bus::init_new_cartridge(const QString& path, bool* status)

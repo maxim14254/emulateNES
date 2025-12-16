@@ -3,5 +3,8 @@
         <file>games/Super Mario Bros. (World).nes</file>
         <file>nintendoNES.ico</file>
         <file>games/nestest.nes</file>
+        <file>games/all_instrs.nes</file>
+        <file>games/1-instr_timing.nes</file>
+        <file>games/2-branch_timing.nes</file>
     </qresource>
 </RCC>

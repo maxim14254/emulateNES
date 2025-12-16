@@ -30,6 +30,7 @@ public:
 
     uint8_t mapper_read_prg(uint16_t addr);
     uint8_t read_prg_ram(uint16_t addr);
+    void write_prg_ram(uint16_t addr, uint8_t data);
 
     uint16_t get_NMI();
     uint16_t get_RESET();

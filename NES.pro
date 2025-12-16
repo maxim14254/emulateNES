@@ -1,13 +1,14 @@
 TEMPLATE = subdirs
 
 BIN_DIR = $$shadowed(emulateNES)
-LOG = 1
+LOG = 0
 
 SUBDIRS += \
     emulateNES \
 
-equals(LOG, 1)
-{
+
+equals(LOG, 1){
+
     DEFINES += LOG_ON
 
     SUBDIRS += testNES \

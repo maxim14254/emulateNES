@@ -3,6 +3,7 @@
 
 #include <QtOpenGL/QtOpenGL>
 #include <QOpenGLFunctions>
+#include <QOpenGLWidget>
 
 
 class MyOpenGL : public QOpenGLWidget, protected QOpenGLFunctions

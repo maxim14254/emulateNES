@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "my_opengl.h"
 #include <QSurface>
+#include <qmessagebox.h>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -10,11 +11,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-
     setWindowIcon(QIcon(":/nintendoNES.ico"));
 
     ui->verticalLayout->addWidget(new MyOpenGL(this));
-
 }
 
 MainWindow::~MainWindow()
