@@ -8,11 +8,10 @@
 #include <QDebug>
 
 
-CPU::CPU(MainWindow* _window) : window(_window)
+CPU::CPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 {
-    bus.reset(new Bus());
-
     connect(this, &CPU::signal_error_show, window, &MainWindow::slot_show_error_message, Qt::QueuedConnection);
+    connect(window, &MainWindow::signal_init_new_cartridge, this, &CPU::slot_init_new_cartridge);
 
     table_instructions.resize(256);
 
@@ -315,7 +314,7 @@ bool CPU::get_flag(StatusFlags f)
     return status & f;
 }
 
-bool CPU::init_new_cartridge(const QString& path)
+bool CPU::slot_init_new_cartridge(const QString& path)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_stop);
@@ -339,30 +338,27 @@ bool CPU::init_new_cartridge(const QString& path)
 
 }
 
-std::shared_ptr<Bus> CPU::get_bus()
-{
-    return bus;
-}
-
 void CPU::run()
 {
-    auto start_time = std::chrono::steady_clock::now();
-
     int FPS = 50;
+
+    auto start_time = std::chrono::steady_clock::now();
 
     while (start)
     {
         std::lock_guard<std::mutex> lock(mutex_stop);
 
         uint8_t val = bus->read(PC);
+        uint64_t old_cycles = cycles;
 
         std::function<void(CPU&)> instr_func = table_instructions[val];
         instr_func(*this);
 
+        bus->run_steps_ppu(cycles - old_cycles);
+
         auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time);
         std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds((1000 / FPS) - elapsed_ms.count())));
         start_time = std::chrono::steady_clock::now();
-\
     }
 }
 
@@ -382,6 +378,18 @@ void CPU::reset()
     status = 0x34;
 
     cycles = 7;
+}
+
+void CPU::write(uint16_t addr, uint8_t data)
+{
+    if (addr == 0x4014)
+    {
+        bool odd = (cycles & 1) != 0;
+        uint16_t extraCycles = odd ? 514 : 513;
+        cycles += extraCycles;
+    }
+
+    bus->write(addr, data);
 }
 
 uint8_t CPU::immediate(uint16_t* addr)
@@ -558,13 +566,13 @@ void CPU::BRK_impl()
 
     immediate();
 
-    bus->write(0x0100 + SP--, (PC >> 8) & 0xFF);
-    bus->write(0x0100 + SP--, PC & 0xFF);
+    write(0x0100 + SP--, (PC >> 8) & 0xFF);
+    write(0x0100 + SP--, PC & 0xFF);
 
     set_flag(StatusFlags::B, true);
     set_flag(StatusFlags::U, true);
 
-    bus->write(0x0100 + SP--, status);
+    write(0x0100 + SP--, status);
 
     set_flag(StatusFlags::I, true);
 
@@ -856,7 +864,7 @@ void CPU::ASL_zp()
     uint8_t val = zero_page(&addr);
     uint8_t ff = ASL_base(val);
 
-    bus->write(addr, ff);
+    write(addr, ff);
     ++cycles;
 
 #if LOG_ON
@@ -906,7 +914,7 @@ void CPU::ASL_abs()
     uint8_t val = absolute(&addr);
     uint8_t val2 = ASL_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
 #if LOG_ON
@@ -942,7 +950,7 @@ void CPU::ASL_absX()
     uint8_t val = absoluteX(&addr);
     uint8_t val2 = ASL_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
     if(cycles - old_cycles == 6)
@@ -978,7 +986,7 @@ void CPU::ASL_zpX()
     uint8_t val = zero_pageX(&addr);
     uint8_t val2 = ASL_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
 #if LOG_ON
@@ -998,7 +1006,7 @@ void CPU::PHP_impl()
 
     ++PC;
 
-    bus->write(0x0100 + SP--, status | 0x30);
+    write(0x0100 + SP--, status | 0x30);
 
     cycles += 3;
 }
@@ -1067,8 +1075,8 @@ void CPU::JSR_abs()
 
     uint16_t return_addr = PC + 1;
 
-    bus->write(0x0100 + SP--, (return_addr >> 8) & 0xFF);
-    bus->write(0x0100 + SP--, return_addr & 0xFF);
+    write(0x0100 + SP--, (return_addr >> 8) & 0xFF);
+    write(0x0100 + SP--, return_addr & 0xFF);
 
     uint8_t a1 = immediate();
     uint8_t a2 = immediate();
@@ -1472,7 +1480,7 @@ void CPU::ROL_zp()
     uint8_t val = zero_page(&addr);
     uint8_t val2 = ROL_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
 #if LOG_ON
@@ -1500,7 +1508,7 @@ void CPU::ROL_zpX()
     uint8_t val = zero_pageX(&addr);
     uint8_t val2 = ROL_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
 #if LOG_ON
@@ -1550,7 +1558,7 @@ void CPU::ROL_abs()
     uint8_t val = absolute(&addr);
     uint8_t val2 = ROL_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
 #if LOG_ON
@@ -1585,7 +1593,7 @@ void CPU::ROL_absX()
     uint8_t val = absoluteX(&addr);
     uint8_t val2 = ROL_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
     if(cycles - old_cycles == 6)
@@ -1968,7 +1976,7 @@ void CPU::LSR_zp()
     uint8_t val = zero_page(&addr);
     auto ff = LSR_base(val);
 
-    bus->write(addr, ff);
+    write(addr, ff);
     ++cycles;
 
 #if LOG_ON
@@ -1996,7 +2004,7 @@ void CPU::LSR_zpX()
     uint8_t val = zero_pageX(&addr);
     uint8_t val2 = LSR_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
 #if LOG_ON
@@ -2046,7 +2054,7 @@ void CPU::LSR_abs()
     uint8_t val = absolute(&addr);
     uint8_t val2 = LSR_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
 #if LOG_ON
@@ -2081,7 +2089,7 @@ void CPU::LSR_absX()
     uint8_t val = absoluteX(&addr);
     uint8_t val2 = LSR_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
     if(cycles - old_cycles == 6)
@@ -2109,7 +2117,7 @@ void CPU::PHA_impl()
     ++PC;
 
     uint16_t addr = 0x0100 | SP--;
-    bus->write(addr, A);
+    write(addr, A);
 
     cycles += 3;
 }
@@ -2551,7 +2559,7 @@ void CPU::ROR_zp()
     uint8_t val = zero_page(&addr);
     uint8_t val2 = ROR_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
 #if LOG_ON
@@ -2579,7 +2587,7 @@ void CPU::ROR_zpX()
     uint8_t val = zero_pageX(&addr);
     uint8_t val2 = ROR_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
 #if LOG_ON
@@ -2629,7 +2637,7 @@ void CPU::ROR_abs()
     uint8_t val = absolute(&addr);
     uint8_t val2 = ROR_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
 #if LOG_ON
@@ -2665,7 +2673,7 @@ void CPU::ROR_absX()
     uint8_t val = absoluteX(&addr);
     uint8_t val2 = ROR_base(val);
 
-    bus->write(addr, val2);
+    write(addr, val2);
     ++cycles;
 
     if(cycles - old_cycles == 6)
@@ -2765,7 +2773,7 @@ void CPU::STA_indX()
     uint16_t addr;
     uint8_t val = indexed_inderectX(&addr);
 
-    bus->write(addr, A);
+    write(addr, A);
     ++cycles;
 
 #if LOG_ON
@@ -2802,7 +2810,7 @@ void CPU::STA_indY()
     uint16_t addr;
     uint8_t val = indexed_inderectY(&addr);
 
-    bus->write(addr, A);
+    write(addr, A);
     ++cycles;
 
     if(cycles - old_cycles == 5)
@@ -2841,7 +2849,7 @@ void CPU::STA_zp()
     uint16_t addr;
     uint8_t val = zero_page(&addr);
 
-    bus->write(addr, A);
+    write(addr, A);
     ++cycles;
 
 #if LOG_ON
@@ -2868,7 +2876,7 @@ void CPU::STA_zpX()
     uint16_t addr;
     uint8_t val = zero_pageX(&addr);
 
-    bus->write(addr, A);
+    write(addr, A);
     ++cycles;
 
 #if LOG_ON
@@ -2895,7 +2903,7 @@ void CPU::STA_abs()
     uint16_t addr;
     uint8_t val = absolute(&addr);
 
-    bus->write(addr, A);
+    write(addr, A);
     ++cycles;
 
 #if LOG_ON
@@ -2930,7 +2938,7 @@ void CPU::STA_absX()
     uint16_t addr;
     uint8_t val = absoluteX(&addr);
 
-    bus->write(addr, A);
+    write(addr, A);
     ++cycles;
 
     if(cycles - old_cycles == 4)
@@ -2966,7 +2974,7 @@ void CPU::STA_absY()
     uint16_t addr;
     uint8_t val = absoluteY(&addr);
 
-    bus->write(addr, A);
+    write(addr, A);
     ++cycles;
 
 
@@ -3002,7 +3010,7 @@ void CPU::STY_zp()
     uint16_t addr;
     uint8_t val = zero_page(&addr);
 
-    bus->write(addr, Y);
+    write(addr, Y);
     ++cycles;
 
 #if LOG_ON
@@ -3029,7 +3037,7 @@ void CPU::STY_zpX()
     uint16_t addr;
     uint8_t val = zero_pageX(&addr);
 
-    bus->write(addr, Y);
+    write(addr, Y);
     ++cycles;
 
 #if LOG_ON
@@ -3056,7 +3064,7 @@ void CPU::STY_abs()
     uint16_t addr;
     uint8_t val = absolute(&addr);
 
-    bus->write(addr, Y);
+    write(addr, Y);
     ++cycles;
 
 #if LOG_ON
@@ -3089,7 +3097,7 @@ void CPU::STX_zp()
     uint16_t addr;
     uint8_t val = zero_page(&addr);
 
-    bus->write(addr, X);
+    write(addr, X);
     ++cycles;
 
 #if LOG_ON
@@ -3116,7 +3124,7 @@ void CPU::STX_zpY()
     uint16_t addr;
     uint8_t val = zero_pageY(&addr);
 
-    bus->write(addr, X);
+    write(addr, X);
     ++cycles;
 
 #if LOG_ON
@@ -3143,7 +3151,7 @@ void CPU::STX_abs()
     uint16_t addr;
     uint8_t val = absolute(&addr);
 
-    bus->write(addr, X);
+    write(addr, X);
     ++cycles;
 
 #if LOG_ON
@@ -4202,7 +4210,7 @@ void CPU::DEC_zp()
     uint8_t val = zero_page(&addr);
 
     uint8_t val2 = DEC_base(val);
-    bus->write(addr, val2);
+    write(addr, val2);
 
     ++cycles;
 
@@ -4231,7 +4239,7 @@ void CPU::DEC_zpX()
     uint8_t val = zero_pageX(&addr);
 
     uint8_t val2 = DEC_base(val);
-    bus->write(addr, val2);
+    write(addr, val2);
 
     ++cycles;
 
@@ -4260,7 +4268,7 @@ void CPU::DEC_abs()
     uint8_t val = absolute(&addr);
 
     uint8_t val2 = DEC_base(val);
-    bus->write(addr, val2);
+    write(addr, val2);
 
     ++cycles;
 
@@ -4290,7 +4298,7 @@ void CPU::DEC_absX()
     uint8_t val = absoluteX(&addr);
 
     uint8_t val2 = DEC_base(val);
-    bus->write(addr, val2);
+    write(addr, val2);
 
     ++cycles;
 
@@ -4815,7 +4823,7 @@ void CPU::INC_zp()
     uint8_t val = zero_page(&addr);
 
     uint8_t val2 = INC_base(val);
-    bus->write(addr, val2);
+    write(addr, val2);
 
     ++cycles;
 
@@ -4844,7 +4852,7 @@ void CPU::INC_zpX()
     uint8_t val = zero_pageX(&addr);
 
     uint8_t val2 = INC_base(val);
-    bus->write(addr, val2);
+    write(addr, val2);
 
     ++cycles;
 
@@ -4873,7 +4881,7 @@ void CPU::INC_abs()
     uint8_t val = absolute(&addr);
 
     uint8_t val2 = INC_base(val);
-    bus->write(addr, val2);
+    write(addr, val2);
 
     ++cycles;
 
@@ -4903,7 +4911,7 @@ void CPU::INC_absX()
     uint8_t val = absoluteX(&addr);
 
     uint8_t val2 = INC_base(val);
-    bus->write(addr, val2);
+    write(addr, val2);
 
     ++cycles;
 
@@ -5582,7 +5590,7 @@ void CPU::SLO_base(uint8_t val, uint16_t addr)
     set_flag(StatusFlags::C, val & 0x80);
 
     val = val << 1;
-    bus->write(addr, val);
+    write(addr, val);
     A = A | val;
 
     set_flag(StatusFlags::Z, A == 0);
@@ -5807,7 +5815,7 @@ void CPU::RLA_base(uint8_t val, uint16_t addr)
 
     set_flag(StatusFlags::C, val & 0x80);
     val = ((val << 1) | oldC);
-    bus->write(addr, val);
+    write(addr, val);
 
     A = A & val;
 
@@ -6037,7 +6045,7 @@ void CPU::SRE_base(uint8_t val, uint16_t addr)
     uint8_t oldC = val & 0x01;
 
     val = val >> 1;
-    bus->write(addr, val);
+    write(addr, val);
 
     A = A ^ val;
 
@@ -6264,7 +6272,7 @@ void CPU::RRA_base(uint8_t val, uint16_t addr)
 
     set_flag(StatusFlags::C, val & 0x01);
     val = (val >> 1) | (oldC ? 0x80 : 0x00);
-    bus->write(addr, val);
+    write(addr, val);
 
     ADC_base(val);
 
@@ -6486,7 +6494,7 @@ void CPU::RRA_absX()
 void CPU::DCP_base(uint8_t val, uint16_t addr)
 {
     val = (val - 1);
-    bus->write(addr, val);
+    write(addr, val);
 
     uint8_t tmp = (A - val);
 
@@ -6710,7 +6718,7 @@ void CPU::DCP_absX()
 void CPU::ISC_base(uint8_t val, uint16_t addr)
 {
     val = (val + 1);
-    bus->write(addr, val);
+    write(addr, val);
 
     SBC_base(val);
 
@@ -7148,7 +7156,7 @@ void CPU::LAX_imm()
 void CPU::SAX_base(uint16_t addr)
 {
     uint8_t val = A & X;
-    bus->write(addr, val);
+    write(addr, val);
 
     ++cycles;
 }
@@ -7425,7 +7433,7 @@ void CPU::AHX_base(uint16_t addr)
     uint8_t highp1 = (uint8_t)((addr >> 8) + 1);
     uint8_t val = A & X & highp1;
 
-    bus->write(addr, val);
+    write(addr, val);
 
     cycles += 2;
 }
@@ -7516,7 +7524,7 @@ void CPU::SHY_absX()
     uint16_t eff = (uint16_t)(addr + X);
     uint8_t highp1 = (uint8_t)((eff >> 8) + 1);
     uint8_t val = Y & highp1;
-    bus->write(eff, val);
+    write(eff, val);
 
     cycles += 2;
 
@@ -7552,7 +7560,7 @@ void CPU::TAS_absY()
     uint16_t eff = addr + Y;
     uint8_t highp1 = (uint8_t)((eff >> 8) + 1);
     uint8_t val = SP & highp1;
-    bus->write(eff, val);
+    write(eff, val);
 
     cycles += 2;
 
@@ -7588,7 +7596,7 @@ void CPU::SHX_absY()
     uint16_t addr = base + Y;
     uint8_t highp1 = (uint8_t)((addr >> 8) + 1);
     uint8_t val = X & highp1;
-    bus->write(addr, val);
+    write(addr, val);
 
     cycles += 2;
 

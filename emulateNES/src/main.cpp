@@ -4,6 +4,8 @@
 #include <QSurfaceFormat>
 #include "log.h"
 #include <QMetaObject>
+#include "bus.h"
+#include "ppu.h"
 
 
 int main(int argc, char *argv[])
@@ -15,12 +17,14 @@ int main(int argc, char *argv[])
 #ifdef LOG_ON
     LOG::Init();
 #endif
-//    MyOpenGL ll;
-//    ll.resize(800, 600);
-//    ll.show();
 
-    CPU cpu(&w);
-    bool rez = cpu.init_new_cartridge(":/games/2-branch_timing.nes");
+    Bus bus;
+
+    PPU ppu(&w, &bus);
+    bus.init_PPU(&ppu);
+
+    CPU cpu(&w, &bus);
+    bool rez = cpu.slot_init_new_cartridge(":/games/2-branch_timing.nes");
 
     return a.exec();
 }

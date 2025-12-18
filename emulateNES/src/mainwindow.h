@@ -25,5 +25,8 @@ public slots:
 private:
     Ui::MainWindow *ui;
 
+signals:
+    void signal_init_new_cartridge(const QString& path);
+
 };
 #endif // MAINWINDOW_H

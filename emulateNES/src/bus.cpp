@@ -4,6 +4,7 @@
 #include <QFile>
 #include <QDir>
 #include <QDebug>
+#include "ppu.h"
 
 
 Bus::Bus()
@@ -24,11 +25,12 @@ uint8_t Bus::read(uint16_t addr)
     }
     else if(addr >= 0x2000 && addr <= 0x2007) // регистры PPU
     {
-
+        return ppu->get_register(addr);
     }
-    else if(addr >= 0x2008 && addr <= 0x3FFF) // PPU
+    else if(addr >= 0x2008 && addr <= 0x3FFF) // зеркало PPU
     {
-
+        uint16_t reg = 0x2000 + (addr & 0x0007);
+        return ppu->get_register(reg);
     }
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода
     {
@@ -59,9 +61,12 @@ void Bus::write(uint16_t addr, uint8_t data)
     {
 
     }
-    else if(addr >= 0x4000 && addr <= 0x4017) //APU и ввода/вывода
+    else if(addr >= 0x4000 && addr <= 0x4017) //APU и ввода/вывода DMA
     {
-
+        if(addr == 0x4014)
+        {
+            //ppu_oam_write
+        }
     }
     else if(addr >= 0x6000 && addr <= 0x7FFF) // ОЗУ картриджа
     {
@@ -82,6 +87,16 @@ void Bus::init_new_cartridge(const QString& path, bool* status)
         return;
 
     std::fill(ram.begin(), ram.end(), 0);
+}
+
+void Bus::init_PPU(PPU *_ppu)
+{
+    ppu = _ppu;
+}
+
+void Bus::run_steps_ppu(int cycles)
+{
+    ppu->run(cycles);
 }
 
 uint16_t Bus::get_NMI()

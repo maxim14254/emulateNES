@@ -31,15 +31,11 @@ class CPU : public QObject
     Q_OBJECT
 
 public:
-    CPU(MainWindow* _window);
+    CPU(MainWindow* _window, Bus* _bus);
     ~CPU();
 
-    void set_flag(StatusFlags f, bool value);
-    bool get_flag(StatusFlags f);
-
-    bool init_new_cartridge(const QString& path);
-
-    std::shared_ptr<Bus> get_bus();
+public slots:
+    bool slot_init_new_cartridge(const QString& path);
 
 signals:
     void signal_error_show();
@@ -49,8 +45,8 @@ private:
     uint8_t  SP;                // стек
     uint16_t PC;                // счетчик команд
     uint8_t  status;            // флаги
-    std::shared_ptr<Bus> bus;   // шина
-    uint32_t  cycles;           // счетчик циклов
+    Bus* bus;                   // шина
+    uint64_t  cycles;           // счетчик циклов
 
     uint16_t NMI;
     uint16_t RESET;
@@ -66,7 +62,10 @@ private:
 
     void run();
     void reset();
+    void write(uint16_t addr, uint8_t data);
 
+    void set_flag(StatusFlags f, bool value);
+    bool get_flag(StatusFlags f);
 
     //адресации
     uint8_t immediate(uint16_t* addr = nullptr);            // 1 цикл
@@ -427,5 +426,6 @@ private:
     void KIL_imp();
 
 };
+
 
 #endif // CPU_H
