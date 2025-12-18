@@ -348,7 +348,7 @@ void CPU::run()
 {
     auto start_time = std::chrono::steady_clock::now();
 
-    int FPS = 0;
+    int FPS = 50;
 
     while (start)
     {
@@ -359,18 +359,10 @@ void CPU::run()
         std::function<void(CPU&)> instr_func = table_instructions[val];
         instr_func(*this);
 
-        ++FPS;
-
-        if(FPS >= 60)
-        {
-            FPS = 0;
-
-            auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time);
-            //std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(1000 - elapsed_ms.count())));
-
-            start_time = std::chrono::steady_clock::now();
-        }
-
+        auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time);
+        std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds((1000 / FPS) - elapsed_ms.count())));
+        start_time = std::chrono::steady_clock::now();
+\
     }
 }
 

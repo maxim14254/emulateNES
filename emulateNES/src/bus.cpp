@@ -22,15 +22,23 @@ uint8_t Bus::read(uint16_t addr)
     {
         return ram[addr & 0x07FF];
     }
-    else if(addr < 0x4000) //PPU
+    else if(addr >= 0x2000 && addr <= 0x2007) // регистры PPU
     {
 
     }
-    else if(addr < 0x4020) //APU и ввода/вывода
+    else if(addr >= 0x2008 && addr <= 0x3FFF) // PPU
+    {
+
+    }
+    else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода
     {
         return 0xFF;
     }
-    else if(addr < 0x8000) // ОЗУ картриджа
+    else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
+    {
+
+    }
+    else if(addr >= 0x6000 && addr <= 0x7FFF) // ОЗУ картриджа
     {
         return cartridge->read_prg_ram(addr);
     }
@@ -47,15 +55,15 @@ void Bus::write(uint16_t addr, uint8_t data)
     {
         ram[addr & 0x07FF] = data;
     }
-    else if(addr < 0x4000) //PPU
+    else if(addr >= 0x2008 && addr <= 0x3FFF) //PPU
     {
 
     }
-    else if(addr < 0x4020) //APU и ввода/вывода
+    else if(addr >= 0x4000 && addr <= 0x4017) //APU и ввода/вывода
     {
 
     }
-    else if(addr < 0x8000) // ОЗУ картриджа
+    else if(addr >= 0x6000 && addr <= 0x7FFF) // ОЗУ картриджа
     {
         cartridge->write_prg_ram(addr, data);
     }

@@ -30,6 +30,15 @@ Cartridge::Cartridge(const QString& path, bool* status)
 
             uint8_t mapper = (map_hi << 8) | map_lo;
 
+            if(mapper == 0)
+            {
+                // NROM
+            }
+            else if(mapper == 2)
+            {
+                // UNROM
+            }
+
             *status = true;
         }
         else
