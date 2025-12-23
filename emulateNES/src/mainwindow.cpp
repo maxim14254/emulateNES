@@ -3,6 +3,7 @@
 #include "my_opengl.h"
 #include <QSurface>
 #include <qmessagebox.h>
+#include <QApplication>
 
 
 MainWindow::MainWindow(QWidget *parent)

@@ -16,8 +16,10 @@ public:
     Bus();
     ~Bus();
 
-    uint8_t read(uint16_t addr);
-    void write(uint16_t addr, uint8_t data);
+    uint8_t read_cpu(uint16_t addr);
+    void write_cpu(uint16_t addr, uint8_t data);
+    uint8_t read_ppu(uint16_t addr);
+    void write_ppu(uint16_t addr, uint8_t data);
     void init_new_cartridge(const QString& path, bool* status);
     void init_PPU(PPU* _ppu);
     void run_steps_ppu(int cycles);
@@ -28,6 +30,8 @@ public:
 
 private:
     std::vector<uint8_t> ram;               //ОЗУ
+    std::vector<uint8_t> vram;              //видеопамять
+    std::vector<uint8_t> palette;           //палитра
     std::unique_ptr<Cartridge> cartridge;   //Картридж
     PPU* ppu;                               //Видеокарта
 

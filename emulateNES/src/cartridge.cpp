@@ -77,6 +77,11 @@ uint8_t Cartridge::mapper_read_prg(uint16_t addr)
     }
 }
 
+uint8_t Cartridge::mapper_read_chr(uint16_t addr)
+{
+    return chr_rom[addr];
+}
+
 uint8_t Cartridge::read_prg_ram(uint16_t addr)
 {
     return prg_ram[addr - 0x6000];

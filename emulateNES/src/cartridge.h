@@ -29,6 +29,7 @@ public:
     ~Cartridge();
 
     uint8_t mapper_read_prg(uint16_t addr);
+    uint8_t mapper_read_chr(uint16_t addr);
     uint8_t read_prg_ram(uint16_t addr);
     void write_prg_ram(uint16_t addr, uint8_t data);
 

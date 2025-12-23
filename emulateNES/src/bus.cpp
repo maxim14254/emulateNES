@@ -10,6 +10,8 @@
 Bus::Bus()
 {
     ram.resize(0x800);
+    vram.resize(0x800);
+    palette.resize(0x20);
 }
 
 Bus::~Bus()
@@ -17,7 +19,7 @@ Bus::~Bus()
 
 }
 
-uint8_t Bus::read(uint16_t addr)
+uint8_t Bus::read_cpu(uint16_t addr)
 {
     if (addr < 0x2000) // ОЗУ
     {
@@ -50,16 +52,20 @@ uint8_t Bus::read(uint16_t addr)
     }
 }
 
-void Bus::write(uint16_t addr, uint8_t data)
+void Bus::write_cpu(uint16_t addr, uint8_t data)
 {
-
     if (addr < 0x2000) // ОЗУ
     {
         ram[addr & 0x07FF] = data;
     }
-    else if(addr >= 0x2008 && addr <= 0x3FFF) //PPU
+    else if(addr >= 0x2000 && addr <= 0x2007) // запись регистры PPU
     {
-
+        ppu->set_register(addr, data);
+    }
+    else if(addr >= 0x2008 && addr <= 0x3FFF) // зеркало PPU
+    {
+        uint16_t reg = 0x2000 + (addr & 0x0007);
+        ppu->set_register(addr, data);
     }
     else if(addr >= 0x4000 && addr <= 0x4017) //APU и ввода/вывода DMA
     {
@@ -77,6 +83,44 @@ void Bus::write(uint16_t addr, uint8_t data)
 
     }
 
+}
+
+uint8_t Bus::read_ppu(uint16_t addr)
+{
+    if (addr < 0x2000) // область картриджа
+    {
+        return cartridge->mapper_read_chr(addr);
+    }
+    else if(addr >= 0x2000 && addr <= 0x2FFF) // VRAM
+    {
+        return vram[addr & 0x07FF];
+    }
+    else if(addr >= 0x3000 && addr <= 0x3EFF) // зеркало VRAM
+    {
+        return vram[addr & 0x07FF];
+    }
+    else if(addr >= 0x3F00 && addr <= 0x3F1F) // палитра
+    {
+        return palette[addr & 0x1F];
+    }
+    else
+        return 0;
+}
+
+void Bus::write_ppu(uint16_t addr, uint8_t data)
+{
+    if(addr >= 0x2000 && addr <= 0x2FFF) // VRAM
+    {
+        vram[addr & 0x07FF] = data;
+    }
+    else if(addr >= 0x3000 && addr <= 0x3EFF) // зеркало VRAM
+    {
+        vram[addr & 0x07FF] = data;
+    }
+    else if(addr >= 0x3F00 && addr <= 0x3F1F) // палитра
+    {
+        palette[addr & 0x1F];
+    }
 }
 
 void Bus::init_new_cartridge(const QString& path, bool* status)
