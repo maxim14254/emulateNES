@@ -122,7 +122,7 @@ void PPU::run(int cycles)
             if (cycle >= 1 && cycle <= 256)
             {
                 uint8_t color_pixel = get_pixel(cycle - 1, scanline);
-                frame_buffer.at(scanline).at(cycle - 1) = nesPalette[color_pixel];
+                frame_buffer[scanline][cycle - 1] = nesPalette[color_pixel];
             }
         }
 
