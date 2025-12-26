@@ -2,8 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <mutex>
 
 
+class Color;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -19,6 +21,8 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    void render_frame(std::vector<std::vector<Color>>& frame_buffer);
+
 public slots:
     void slot_show_error_message();
 
@@ -29,4 +33,5 @@ signals:
     void signal_init_new_cartridge(const QString& path);
 
 };
+
 #endif // MAINWINDOW_H

@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <vector>
+#include <mutex>
+#include <thread>
 
 
 class Bus;
@@ -37,8 +39,10 @@ private:
     uint16_t v = 0; // текущий VRAM адрес
     uint16_t t = 0; // временный VRAM адрес
     uint8_t x = 0;
+    uint8_t ppu_data_buffer = 0;
     bool w;
-
+    std::mutex mutex_render_frame;
+    std::thread thread_render_frame;
 
     MainWindow* window;
     Bus* bus;
@@ -47,6 +51,7 @@ private:
     void ppu_tick();
     uint8_t get_pixel(uint16_t x, uint16_t y);
     void incrementVRAMAddress();
+    uint8_t read_vram_buffered();
 
     Color nesPalette[64] = { // системная NES‑палитра
         { 84,  84,  84}, {  0,  30, 116}, {  8,  16, 144}, { 48,   0, 136},

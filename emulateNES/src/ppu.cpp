@@ -1,5 +1,5 @@
 #include "ppu.h"
-#include <QMainWindow>
+#include "mainwindow.h"
 #include "bus.h"
 #include <QDebug>
 
@@ -13,12 +13,13 @@ PPU::PPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
     for (auto &row : frame_buffer)
         row.resize(256, Color{0, 0, 0});
 
-    PPUCTRL = PPUMASK = PPUSTATUS = OAMADDR = OAMDATA = PPUSCROLL = PPUDATA = PPUADDR = 0;
+    PPUCTRL = PPUMASK = PPUSTATUS = OAMADDR = OAMDATA = PPUSCROLL = PPUDATA = PPUADDR = v = 0;
 }
 
 PPU::~PPU()
 {
-
+    if(thread_render_frame.joinable())
+        thread_render_frame.join();
 }
 
 uint8_t PPU::get_register(uint16_t addr)
@@ -38,14 +39,14 @@ uint8_t PPU::get_register(uint16_t addr)
     else if(addr == 0x2003)
         return OAMADDR;
     else if(addr == 0x2004)
-        return oam[OAMDATA];
+        return oam[OAMADDR];
     else if(addr == 0x2005)
         return PPUSCROLL;
     else if(addr == 0x2006)
-        return PPUADDR;
+        return 0;
     else if(addr == 0x2007)
     {
-        uint8_t data = bus->read_ppu(PPUADDR);
+        uint8_t data = read_vram_buffered();
         incrementVRAMAddress();
 
         return data;
@@ -104,7 +105,7 @@ void PPU::set_register(uint16_t addr, uint8_t data)
     }
     else if(addr == 0x2007)
     {
-        bus->write_ppu(PPUADDR, data);
+        bus->write_ppu(v, data);
         incrementVRAMAddress();
     }
 }
@@ -122,18 +123,26 @@ void PPU::run(int cycles)
             if (cycle >= 1 && cycle <= 256)
             {
                 uint8_t color_pixel = get_pixel(cycle - 1, scanline);
+
                 frame_buffer[scanline][cycle - 1] = nesPalette[color_pixel];
             }
         }
 
         if (scanline == 261 && cycle == 1)
         {
-            // pre-render: надо сбросить VBlank флаг в PPUSTATUS
+            PPUSTATUS &= ~0x40;
+            PPUSTATUS &= ~0x20;
+            PPUSTATUS &= ~0x80;
         }
 
         if (scanline == 241 && cycle == 1)
         {
-            // начало VBlank — ставим флаг и, если разрешено, вызываем NMI
+            PPUSTATUS |= 0x80;
+
+            if (PPUCTRL & 0x80)
+                bus->cpu_request_nmi();
+
+            thread_render_frame = std::thread(&MainWindow::render_frame, window, std::ref(frame_buffer));
         }
     }
 }
@@ -149,6 +158,9 @@ void PPU::ppu_tick()
 
         if(scanline > 261)
         {
+            if(thread_render_frame.joinable())
+                thread_render_frame.join();
+
             scanline = 0;
             ++frame;
         }
@@ -164,22 +176,20 @@ uint8_t PPU::get_pixel(uint16_t x, uint16_t y)
 
     uint16_t nameTableBase = 0x2000;
     uint16_t tileIndex = numb_tileY * 32 + numb_tileX;
-    //uint8_t tileByte = bus->read_ppu(nameTableBase + tileIndex);
+    uint8_t tileByte = bus->read_ppu(nameTableBase + tileIndex);
 
     uint16_t attrTableBase = nameTableBase + 0x3C0;
-    uint16_t numb_blockX = numb_tileX / 2;
-    uint16_t numb_blockY = numb_tileY / 2;
-    uint16_t blockIndex = numb_blockY * 16 + numb_blockX;
-
-    uint8_t attrIndex = blockIndex / 4;
+    uint16_t attrIndex = (numb_tileY / 4) * 8 + (numb_tileX / 4);
     uint8_t attrByte = bus->read_ppu(attrTableBase + attrIndex);
 
-    uint8_t numbBit = (tileIndex + 1) % 4;
-    uint8_t paletteNumb = (attrByte >> (2 * numbBit)) & 0x03;
+    uint8_t quadrantX = (numb_tileX / 2) % 2;
+    uint8_t quadrantY = (numb_tileY / 2) % 2;
+    uint8_t shift = (quadrantY * 2 + quadrantX) * 2;
 
+    uint8_t paletteNumb = (attrByte >> shift) & 0x03;
 
     uint16_t patternBase = (PPUCTRL & 0x10) ? 0x1000 : 0x0000;
-    uint16_t tileAddr = patternBase + tileIndex * 16 + numb_pixelY;
+    uint16_t tileAddr = patternBase + tileByte * 16 + numb_pixelY;
 
     uint8_t lowByte  = bus->read_ppu(tileAddr);
     uint8_t highByte = bus->read_ppu(tileAddr + 8);
@@ -205,8 +215,26 @@ uint8_t PPU::get_pixel(uint16_t x, uint16_t y)
 void PPU::incrementVRAMAddress()
 {
     if (PPUCTRL & 0x04)
-        PPUADDR += 32;
+        v += 32;
     else
-        PPUADDR += 1;
+        v += 1;
+}
+
+uint8_t PPU::read_vram_buffered()
+{
+    uint8_t value = bus->read_ppu(v);
+    uint8_t ret;
+
+    if (v >= 0x3F00 && v <= 0x3FFF)
+    {
+        ret = value;
+        ppu_data_buffer = bus->read_ppu(v - 0x1000);
+    } else
+    {
+        ret = ppu_data_buffer;
+        ppu_data_buffer = value;
+    }
+
+    return ret;
 }
 

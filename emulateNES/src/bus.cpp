@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QDebug>
 #include "ppu.h"
+#include "cpu.h"
 
 
 Bus::Bus()
@@ -138,9 +139,19 @@ void Bus::init_PPU(PPU *_ppu)
     ppu = _ppu;
 }
 
+void Bus::init_CPU(CPU *_cpu)
+{
+    cpu = _cpu;
+}
+
 void Bus::run_steps_ppu(int cycles)
 {
     ppu->run(cycles);
+}
+
+void Bus::cpu_request_nmi()
+{
+    cpu->request_nmi();
 }
 
 uint16_t Bus::get_NMI()

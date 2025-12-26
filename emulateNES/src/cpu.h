@@ -34,6 +34,8 @@ public:
     CPU(MainWindow* _window, Bus* _bus);
     ~CPU();
 
+    void request_nmi();
+
 public slots:
     bool slot_init_new_cartridge(const QString& path);
 
@@ -56,6 +58,7 @@ private:
     std::once_flag start_once_flag;
     std::thread run_t;
     bool start;
+    bool nmi_pending = false;
     MainWindow* window;
 
     std::vector<std::function<void(CPU&)>> table_instructions;  // таблица инструкции
@@ -66,6 +69,7 @@ private:
 
     void set_flag(StatusFlags f, bool value);
     bool get_flag(StatusFlags f);
+    void handle_nmi();
 
     //адресации
     uint8_t immediate(uint16_t* addr = nullptr);            // 1 цикл

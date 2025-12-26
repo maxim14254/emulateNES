@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
     bus.init_PPU(&ppu);
 
     CPU cpu(&w, &bus);
+    bus.init_CPU(&cpu);
     bool rez = cpu.slot_init_new_cartridge(":/games/2-branch_timing.nes");
 
     return a.exec();

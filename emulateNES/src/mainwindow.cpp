@@ -4,6 +4,8 @@
 #include <QSurface>
 #include <qmessagebox.h>
 #include <QApplication>
+#include "ppu.h"
+
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -20,6 +22,11 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::render_frame(std::vector<std::vector<Color>>& frame_buffer)
+{
+
 }
 
 void MainWindow::slot_show_error_message()

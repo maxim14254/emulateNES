@@ -8,6 +8,7 @@
 class Cartridge;
 class QString;
 class PPU;
+class CPU;
 
 class Bus
 {
@@ -22,7 +23,9 @@ public:
     void write_ppu(uint16_t addr, uint8_t data);
     void init_new_cartridge(const QString& path, bool* status);
     void init_PPU(PPU* _ppu);
+    void init_CPU(CPU* _cpu);
     void run_steps_ppu(int cycles);
+    void cpu_request_nmi();
 
     uint16_t get_NMI();
     uint16_t get_RESET();
@@ -34,6 +37,7 @@ private:
     std::vector<uint8_t> palette;           //палитра
     std::unique_ptr<Cartridge> cartridge;   //Картридж
     PPU* ppu;                               //Видеокарта
+    CPU* cpu;
 
     uint16_t cycle;
     uint16_t scanline;
