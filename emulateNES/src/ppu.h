@@ -11,14 +11,14 @@ class Bus;
 class MainWindow;
 
 
-struct Color {
-    uint8_t r, g, b;
-};
-
 
 class PPU
 {
 public:
+    struct Color {
+        uint8_t r, g, b;
+    };
+
     PPU(MainWindow* _window, Bus* _bus);
     ~PPU();
 
@@ -28,19 +28,33 @@ public:
 
 private:
     uint8_t PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA;
+    // PPUSTATUS 0x80 VBlank
+    // PPUSTATUS 0x40 попадание по спрайту 0
+    // PPUSTATUS 0x20 переполнение спрайтов не более 8
+
+    // PPUCTRL 0x80 Формирование запроса прерывания NMI
+    // PPUCTRL 0x20 Размер спрайтов (0 - 8x8; 1 - 8x16)
+    // PPUCTRL 0x10 Выбор знакогенератора фона (0/1)
+    // PPUCTRL 0x08 Выбор знакогенератора спрайтов (0/1)
+    // PPUCTRL 0x04 Выбор режима инкремента (0 – увеличение на единицу; 1 - увеличение на 32)
+    // PPUCTRL 0x03 Адрес активной экранной страницы
+
     uint16_t PPUADDR;                                   // регистры
     std::vector<uint8_t> oam;                           // 256 байт OAM (64 спрайта по 4 байта)
-    std::vector<std::vector<Color>> frame_buffer;        // результат кадра (цвета ARGB/RGBA)
+    std::vector<std::vector<Color>> frame_buffer;       // результат кадра (цвета ARGB/RGBA)
 
     int16_t scanline = 0;
     uint16_t cycle = 0;
     uint64_t frame = 0;
 
-    uint16_t v = 0; // текущий VRAM адрес
-    uint16_t t = 0; // временный VRAM адрес
-    uint8_t x = 0;
+    uint16_t current_VRAM = 0;
+    uint16_t render_VRAM = 0;
+    uint16_t temp_VRAM = 0;
+    uint8_t numb_pixelX = 0;
     uint8_t ppu_data_buffer = 0;
     bool w;
+    uint8_t openBus = 0;
+
     std::mutex mutex_render_frame;
     std::thread thread_render_frame;
 
@@ -49,9 +63,11 @@ private:
 
 
     void ppu_tick();
-    uint8_t get_pixel(uint16_t x, uint16_t y);
-    void incrementVRAMAddress();
+    uint8_t get_pixel(uint8_t& x, uint8_t& y);
+    void increment_VRAM_address();
     uint8_t read_vram_buffered();
+    void increment_x();
+    void increment_y();
 
     Color nesPalette[64] = { // системная NES‑палитра
         { 84,  84,  84}, {  0,  30, 116}, {  8,  16, 144}, { 48,   0, 136},

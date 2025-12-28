@@ -2,10 +2,9 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <mutex>
+#include "ppu.h"
 
 
-class Color;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -21,7 +20,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    void render_frame(std::vector<std::vector<Color>>& frame_buffer);
+    void render_frame(std::vector<std::vector<PPU::Color>>& frame_buffer);
 
 public slots:
     void slot_show_error_message();

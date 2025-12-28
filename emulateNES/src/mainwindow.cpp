@@ -4,7 +4,6 @@
 #include <QSurface>
 #include <qmessagebox.h>
 #include <QApplication>
-#include "ppu.h"
 
 
 
@@ -24,7 +23,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::render_frame(std::vector<std::vector<Color>>& frame_buffer)
+void MainWindow::render_frame(std::vector<std::vector<PPU::Color>>& frame_buffer)
 {
 
 }
