@@ -69,17 +69,11 @@ void PPU::set_register(uint16_t addr, uint8_t data)
         temp_VRAM = (temp_VRAM & 0xF3FF) | ((data & 0x03) << 10);
     }
     else if(addr == 0x2001)
-    {
         PPUMASK = data;
-    }
     else if(addr == 0x2003)
-    {
         OAMADDR = data;
-    }
     else if(addr == 0x2004)
-    {
         oam[OAMADDR++] = data;
-    }
     else if(addr == 0x2005)
     {
         if (!w)
@@ -125,7 +119,7 @@ void PPU::run(int cycles)
     {
         ppu_tick();
 
-        if (scanline > 0 && scanline < 240)
+        if (scanline < 240)
         {
             if (cycle >= 1 && cycle <= 256)
             {
@@ -158,8 +152,13 @@ void PPU::run(int cycles)
                 render_VRAM = (render_VRAM & 0xFC1F) | (temp_VRAM & 0x3E0);
                 render_VRAM = (render_VRAM & 0x8FFF) | (temp_VRAM & 0x7000);
             }
-            // else if(cycle == 256)
-            //     increment_y();
+            else if(cycle == 256)
+                increment_y();
+            else if(cycle == 257)
+            {
+                render_VRAM = (render_VRAM & 0xFBFF) | (temp_VRAM & 0x400);
+                render_VRAM = (render_VRAM & 0xFFE0) | (temp_VRAM & 0x1F);
+            }
         }
 
         if (scanline == 241 && cycle == 1)
@@ -314,5 +313,3 @@ uint8_t PPU::read_vram_buffered()
 
     return ret;
 }
-
-

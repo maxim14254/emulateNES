@@ -15,7 +15,8 @@ class MainWindow;
 class PPU
 {
 public:
-    struct Color {
+    struct Color
+    {
         uint8_t r, g, b;
     };
 

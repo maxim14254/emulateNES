@@ -2,11 +2,13 @@
 #include <QApplication>
 #include "cpu.h"
 #include <QSurfaceFormat>
-#include "log.h"
 #include <QMetaObject>
 #include "bus.h"
 #include "ppu.h"
 
+#ifdef LOG_ON
+#include "log.h"
+#endif
 
 int main(int argc, char *argv[])
 {

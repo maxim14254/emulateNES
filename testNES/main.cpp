@@ -4,6 +4,7 @@
 #include <QTextStream>
 
 
+ In included file: 'crtdbg.h' file not found
 
 using namespace std;
 

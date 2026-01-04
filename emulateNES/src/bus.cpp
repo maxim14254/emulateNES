@@ -37,17 +37,17 @@ uint8_t Bus::read_cpu(uint16_t addr)
     }
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода
     {
-        return 0xFF;
+        return 0xFF; // TO DO
     }
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
     {
-
+        return cartridge->mapper_read_prg(addr);
     }
     else if(addr >= 0x6000 && addr <= 0x7FFF) // ОЗУ картриджа
     {
         return cartridge->read_prg_ram(addr);
     }
-    else  //область картриджа
+    else  // область картриджа
     {
         return cartridge->mapper_read_prg(addr);
     }
@@ -66,43 +66,61 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     else if(addr >= 0x2008 && addr <= 0x3FFF) // зеркало PPU
     {
         uint16_t reg = 0x2000 + (addr & 0x0007);
-        ppu->set_register(addr, data);
+        ppu->set_register(reg, data);
     }
-    else if(addr >= 0x4000 && addr <= 0x4017) //APU и ввода/вывода DMA
+    else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода DMA
     {
         if(addr == 0x4014)
         {
-            //ppu_oam_write
+            //ppu_oam_write TO DO
         }
+    }
+    else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
+    {
+        // cartridge->mapper_write_prg(addr, data); TO DO
     }
     else if(addr >= 0x6000 && addr <= 0x7FFF) // ОЗУ картриджа
     {
         cartridge->write_prg_ram(addr, data);
     }
-    else //область картриджа
+    else // область картриджа
     {
-
+        // cartridge->mapper_write_prg(addr, data); TO DO
     }
-
 }
 
 uint8_t Bus::read_ppu(uint16_t addr)
 {
+    addr &= 0x3FFF;
+
     if (addr < 0x2000) // область картриджа
     {
         return cartridge->mapper_read_chr(addr);
     }
     else if(addr >= 0x2000 && addr <= 0x2FFF) // VRAM
     {
-        return vram[addr & 0x07FF];
+        uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x2000) & 0x0FFF);
+        return vram[nt_index];
     }
     else if(addr >= 0x3000 && addr <= 0x3EFF) // зеркало VRAM
     {
-        return vram[addr & 0x07FF];
+        uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x2000) & 0x0FFF);
+        return vram[nt_index];
     }
-    else if(addr >= 0x3F00 && addr <= 0x3F1F) // палитра
+    else if(addr >= 0x3F00 && addr <= 0x3FFF) // палитра
     {
-        return palette[addr & 0x1F];
+        uint8_t palette_addr = addr & 0x1F;
+
+        if (palette_addr == 0x10)
+            palette_addr = 0x00;
+        else if (palette_addr == 0x14)
+            palette_addr = 0x04;
+        else if (palette_addr == 0x18)
+            palette_addr = 0x08;
+        else if (palette_addr == 0x1C)
+            palette_addr = 0x0C;
+
+        return palette[palette_addr];
     }
     else
         return 0;
@@ -110,17 +128,36 @@ uint8_t Bus::read_ppu(uint16_t addr)
 
 void Bus::write_ppu(uint16_t addr, uint8_t data)
 {
-    if(addr >= 0x2000 && addr <= 0x2FFF) // VRAM
+    addr &= 0x3FFF;
+
+    if (addr < 0x2000) // область картриджа
     {
-        vram[addr & 0x07FF] = data;
+        cartridge->write_chr_ram(addr, data);
+    }
+    else if(addr >= 0x2000 && addr <= 0x2FFF) // VRAM
+    {
+        uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x2000) & 0x0FFF);
+        vram[nt_index] = data;
     }
     else if(addr >= 0x3000 && addr <= 0x3EFF) // зеркало VRAM
     {
-        vram[addr & 0x07FF] = data;
+        uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x2000) & 0x0FFF);
+        vram[nt_index] = data;
     }
-    else if(addr >= 0x3F00 && addr <= 0x3F1F) // палитра
+    else if(addr >= 0x3F00 && addr <= 0x3FFF) // палитра
     {
-        palette[addr & 0x1F];
+        uint8_t palette_addr = addr & 0x1F;
+
+        if (palette_addr == 0x10)
+            palette_addr = 0x00;
+        else if (palette_addr == 0x14)
+            palette_addr = 0x04;
+        else if (palette_addr == 0x18)
+            palette_addr = 0x08;
+        else if (palette_addr == 0x1C)
+            palette_addr = 0x0C;
+
+        palette[palette_addr] = data;
     }
 }
 

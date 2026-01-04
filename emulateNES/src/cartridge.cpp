@@ -15,7 +15,11 @@ Cartridge::Cartridge(const QString& path, bool* status)
         if(header.magic[0] == 'N' && header.magic[1] == 'E' && header.magic[2] == 'S')
         {
             prg_rom.resize(header.prg_rom * 0x4000);
-            chr_rom.resize(header.chr_rom * 0x2000);
+
+            if(header.chr_rom > 0)
+                chr_rom.resize(header.chr_rom * 0x2000);
+            else
+                chr_ram.resize(0x2000);
 
             if(header.prg_ram > 0)
                 prg_ram.resize(header.prg_ram * 0x2000);
@@ -79,7 +83,10 @@ uint8_t Cartridge::mapper_read_prg(uint16_t addr)
 
 uint8_t Cartridge::mapper_read_chr(uint16_t addr)
 {
-    return chr_rom[addr];
+    if(chr_rom.size() > 0)
+        return chr_rom[addr];
+    else
+        return chr_ram[addr];
 }
 
 uint8_t Cartridge::read_prg_ram(uint16_t addr)
@@ -90,6 +97,17 @@ uint8_t Cartridge::read_prg_ram(uint16_t addr)
 void Cartridge::write_prg_ram(uint16_t addr, uint8_t data)
 {
     prg_ram[addr - 0x6000] = data;
+}
+
+void Cartridge::write_chr_ram(uint16_t addr, uint8_t data)
+{
+    if(chr_ram.size() > 0)
+        chr_ram[addr] = data;
+}
+
+uint8_t Cartridge::map_nametable_addr(uint16_t addr)
+{
+    return 1; // TO DO
 }
 
 uint16_t Cartridge::get_NMI()

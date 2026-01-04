@@ -1,11 +1,15 @@
 ﻿#include "cpu.h"
 #include "bus.h"
 #include <QMessageBox>
-#include "log.h"
 #include <QMetaObject>
 #include "mainwindow.h"
 #include <chrono>
 #include <QDebug>
+
+#ifdef LOG_ON
+#include "log.h"
+#endif
+
 
 
 CPU::CPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
