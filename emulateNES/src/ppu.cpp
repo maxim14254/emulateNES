@@ -111,6 +111,12 @@ void PPU::set_register(uint16_t addr, uint8_t data)
     }
 }
 
+void PPU::set_oam(const uint8_t* _oam)
+{
+    for(int i = 0; i < 0x100; ++i)
+        oam[i] = _oam[i];
+}
+
 void PPU::run(int cycles)
 {
     int count = cycles * 3;
@@ -124,7 +130,21 @@ void PPU::run(int cycles)
             if (cycle >= 1 && cycle <= 256)
             {
                 uint8_t x, y;
-                uint8_t color_pixel = get_pixel(x, y);
+                uint8_t color_pixel = get_background(x, y);
+
+                for(int j = 0; j < sprites_current_scanline.size(); ++j)
+                {
+                    uint8_t color_sprite = get_sprite(sprites_current_scanline[j]);
+
+                    y = scanline;
+                    x = cycle - 1;
+
+                    if (color_sprite != 0xFF)
+                    {
+                        color_pixel = color_sprite;
+                        break;
+                    }
+                }
 
                 frame_buffer[y][x] = nesPalette[color_pixel];
 
@@ -136,6 +156,8 @@ void PPU::run(int cycles)
                 render_VRAM = (render_VRAM & 0xFBFF) | (temp_VRAM & 0x400);
                 render_VRAM = (render_VRAM & 0xFFE0) | (temp_VRAM & 0x1F);
             }
+            else if(cycle > 257 && cycle < 320)
+                get_current_sprites();
         }
 
         if (scanline == 261)
@@ -177,6 +199,9 @@ void PPU::run(int cycles)
 
 void PPU::ppu_tick()
 {
+    // if(cycle == 0 && scanline == 0)
+    //     get_current_sprites();
+
     ++cycle;
 
     if(cycle > 340)
@@ -190,12 +215,83 @@ void PPU::ppu_tick()
                 thread_render_frame.join();
 
             scanline = 0;
+
             ++frame;
         }
     }
 }
 
-uint8_t PPU::get_pixel(uint8_t& x, uint8_t& y)
+void PPU::get_current_sprites()
+{
+    uint8_t sprite_height = (PPUCTRL & 0x20) > 0 ? 16 : 8;
+
+    sprites_current_scanline.clear();
+
+    for(int i = 0; i < oam.size(); i+=4)
+    {
+        if(scanline >= oam[i] && scanline < oam[i] + sprite_height)
+        {
+            if(sprites_current_scanline.size() == 8)
+            {
+                PPUSTATUS |= 0x20;
+                break;
+            }
+
+            sprites_current_scanline.push_back(Sprite{oam[i], oam[i + 1], oam[i + 2], oam[i + 3]});
+        }
+    }
+}
+
+uint8_t PPU::get_sprite(const Sprite& sprite)
+{
+    int spriteScreenY = sprite.y + 1;
+    int spriteScreenX = sprite.x;
+    uint8_t sprite_height = (PPUCTRL & 0x20) > 0 ? 16 : 8;
+
+    if (scanline < spriteScreenY || scanline >= spriteScreenY + sprite_height)
+        return 0xFF;
+    if (cycle < spriteScreenX || cycle >= spriteScreenX + 8)
+        return 0xFF;
+
+    int localY = scanline - spriteScreenY;
+    int localX = cycle - spriteScreenX;
+
+    bool flipY = (sprite.attr & 0x80) != 0;
+    bool flipX = (sprite.attr & 0x40) != 0;
+
+    if (flipY)
+        localY = 7 - localY;
+    if (flipX)
+        localX = 7 - localX;
+
+    uint16_t patternBase = (PPUCTRL & 0x08) ? 0x1000 : 0x0000;
+    uint16_t tileAddr = patternBase + sprite.tile * 16;
+
+    uint8_t lowByte = bus->read_ppu(tileAddr + localY);
+    uint8_t highByte = bus->read_ppu(tileAddr + localY + 8);
+
+    uint8_t bitIndex = 7 - localX;
+
+    uint8_t lo = (lowByte  >> bitIndex) & 1;
+    uint8_t hi = (highByte >> bitIndex) & 1;
+
+    uint8_t color = (hi << 1) | lo;
+
+    uint8_t paletteIndex = sprite.attr & 0x03;
+
+    uint8_t colorByte;
+    if (color == 0)
+        colorByte = 0xFF;
+    else
+    {
+        uint16_t addr = 0x3F10 + paletteIndex * 4 + color;
+        colorByte = bus->read_ppu(addr);
+    }
+
+    return colorByte;
+}
+
+uint8_t PPU::get_background(uint8_t& x, uint8_t& y)
 {
     uint8_t numb_tileX = render_VRAM & 0x1F;
     uint8_t numb_tileY = (render_VRAM >> 5) & 0x1F;

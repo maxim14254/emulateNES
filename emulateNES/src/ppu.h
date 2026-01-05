@@ -5,6 +5,7 @@
 #include <vector>
 #include <mutex>
 #include <thread>
+#include <map>
 
 
 class Bus;
@@ -20,11 +21,20 @@ public:
         uint8_t r, g, b;
     };
 
+    struct Sprite
+    {
+        uint8_t y;
+        uint8_t tile;
+        uint8_t attr;
+        uint8_t x;
+    };
+
     PPU(MainWindow* _window, Bus* _bus);
     ~PPU();
 
     uint8_t get_register(uint16_t addr);
     void set_register(uint16_t addr, uint8_t data);
+    void set_oam(const uint8_t* _oam);
     void run(int cycles);
 
 private:
@@ -43,6 +53,7 @@ private:
     uint16_t PPUADDR;                                   // регистры
     std::vector<uint8_t> oam;                           // 256 байт OAM (64 спрайта по 4 байта)
     std::vector<std::vector<Color>> frame_buffer;       // результат кадра (цвета ARGB/RGBA)
+    std::vector<Sprite> sprites_current_scanline;     // спрайты для текущей линии
 
     int16_t scanline = 0;
     uint16_t cycle = 0;
@@ -64,11 +75,13 @@ private:
 
 
     void ppu_tick();
-    uint8_t get_pixel(uint8_t& x, uint8_t& y);
+    uint8_t get_background(uint8_t& x, uint8_t& y);
+    uint8_t get_sprite(const Sprite& sprite);
     void increment_VRAM_address();
     uint8_t read_vram_buffered();
     void increment_x();
     void increment_y();
+    void get_current_sprites();
 
     Color nesPalette[64] = { // системная NES‑палитра
         { 84,  84,  84}, {  0,  30, 116}, {  8,  16, 144}, { 48,   0, 136},
