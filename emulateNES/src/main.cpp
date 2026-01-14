@@ -13,6 +13,9 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    QApplication::setAttribute(Qt::AA_ForceRasterWidgets, false);
+
     MainWindow w;
     w.show();
 
@@ -27,7 +30,7 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/2-branch_timing.nes");
+    bool rez = cpu.slot_init_new_cartridge(":/games/ppu_vbl_nmi.nes");
 
     return a.exec();
 }

@@ -6,5 +6,7 @@
         <file>games/all_instrs.nes</file>
         <file>games/1-instr_timing.nes</file>
         <file>games/2-branch_timing.nes</file>
+        <file>games/Donkey Kong (Japan).nes</file>
+        <file>games/ppu_vbl_nmi.nes</file>
     </qresource>
 </RCC>

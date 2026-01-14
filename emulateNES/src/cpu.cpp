@@ -389,7 +389,7 @@ void CPU::run()
         }
 
         auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time);
-        std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds((1000 / FPS) - elapsed_ms.count())));
+        std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(((1 / FPS) * 1000) - elapsed_ms.count())));
         start_time = std::chrono::steady_clock::now();
     }
 }
@@ -410,6 +410,8 @@ void CPU::reset()
     status = 0x34;
 
     cycles = 7;
+
+    bus->reset_ppu();
 }
 
 void CPU::write(uint16_t addr, uint8_t data)

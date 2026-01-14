@@ -26,6 +26,7 @@ public:
     void init_CPU(CPU* _cpu);
     void run_steps_ppu(int cycles);
     void cpu_request_nmi();
+    void reset_ppu();
 
     uint16_t get_NMI();
     uint16_t get_RESET();

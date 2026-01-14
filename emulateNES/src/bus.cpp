@@ -189,6 +189,11 @@ void Bus::cpu_request_nmi()
     cpu->request_nmi();
 }
 
+void Bus::reset_ppu()
+{
+    ppu->reset();
+}
+
 uint16_t Bus::get_NMI()
 {
     return cartridge->get_NMI();

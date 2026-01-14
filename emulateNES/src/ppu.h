@@ -27,6 +27,7 @@ public:
         uint8_t tile;
         uint8_t attr;
         uint8_t x;
+        size_t index;
     };
 
     PPU(MainWindow* _window, Bus* _bus);
@@ -36,6 +37,7 @@ public:
     void set_register(uint16_t addr, uint8_t data);
     void set_oam(const uint8_t* _oam);
     void run(int cycles);
+    void reset();
 
 private:
     uint8_t PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA;
@@ -53,7 +55,7 @@ private:
     uint16_t PPUADDR;                                   // регистры
     std::vector<uint8_t> oam;                           // 256 байт OAM (64 спрайта по 4 байта)
     std::vector<std::vector<Color>> frame_buffer;       // результат кадра (цвета ARGB/RGBA)
-    std::vector<Sprite> sprites_current_scanline;     // спрайты для текущей линии
+    std::vector<Sprite> sprites_current_scanline;       // спрайты для текущей линии
 
     int16_t scanline = 0;
     uint16_t cycle = 0;
@@ -67,15 +69,14 @@ private:
     bool w;
     uint8_t openBus = 0;
 
-    std::mutex mutex_render_frame;
-    std::thread thread_render_frame;
+    std::mutex mutex_lock_frame_buffer;
 
     MainWindow* window;
     Bus* bus;
 
 
     void ppu_tick();
-    uint8_t get_background(uint8_t& x, uint8_t& y);
+    uint8_t get_background();
     uint8_t get_sprite(const Sprite& sprite);
     void increment_VRAM_address();
     uint8_t read_vram_buffered();
