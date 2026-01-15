@@ -15,11 +15,16 @@ MainWindow::MainWindow(QWidget *parent)
 
     setWindowIcon(QIcon(":/nintendoNES.ico"));
 
-    my_openGL.reset(new MyOpenGL(this));
+    my_openGL.reset(new MyOpenGL(256, 240, this));
 
     ui->verticalLayout->addWidget(my_openGL.get());
 
     outBuffer.resize(256 * 240);
+
+    debug_tiles_widget.reset(new MyOpenGL(128, 128, this));
+    debug_tiles_widget->setFixedSize(300, 300);
+    ui->verticalLayout_3->addWidget(debug_tiles_widget.get());
+    ui->verticalLayout_3->addStretch();
 }
 
 MainWindow::~MainWindow()
@@ -46,6 +51,11 @@ void MainWindow::render_frame(const std::vector<std::vector<PPU::Color>>& frame_
     }
 
     my_openGL->set_frame_buffer(outBuffer.data());
+}
+
+void MainWindow::render_debug_tiles(uint32_t *frame)
+{
+    debug_tiles_widget->set_frame_buffer(frame);
 }
 
 void MainWindow::slot_show_error_message()

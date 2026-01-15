@@ -22,6 +22,8 @@ public:
 
     void render_frame(const std::vector<std::vector<PPU::Color>>& frame_buffer, std::mutex& mutex_lock_frame_buffer);
 
+    void render_debug_tiles(uint32_t* frame);
+
 public slots:
     void slot_show_error_message();
 
@@ -29,6 +31,7 @@ private:
     Ui::MainWindow *ui;
     std::unique_ptr<MyOpenGL> my_openGL;
     std::vector<uint32_t> outBuffer;
+    std::unique_ptr<MyOpenGL> debug_tiles_widget;
 
 signals:
     void signal_init_new_cartridge(const QString& path);

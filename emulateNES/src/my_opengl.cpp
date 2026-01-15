@@ -4,10 +4,13 @@
 
 
 
-MyOpenGL::MyOpenGL(QWidget* parent, Qt::WindowFlags f) : QOpenGLWidget(parent)
+MyOpenGL::MyOpenGL(GLsizei _width, GLsizei _height, QWidget* parent, Qt::WindowFlags f) : QOpenGLWidget(parent)
 {
     textureId = 0;
     nesFrame = nullptr;
+
+    width = _width;
+    height = _height;
 }
 
 MyOpenGL::~MyOpenGL()
@@ -34,7 +37,7 @@ void MyOpenGL::initializeGL()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                 256, 240, 0,
+                 width, height, 0,
                  GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -59,7 +62,7 @@ void MyOpenGL::paintGL()
     glBindTexture(GL_TEXTURE_2D, textureId);
 
     glTexSubImage2D(GL_TEXTURE_2D, 0,
-                    0, 0, 256, 240,
+                    0, 0, width, height,
                     GL_RGBA, GL_UNSIGNED_BYTE,
                     nesFrame);
 

@@ -11,7 +11,7 @@ class MyOpenGL : public QOpenGLWidget, protected QOpenGLFunctions
 {
 
 public:
-    explicit MyOpenGL(QWidget* parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
+    explicit MyOpenGL(GLsizei _width, GLsizei _height, QWidget* parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
     virtual ~MyOpenGL();
 
     void set_frame_buffer(uint32_t* frame_buffer);
@@ -24,6 +24,7 @@ protected:
 private:
     GLuint textureId;
     uint32_t* nesFrame;
+    GLsizei width, height;
 
 };
 

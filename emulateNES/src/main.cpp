@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/ppu_vbl_nmi.nes");
+    bool rez = cpu.slot_init_new_cartridge(":/games/nestest.nes");
 
     return a.exec();
 }

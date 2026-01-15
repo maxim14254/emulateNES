@@ -9,6 +9,7 @@
 PPU::PPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 {
     oam.resize(0x100);
+    pColData.resize(128 * 128);
 
     frame_buffer.resize(240);
     for (auto &row : frame_buffer)
@@ -203,6 +204,69 @@ void PPU::run(int cycles)
 
         if (scanline == 241 && cycle == 1)
         {
+
+
+            int numb_table = 0;
+            int palette = 1;
+
+            for (uint16_t nTileY = 0; nTileY < 16; nTileY++)
+            {
+                for (uint16_t nTileX = 0; nTileX < 16; nTileX++)
+                {
+                    // Convert the 2D tile coordinate into a 1D offset into the pattern
+                    // table memory.
+                    uint16_t nOffset = nTileY * 256 + nTileX * 16;
+
+                    // Now loop through 8 rows of 8 pixels
+                    for (uint16_t row = 0; row < 8; row++)
+                    {
+                        // For each row, we need to read both bit planes of the character
+                        // in order to extract the least significant and most significant
+                        // bits of the 2 bit pixel value. in the CHR ROM, each character
+                        // is stored as 64 bits of lsb, followed by 64 bits of msb. This
+                        // conveniently means that two corresponding rows are always 8
+                        // bytes apart in memory.
+                        uint8_t tile_lsb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0000);
+                        uint8_t tile_msb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0008);
+
+
+                        // Now we have a single row of the two bit planes for the character
+                        // we need to iterate through the 8-bit words, combining them to give
+                        // us the final pixel index
+                        for (uint16_t col = 0; col < 8; col++)
+                        {
+                            // We can get the index value by simply adding the bits together
+                            // but we're only interested in the lsb of the row words because...
+                            uint8_t pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
+
+                            // ...we will shift the row words 1 bit right for each column of
+                            // the character.
+                            tile_lsb >>= 1; tile_msb >>= 1;
+
+                            // Now we know the location and NES pixel value for a specific location
+                            // in the pattern table, we can translate that to a screen colour, and an
+                            // (x,y) location in the sprite
+
+                            int x = (nTileY * 16 + nTileX) * 64;
+                            // Because we are using the lsb of the row word first
+                            // we are effectively reading the row from right
+                            // to left, so we need to draw the row "backwards"
+                            int y = x + (row * 8 + col);
+                            Color color = nesPalette[bus->read_ppu(0x3F00 + (palette << 2) + pixel) & 0x3F];
+
+                            uint32_t pixel2 = (static_cast<uint32_t>(color.r) << 16) | (static_cast<uint32_t>(color.g) << 8) | (static_cast<uint32_t>(color.b) << 0);
+                            pColData[y] = pixel2;
+                        }
+                    }
+                }
+            }
+            QMetaObject::invokeMethod(window, [&]()
+            {
+                window->render_debug_tiles(pColData.data());
+            },
+            Qt::DirectConnection);
+
+
             QMetaObject::invokeMethod(window, [&]()
             {
                 window->render_frame(frame_buffer, mutex_lock_frame_buffer);
