@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowIcon(QIcon(":/nintendoNES.ico"));
 
     my_openGL.reset(new MyOpenGL(256, 240, this));
-
+    my_openGL->setMinimumSize(500, 500);
     ui->verticalLayout->addWidget(my_openGL.get());
 
     outBuffer.resize(256 * 240);
@@ -24,6 +24,13 @@ MainWindow::MainWindow(QWidget *parent)
     debug_tiles_widget.reset(new MyOpenGL(128, 128, this));
     debug_tiles_widget->setFixedSize(300, 300);
     ui->verticalLayout_3->addWidget(debug_tiles_widget.get());
+
+    cpu_debuger.reset(new QTextEdit(this));
+    cpu_debuger->setPlainText("");
+    cpu_debuger->setFixedSize(610, 610);
+    cpu_debuger->setTextInteractionFlags(Qt::NoTextInteraction);
+    ui->verticalLayout_3->addWidget(cpu_debuger.get());
+
     ui->verticalLayout_3->addStretch();
 }
 
@@ -56,6 +63,16 @@ void MainWindow::render_frame(const std::vector<std::vector<PPU::Color>>& frame_
 void MainWindow::render_debug_tiles(uint32_t *frame)
 {
     debug_tiles_widget->set_frame_buffer(frame);
+}
+
+void MainWindow::render_cpu_debug(QString text)
+{
+    cpu_debuger->setText(text);
+}
+
+void MainWindow::clear_cpu_debug()
+{
+    cpu_debuger->clear();
 }
 
 void MainWindow::slot_show_error_message()

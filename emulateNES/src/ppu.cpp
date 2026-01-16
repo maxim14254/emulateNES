@@ -3,13 +3,14 @@
 #include "bus.h"
 #include <QDebug>
 #include <QObject>
-
+#include "global.h"
+#include <map>
 
 
 PPU::PPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 {
     oam.resize(0x100);
-    pColData.resize(128 * 128);
+    //pColData.resize(128 * 128);
 
     frame_buffer.resize(240);
     for (auto &row : frame_buffer)
@@ -204,69 +205,6 @@ void PPU::run(int cycles)
 
         if (scanline == 241 && cycle == 1)
         {
-
-
-            int numb_table = 0;
-            int palette = 1;
-
-            for (uint16_t nTileY = 0; nTileY < 16; nTileY++)
-            {
-                for (uint16_t nTileX = 0; nTileX < 16; nTileX++)
-                {
-                    // Convert the 2D tile coordinate into a 1D offset into the pattern
-                    // table memory.
-                    uint16_t nOffset = nTileY * 256 + nTileX * 16;
-
-                    // Now loop through 8 rows of 8 pixels
-                    for (uint16_t row = 0; row < 8; row++)
-                    {
-                        // For each row, we need to read both bit planes of the character
-                        // in order to extract the least significant and most significant
-                        // bits of the 2 bit pixel value. in the CHR ROM, each character
-                        // is stored as 64 bits of lsb, followed by 64 bits of msb. This
-                        // conveniently means that two corresponding rows are always 8
-                        // bytes apart in memory.
-                        uint8_t tile_lsb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0000);
-                        uint8_t tile_msb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0008);
-
-
-                        // Now we have a single row of the two bit planes for the character
-                        // we need to iterate through the 8-bit words, combining them to give
-                        // us the final pixel index
-                        for (uint16_t col = 0; col < 8; col++)
-                        {
-                            // We can get the index value by simply adding the bits together
-                            // but we're only interested in the lsb of the row words because...
-                            uint8_t pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
-
-                            // ...we will shift the row words 1 bit right for each column of
-                            // the character.
-                            tile_lsb >>= 1; tile_msb >>= 1;
-
-                            // Now we know the location and NES pixel value for a specific location
-                            // in the pattern table, we can translate that to a screen colour, and an
-                            // (x,y) location in the sprite
-
-                            int x = (nTileY * 16 + nTileX) * 64;
-                            // Because we are using the lsb of the row word first
-                            // we are effectively reading the row from right
-                            // to left, so we need to draw the row "backwards"
-                            int y = x + (row * 8 + col);
-                            Color color = nesPalette[bus->read_ppu(0x3F00 + (palette << 2) + pixel) & 0x3F];
-
-                            uint32_t pixel2 = (static_cast<uint32_t>(color.r) << 16) | (static_cast<uint32_t>(color.g) << 8) | (static_cast<uint32_t>(color.b) << 0);
-                            pColData[y] = pixel2;
-                        }
-                    }
-                }
-            }
-            QMetaObject::invokeMethod(window, [&]()
-            {
-                window->render_debug_tiles(pColData.data());
-            },
-            Qt::DirectConnection);
-
-
             QMetaObject::invokeMethod(window, [&]()
             {
                 window->render_frame(frame_buffer, mutex_lock_frame_buffer);
@@ -281,6 +219,93 @@ void PPU::run(int cycles)
                 bus->cpu_request_nmi();
         }
     }
+}
+
+void PPU::run_watch_all_tiles()
+{
+    int numb_table = 0;
+    int palette = 1;
+    static std::vector<uint32_t> pColData(128 * 128);
+
+    for (uint16_t nTileY = 0; nTileY < 16; nTileY++)
+    {
+        for (uint16_t nTileX = 0; nTileX < 16; nTileX++)
+        {
+            uint16_t nOffset = nTileY * 256 + nTileX * 16;
+
+            for (uint16_t row = 0; row < 8; row++)
+            {
+                uint8_t tile_lsb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0000);
+                uint8_t tile_msb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0008);
+
+                for (uint16_t col = 0; col < 8; col++)
+                {
+                    uint8_t pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
+
+                    tile_lsb >>= 1; tile_msb >>= 1;
+
+                    int x = (nTileY * 16 + nTileX) * 64;
+                    int y = x + (row * 8 + col);
+                    Color color = nesPalette[bus->read_ppu(0x3F00 + (palette << 2) + pixel) & 0x3F];
+
+                    uint32_t pixel2 = (static_cast<uint32_t>(color.r) << 16) | (static_cast<uint32_t>(color.g) << 8) | (static_cast<uint32_t>(color.b) << 0);
+                    pColData[y] = pixel2;
+                }
+            }
+        }
+    }
+    QMetaObject::invokeMethod(window, [&]()
+    {
+        window->render_debug_tiles(pColData.data());
+    },
+    Qt::QueuedConnection);
+}
+
+void PPU::run_watch_cpu_instr(uint16_t PC)
+{
+    static bool download_asm = true;
+    static std::map<uint16_t, std::string> assembler_buf;
+
+    if(download_asm)
+    {
+        download_asm = false;
+        download_asm_buffer(assembler_buf);
+    }
+
+    auto it_a = assembler_buf.find(PC);
+
+    QString value = "";
+
+    if(it_a != assembler_buf.end())
+    {
+        for(int i = 0; i < 10; ++i)
+        {
+            if (--it_a != assembler_buf.end())
+            {
+                value += QString("%1\n").arg(it_a->second.c_str());
+            }
+        }
+        it_a = assembler_buf.find(PC);
+    }
+
+    if(it_a != assembler_buf.end())
+    {
+        value += QString("==>%1\n").arg(it_a->second.c_str());
+
+        for(int i = 0; i < 10; ++i)
+        {
+            if (++it_a != assembler_buf.end())
+            {
+                value += QString("%1\n").arg(it_a->second.c_str());
+            }
+        }
+    }
+
+    QMetaObject::invokeMethod(window, [&, value]()
+    {
+        window->render_cpu_debug(value);
+    },
+    Qt::QueuedConnection);
 }
 
 void PPU::reset()
@@ -337,6 +362,98 @@ void PPU::get_current_sprites()
 
             sprites_current_scanline.push_back(Sprite{oam[i], oam[i + 1], oam[i + 2], oam[i + 3], i / 4});
         }
+    }
+}
+
+void PPU::download_asm_buffer(std::map<uint16_t, std::string> &assembler_buf)
+{
+    uint32_t addr = 0x0000;
+    uint16_t line_addr = 0x0000;
+
+    auto hex = [](uint32_t n, uint8_t d)
+    {
+        std::string s(d, '0');
+
+        for (int i = d - 1; i >= 0; i--, n >>= 4)
+            s[i] = "0123456789ABCDEF"[n & 0xF];
+
+        return s;
+    };
+
+    while (addr <= 0xFFFF)
+    {
+        line_addr = addr;
+
+        std::string inst = "$" + hex(addr, 4) + ": ";
+
+        uint8_t opcode = bus->read_cpu(addr++);
+        inst += table_instructions[opcode].name + " ";
+
+        if (table_instructions[opcode].addrmode == "IMP")
+        {
+            inst += " {IMP}";
+        }
+        else if (table_instructions[opcode].addrmode == "IMM")
+        {
+            uint8_t value = bus->read_cpu(addr++);
+            inst += "#$" + hex(value, 2) + " {IMM}";
+        }
+        else if (table_instructions[opcode].addrmode == "ZP0")
+        {
+            uint8_t lo = bus->read_cpu(addr++);
+            inst += "$" + hex(lo, 2) + " {ZP0}";
+        }
+        else if (table_instructions[opcode].addrmode == "ZPX")
+        {
+            uint8_t lo = bus->read_cpu(addr++);
+            inst += "$" + hex(lo, 2) + ", X {ZPX}";
+        }
+        else if (table_instructions[opcode].addrmode == "ZPY")
+        {
+            uint8_t lo = bus->read_cpu(addr++);
+            inst += "$" + hex(lo, 2) + ", Y {ZPY}";
+        }
+        else if (table_instructions[opcode].addrmode == "IZX")
+        {
+            uint8_t lo = bus->read_cpu(addr++);
+            inst += "($" + hex(lo, 2) + ", X) {IZX}";
+        }
+        else if (table_instructions[opcode].addrmode == "IZY")
+        {
+            uint8_t lo = bus->read_cpu(addr++);
+            inst += "($" + hex(lo, 2) + "), Y {IZY}";
+        }
+        else if (table_instructions[opcode].addrmode == "ABS")
+        {
+            uint8_t lo = bus->read_cpu(addr++);
+            uint8_t hi = bus->read_cpu(addr++);
+            inst += "$" + hex((uint16_t)(hi << 8) | lo, 4) + " {ABS}";
+        }
+        else if (table_instructions[opcode].addrmode == "ABX")
+        {
+            uint8_t lo = bus->read_cpu(addr++);
+            uint8_t hi = bus->read_cpu(addr++);
+            inst += "$" + hex((uint16_t)(hi << 8) | lo, 4) + ", X {ABX}";
+        }
+        else if (table_instructions[opcode].addrmode == "ABY")
+        {
+            uint8_t lo = bus->read_cpu(addr++);
+            uint8_t hi = bus->read_cpu(addr++);
+            inst += "$" + hex((uint16_t)(hi << 8) | lo, 4) + ", Y {ABY}";
+        }
+        else if (table_instructions[opcode].addrmode == "IND")
+        {
+            uint8_t lo = bus->read_cpu(addr++);
+            uint8_t hi = bus->read_cpu(addr++);
+            inst += "($" + hex((uint16_t)(hi << 8) | lo, 4) + ") {IND}";
+        }
+        else if (table_instructions[opcode].addrmode == "REL")
+        {
+            uint8_t value = bus->read_cpu(addr++);
+            inst += "$" + hex(value, 2) + " [$" + hex(addr + (int8_t)value, 4) + "] {REL}";
+        }
+
+        assembler_buf[line_addr] = inst;
     }
 }
 

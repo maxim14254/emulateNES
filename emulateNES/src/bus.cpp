@@ -194,6 +194,16 @@ void Bus::reset_ppu()
     ppu->reset();
 }
 
+void Bus::run_watch_all_tiles()
+{
+    ppu->run_watch_all_tiles();
+}
+
+void Bus::run_watch_cpu_instr(uint16_t PC)
+{
+    ppu->run_watch_cpu_instr(PC);
+}
+
 uint16_t Bus::get_NMI()
 {
     return cartridge->get_NMI();

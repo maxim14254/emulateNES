@@ -61,7 +61,7 @@ private:
     bool nmi_pending = false;
     MainWindow* window;
 
-    std::vector<std::function<void(CPU&)>> table_instructions;  // таблица инструкции
+   // std::vector<std::function<void(CPU&)>> table_instructions;  // таблица инструкции
 
     void run();
     void reset();

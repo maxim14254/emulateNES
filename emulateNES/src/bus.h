@@ -27,6 +27,8 @@ public:
     void run_steps_ppu(int cycles);
     void cpu_request_nmi();
     void reset_ppu();
+    void run_watch_all_tiles();
+    void run_watch_cpu_instr(uint16_t PC);
 
     uint16_t get_NMI();
     uint16_t get_RESET();
