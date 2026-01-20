@@ -72,18 +72,18 @@ private:
     void handle_nmi();
 
     //адресации
-    uint8_t immediate(uint16_t* addr = nullptr);            // 1 цикл
-    uint8_t zero_page(uint16_t* addr = nullptr);            // 2 цикла
-    uint8_t zero_pageX(uint16_t* addr = nullptr);           // 3 цикла
-    uint8_t zero_pageY(uint16_t* addr = nullptr);           // 3 цикла
+    uint8_t immediate(uint16_t* addr = nullptr, bool onlyRead = false);            // 1 цикл
+    uint8_t zero_page(uint16_t* addr = nullptr, bool onlyRead = false);            // 2 цикла
+    uint8_t zero_pageX(uint16_t* addr = nullptr, bool onlyRead = false);           // 3 цикла
+    uint8_t zero_pageY(uint16_t* addr = nullptr, bool onlyRead = false);           // 3 цикла
     uint8_t accumulator();                                  // 0 циклов
-    uint8_t absolute(uint16_t* addr = nullptr);             // 3 цикла
-    uint8_t absoluteX(uint16_t* addr = nullptr);            // 3-4 цикла
-    uint8_t absoluteY(uint16_t* addr = nullptr);            // 3-4 цикла
-    uint16_t indirect(uint16_t* addr = nullptr);            // 4 цикла
-    uint8_t indexed_inderectX(uint16_t* addr = nullptr);    // 5 циклов
-    uint8_t indexed_inderectY(uint16_t* addr = nullptr);    // 4-5 циклов
-    int8_t relative(uint16_t* addr = nullptr);              // 1 цикл
+    uint8_t absolute(uint16_t* addr = nullptr, bool onlyRead = false);             // 3 цикла
+    uint8_t absoluteX(uint16_t* addr = nullptr, bool onlyRead = false);            // 3-4 цикла
+    uint8_t absoluteY(uint16_t* addr = nullptr, bool onlyRead = false);            // 3-4 цикла
+    uint16_t indirect(uint16_t* addr = nullptr, bool onlyRead = false);            // 4 цикла
+    uint8_t indexed_inderectX(uint16_t* addr = nullptr, bool onlyRead = false);    // 5 циклов
+    uint8_t indexed_inderectY(uint16_t* addr = nullptr, bool onlyRead = false);    // 4-5 циклов
+    int8_t relative(uint16_t* addr = nullptr, bool onlyRead = false);              // 1 цикл
 
 
     //инструкции

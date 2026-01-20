@@ -17,7 +17,7 @@ public:
     Bus();
     ~Bus();
 
-    uint8_t read_cpu(uint16_t addr);
+    uint8_t read_cpu(uint16_t addr, bool onlyRead = false);
     void write_cpu(uint16_t addr, uint8_t data);
     uint8_t read_ppu(uint16_t addr);
     void write_ppu(uint16_t addr, uint8_t data);

@@ -373,10 +373,11 @@ void CPU::run()
         {
             std::lock_guard<std::mutex> lock(mutex_stop);
 
+#if DEBUG_ON
             bus->run_watch_all_tiles();
             bus->run_watch_cpu_instr(PC);
-
-            uint8_t val = bus->read_cpu(PC);
+#endif
+            uint8_t val = bus->read_cpu(PC, false);
             uint64_t old_cycles = cycles;
 
             std::function<void(CPU&)> instr_func = table_instructions[val].func;
@@ -410,9 +411,9 @@ void CPU::reset()
     PC = RESET;
 
     SP = 0xFD;
-    status = 0x34;
+    status = 0x20;
 
-    cycles = 7;
+    cycles = 8;
 
     bus->reset_ppu();
 }
@@ -429,17 +430,17 @@ void CPU::write(uint16_t addr, uint8_t data)
     bus->write_cpu(addr, data);
 }
 
-uint8_t CPU::immediate(uint16_t* addr)
+uint8_t CPU::immediate(uint16_t* addr, bool onlyRead)
 {
     ++cycles;
 
     if(addr)
         *addr = PC;
 
-    return bus->read_cpu(PC++);
+    return bus->read_cpu(PC++, onlyRead);
 }
 
-uint8_t CPU::zero_page(uint16_t* addr)
+uint8_t CPU::zero_page(uint16_t* addr, bool onlyRead)
 {
     uint8_t a1 = immediate();
 
@@ -448,10 +449,10 @@ uint8_t CPU::zero_page(uint16_t* addr)
     if(addr)
         *addr = a1;
 
-    return bus->read_cpu(a1);
+    return bus->read_cpu(a1, onlyRead);
 }
 
-uint8_t CPU::zero_pageX(uint16_t* addr)
+uint8_t CPU::zero_pageX(uint16_t* addr, bool onlyRead)
 {
     uint8_t a1 = immediate();
 
@@ -460,10 +461,10 @@ uint8_t CPU::zero_pageX(uint16_t* addr)
     if(addr)
         *addr = (uint8_t)(a1 + X);
 
-    return bus->read_cpu((uint8_t)(a1 + X));
+    return bus->read_cpu((uint8_t)(a1 + X), onlyRead);
 }
 
-uint8_t CPU::zero_pageY(uint16_t* addr)
+uint8_t CPU::zero_pageY(uint16_t* addr, bool onlyRead)
 {
     uint8_t a1 = immediate();
 
@@ -472,7 +473,7 @@ uint8_t CPU::zero_pageY(uint16_t* addr)
     if(addr)
         *addr = (uint8_t)(a1 + Y);
 
-    return bus->read_cpu((uint8_t)(a1 + Y));
+    return bus->read_cpu((uint8_t)(a1 + Y), onlyRead);
 }
 
 uint8_t CPU::accumulator()
@@ -480,7 +481,7 @@ uint8_t CPU::accumulator()
     return A;
 }
 
-uint8_t CPU::absolute(uint16_t* addr)
+uint8_t CPU::absolute(uint16_t* addr, bool onlyRead)
 {
     uint8_t a1 = immediate();
     uint8_t a2 = immediate();
@@ -491,10 +492,11 @@ uint8_t CPU::absolute(uint16_t* addr)
     if(addr)
         *addr = addr2;
 
-    return bus->read_cpu(addr2);
+
+    return bus->read_cpu(addr2, onlyRead);
 }
 
-uint8_t CPU::absoluteX(uint16_t* addr)
+uint8_t CPU::absoluteX(uint16_t* addr, bool onlyRead)
 {
     uint8_t a1 = immediate();
     uint8_t a2 = immediate();
@@ -509,10 +511,10 @@ uint8_t CPU::absoluteX(uint16_t* addr)
     if(addr)
         *addr = addr2;
 
-    return bus->read_cpu(addr2);
+    return bus->read_cpu(addr2, onlyRead);
 }
 
-uint8_t CPU::absoluteY(uint16_t* addr)
+uint8_t CPU::absoluteY(uint16_t* addr, bool onlyRead)
 {
     uint8_t a1 = immediate();
     uint8_t a2 = immediate();
@@ -527,10 +529,10 @@ uint8_t CPU::absoluteY(uint16_t* addr)
     if(addr)
         *addr = addr2;
 
-    return bus->read_cpu(addr2);
+    return bus->read_cpu(addr2, onlyRead);
 }
 
-uint16_t CPU::indirect(uint16_t* addr)
+uint16_t CPU::indirect(uint16_t* addr, bool onlyRead)
 {
     uint8_t a1 = immediate();
     uint8_t a2 = immediate();
@@ -539,24 +541,24 @@ uint16_t CPU::indirect(uint16_t* addr)
     if(addr)
         *addr = base;
 
-    uint8_t al = bus->read_cpu(base);
+    uint8_t al = bus->read_cpu(base, onlyRead);
     uint16_t ah;
 
     if ((base & 0x00FF) == 0x00FF)
-        ah = bus->read_cpu(base & 0xFF00);
+        ah = bus->read_cpu(base & 0xFF00, onlyRead);
     else
-        ah = bus->read_cpu(base + 1);
+        ah = bus->read_cpu(base + 1, onlyRead);
 
     cycles += 2;
     return (ah << 8) | al;
 }
 
-uint8_t CPU::indexed_inderectX(uint16_t* addr)
+uint8_t CPU::indexed_inderectX(uint16_t* addr, bool onlyRead)
 {
     uint8_t a1 = immediate();
 
-    uint8_t al = bus->read_cpu((a1 + X) & 0xFF);
-    uint8_t ah = bus->read_cpu((a1 + X + 1) & 0xFF);
+    uint8_t al = bus->read_cpu((a1 + X) & 0xFF, onlyRead);
+    uint8_t ah = bus->read_cpu((a1 + X + 1) & 0xFF, onlyRead);
     uint16_t addr2 = (ah << 8) | al;
 
     cycles += 4;
@@ -564,15 +566,15 @@ uint8_t CPU::indexed_inderectX(uint16_t* addr)
     if(addr)
         *addr = addr2;
 
-    return bus->read_cpu(addr2);
+    return bus->read_cpu(addr2, onlyRead);
 }
 
-uint8_t CPU::indexed_inderectY(uint16_t* addr)
+uint8_t CPU::indexed_inderectY(uint16_t* addr, bool onlyRead)
 {
     uint8_t a1 = immediate();
 
-    uint8_t al = bus->read_cpu(a1);
-    uint8_t ah = bus->read_cpu((a1 + 1) & 0xFF);
+    uint8_t al = bus->read_cpu(a1, onlyRead);
+    uint8_t ah = bus->read_cpu((a1 + 1) & 0xFF, onlyRead);
     uint16_t base = (ah << 8) | al;
     uint16_t addr2 = base + Y;
 
@@ -584,12 +586,12 @@ uint8_t CPU::indexed_inderectY(uint16_t* addr)
     if(addr)
         *addr = addr2;
 
-    return bus->read_cpu(addr2);
+    return bus->read_cpu(addr2, onlyRead);
 }
 
-int8_t CPU::relative(uint16_t* addr)
+int8_t CPU::relative(uint16_t* addr, bool onlyRead)
 {
-    return immediate(addr);
+    return immediate(addr, onlyRead);
 }
 
 void CPU::BRK_impl()
@@ -599,9 +601,7 @@ void CPU::BRK_impl()
     LOG::Write(PC, ddd, QString("BRK"), A, X, Y, status, SP, cycles);
 #endif
 
-    ++PC;
-
-    immediate();
+    PC += 2;
 
     write(0x0100 + SP--, (PC >> 8) & 0xFF);
     write(0x0100 + SP--, PC & 0xFF);
@@ -612,10 +612,12 @@ void CPU::BRK_impl()
     write(0x0100 + SP--, status);
 
     set_flag(StatusFlags::I, true);
+    set_flag(StatusFlags::B, false);
+    set_flag(StatusFlags::U, true);
 
     PC = bus->get_IRQ();
 
-    cycles += 6;
+    cycles += 7;
 }
 
 void CPU::ORA_base(uint8_t val)
@@ -1064,12 +1066,15 @@ void CPU::BPL_rel()
 
     int8_t val = relative();
 
+    if (val & 0x80)
+        val |= 0xFF00;
+
     if(get_flag(StatusFlags::N) == 0)
     {
         ++cycles;
         PC += val;
 
-        if(PC >> 8 != (PC - 2 - val) >> 8)
+        if(PC >> 8 != (PC - val) >> 8)
             ++cycles;
     }
 
@@ -2808,7 +2813,7 @@ void CPU::STA_indX()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = indexed_inderectX(&addr);
+    uint8_t val = indexed_inderectX(&addr, true);
 
     write(addr, A);
     ++cycles;
@@ -2845,7 +2850,7 @@ void CPU::STA_indY()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = indexed_inderectY(&addr);
+    uint8_t val = indexed_inderectY(&addr, true);
 
     write(addr, A);
     ++cycles;
@@ -2884,7 +2889,7 @@ void CPU::STA_zp()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_page(&addr);
+    uint8_t val = zero_page(&addr, true);
 
     write(addr, A);
     ++cycles;
@@ -2911,7 +2916,7 @@ void CPU::STA_zpX()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_pageX(&addr);
+    uint8_t val = zero_pageX(&addr, true);
 
     write(addr, A);
     ++cycles;
@@ -2938,7 +2943,7 @@ void CPU::STA_abs()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absolute(&addr);
+    uint8_t val = absolute(&addr, true);
 
     write(addr, A);
     ++cycles;
@@ -2973,7 +2978,7 @@ void CPU::STA_absX()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absoluteX(&addr);
+    uint8_t val = absoluteX(&addr, true);
 
     write(addr, A);
     ++cycles;
@@ -3009,7 +3014,7 @@ void CPU::STA_absY()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absoluteY(&addr);
+    uint8_t val = absoluteY(&addr, true);
 
     write(addr, A);
     ++cycles;
@@ -3045,7 +3050,7 @@ void CPU::STY_zp()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_page(&addr);
+    uint8_t val = zero_page(&addr, true);
 
     write(addr, Y);
     ++cycles;
@@ -3072,7 +3077,7 @@ void CPU::STY_zpX()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_pageX(&addr);
+    uint8_t val = zero_pageX(&addr, true);
 
     write(addr, Y);
     ++cycles;
@@ -3099,7 +3104,7 @@ void CPU::STY_abs()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absolute(&addr);
+    uint8_t val = absolute(&addr, true);
 
     write(addr, Y);
     ++cycles;
@@ -3132,7 +3137,7 @@ void CPU::STX_zp()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_page(&addr);
+    uint8_t val = zero_page(&addr, true);
 
     write(addr, X);
     ++cycles;
@@ -3159,7 +3164,7 @@ void CPU::STX_zpY()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_pageY(&addr);
+    uint8_t val = zero_pageY(&addr, true);
 
     write(addr, X);
     ++cycles;
@@ -3186,7 +3191,7 @@ void CPU::STX_abs()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absolute(&addr);
+    uint8_t val = absolute(&addr, true);
 
     write(addr, X);
     ++cycles;
@@ -4997,7 +5002,10 @@ void CPU::BEQ_rel()
 
     ++PC;
 
-    uint8_t val = relative();
+    int8_t val = relative();
+
+    if (val & 0x80)
+        val |= 0xFF00;
 
     if(get_flag(StatusFlags::Z))
     {
@@ -5110,7 +5118,7 @@ void CPU::NOP_imm_80()
 
     ++PC;
 
-    uint8_t val = immediate();
+    uint8_t val = immediate(nullptr, true);
 
     ++cycles;
 
@@ -5171,7 +5179,7 @@ void CPU::NOP_zp_04()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_page(&addr);
+    uint8_t val = zero_page(&addr, true);
 
     ++cycles;
 
@@ -5197,7 +5205,7 @@ void CPU::NOP_zp_44()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_page(&addr);
+    uint8_t val = zero_page(&addr, true);
 
     ++cycles;
 
@@ -5223,7 +5231,7 @@ void CPU::NOP_zp_64()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_page(&addr);
+    uint8_t val = zero_page(&addr, true);
 
     ++cycles;
 
@@ -5249,7 +5257,7 @@ void CPU::NOP_zpX_14()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_pageX(&addr);
+    uint8_t val = zero_pageX(&addr, true);
 
     ++cycles;
 
@@ -5275,7 +5283,7 @@ void CPU::NOP_zpX_34()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_pageX(&addr);
+    uint8_t val = zero_pageX(&addr, true);
 
     ++cycles;
 
@@ -5301,7 +5309,7 @@ void CPU::NOP_zpX_54()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_pageX(&addr);
+    uint8_t val = zero_pageX(&addr, true);
 
     ++cycles;
 
@@ -5327,7 +5335,7 @@ void CPU::NOP_zpX_74()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_pageX(&addr);
+    uint8_t val = zero_pageX(&addr, true);
 
     ++cycles;
 
@@ -5353,7 +5361,7 @@ void CPU::NOP_zpX_D4()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_pageX(&addr);
+    uint8_t val = zero_pageX(&addr, true);
 
     ++cycles;
 
@@ -5379,7 +5387,7 @@ void CPU::NOP_zpX_F4()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_pageX(&addr);
+    uint8_t val = zero_pageX(&addr, true);
 
     ++cycles;
 
@@ -5405,7 +5413,7 @@ void CPU::NOP_abs()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absolute(&addr);
+    uint8_t val = absolute(&addr, true);
 
     PC -= 0;
 
@@ -5433,7 +5441,7 @@ void CPU::NOP_absX_1C()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absoluteX(&addr);
+    uint8_t val = absoluteX(&addr, true);
 
     ++cycles;
 
@@ -5467,7 +5475,7 @@ void CPU::NOP_absX_3C()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absoluteX(&addr);
+    uint8_t val = absoluteX(&addr, true);
 
     ++cycles;
 
@@ -5501,7 +5509,7 @@ void CPU::NOP_absX_5C()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absoluteX(&addr);
+    uint8_t val = absoluteX(&addr, true);
 
     ++cycles;
 
@@ -5535,7 +5543,7 @@ void CPU::NOP_absX_7C()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absoluteX(&addr);
+    uint8_t val = absoluteX(&addr, true);
 
     ++cycles;
 
@@ -5569,7 +5577,7 @@ void CPU::NOP_absX_DC()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absoluteX(&addr);
+    uint8_t val = absoluteX(&addr, true);
 
     ++cycles;
 
@@ -5603,7 +5611,7 @@ void CPU::NOP_absX_FC()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absoluteX(&addr);
+    uint8_t val = absoluteX(&addr, true);
 
     ++cycles;
 
@@ -7213,7 +7221,7 @@ void CPU::SAX_indX()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = indexed_inderectX(&addr);
+    uint8_t val = indexed_inderectX(&addr, true);
 
     SAX_base(addr);
 
@@ -7248,7 +7256,7 @@ void CPU::SAX_zp()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_page(&addr);
+    uint8_t val = zero_page(&addr, true);
 
     SAX_base(addr);
 
@@ -7274,7 +7282,7 @@ void CPU::SAX_abs()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absolute(&addr);
+    uint8_t val = absolute(&addr, true);
 
     SAX_base(addr);
 
@@ -7300,7 +7308,7 @@ void CPU::SAX_zpY()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = zero_pageY(&addr);
+    uint8_t val = zero_pageY(&addr, true);
 
     SAX_base(addr);
 
@@ -7326,7 +7334,7 @@ void CPU::SAX_imm()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = immediate(&addr);
+    uint8_t val = immediate(&addr, true);
 
     SAX_base(addr);
 
@@ -7490,7 +7498,7 @@ void CPU::AHX_indY()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = indexed_inderectY(&addr);
+    uint8_t val = indexed_inderectY(&addr, true);
 
     AHX_base(addr);
 
@@ -7525,7 +7533,7 @@ void CPU::AHX_absY()
     ++PC;
 
     uint16_t addr;
-    uint8_t val = absoluteY(&addr);
+    uint8_t val = absoluteY(&addr, true);
 
     AHX_base(addr);
 

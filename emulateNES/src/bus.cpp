@@ -1,7 +1,6 @@
 #include "bus.h"
 #include "cartridge.h"
 #include <QString>
-#include <QFile>
 #include <QDir>
 #include <QDebug>
 #include "ppu.h"
@@ -20,7 +19,7 @@ Bus::~Bus()
 
 }
 
-uint8_t Bus::read_cpu(uint16_t addr)
+uint8_t Bus::read_cpu(uint16_t addr, bool onlyRead)
 {
     if (addr < 0x2000) // ОЗУ
     {
@@ -28,12 +27,12 @@ uint8_t Bus::read_cpu(uint16_t addr)
     }
     else if(addr >= 0x2000 && addr <= 0x2007) // регистры PPU
     {
-        return ppu->get_register(addr);
+        return ppu->get_register(addr, onlyRead);
     }
     else if(addr >= 0x2008 && addr <= 0x3FFF) // зеркало PPU
     {
         uint16_t reg = 0x2000 + (addr & 0x0007);
-        return ppu->get_register(reg);
+        return ppu->get_register(reg, onlyRead);
     }
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода
     {

@@ -24,39 +24,63 @@ PPU::~PPU()
 
 }
 
-uint8_t PPU::get_register(uint16_t addr)
+uint8_t PPU::get_register(uint16_t addr, bool onlyRead)
 {
-    uint8_t result;
+    uint8_t result = 0;
 
-    if(addr == 0x2000)
-        openBus = result = PPUCTRL;
-    else if(addr == 0x2001)
-        openBus = result = PPUMASK;
-    else if(addr == 0x2002)
+    if(onlyRead)
     {
-        uint8_t data = (PPUSTATUS & 0xE0) | (openBus & 0x1F);
-        PPUSTATUS &= ~0x80;
-        w = false;
-
-        openBus = result = data;
-    }
-    else if(addr == 0x2003)
-        openBus = result = OAMADDR;
-    else if(addr == 0x2004)
-        openBus = result = oam[OAMADDR];
-    else if(addr == 0x2005)
-        result = openBus;
-    else if(addr == 0x2006)
-        result = openBus;
-    else if(addr == 0x2007)
-    {
-        uint8_t data = read_vram_buffered();
-        increment_VRAM_address();
-
-        openBus = result = data;
+        if(addr == 0x2000)
+            result = PPUCTRL;
+        else if(addr == 0x2001)
+            result = PPUMASK;
+        else if(addr == 0x2002)
+            result = PPUSTATUS;
+//        else if(addr == 0x2003)
+//            result = OAMADDR;
+//        else if(addr == 0x2004)
+//            result = oam[OAMADDR];
+//        else if(addr == 0x2005)
+//            result = openBus;
+//        else if(addr == 0x2006)
+//            result = openBus;
+//        else if(addr == 0x2007)
+//            result = read_vram_buffered();
+        else
+            result = 0;
     }
     else
-        openBus = result = 0;
+    {
+        if(addr == 0x2000)
+            openBus = result = PPUCTRL;
+        else if(addr == 0x2001)
+            openBus = result = PPUMASK;
+        else if(addr == 0x2002)
+        {
+            uint8_t data = (PPUSTATUS & 0xE0) | (openBus & 0x1F);
+            PPUSTATUS &= ~0x80;
+            w = false;
+
+            openBus = result = data;
+        }
+        else if(addr == 0x2003)
+            openBus = result = OAMADDR;
+        else if(addr == 0x2004)
+            openBus = result = oam[OAMADDR];
+        else if(addr == 0x2005)
+            result = openBus;
+        else if(addr == 0x2006)
+            result = openBus;
+        else if(addr == 0x2007)
+        {
+            uint8_t data = read_vram_buffered();
+            increment_VRAM_address();
+
+            openBus = result = data;
+        }
+        else
+            openBus = result = 0;
+    }
 
     return result;
 }
@@ -176,8 +200,8 @@ void PPU::run(int cycles)
                 render_VRAM = (render_VRAM & 0xFBFF) | (temp_VRAM & 0x400);
                 render_VRAM = (render_VRAM & 0xFFE0) | (temp_VRAM & 0x1F);
             }
-            else if(cycle > 257 && cycle < 320)
-                get_current_sprites();
+            //else if(cycle > 257 && cycle < 320)
+                //get_current_sprites();
         }
 
         if (scanline == 261)
@@ -254,6 +278,7 @@ void PPU::run_watch_all_tiles()
             }
         }
     }
+
     QMetaObject::invokeMethod(window, [&]()
     {
         window->render_debug_tiles(pColData.data());

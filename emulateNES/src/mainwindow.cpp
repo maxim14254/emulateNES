@@ -16,10 +16,12 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowIcon(QIcon(":/nintendoNES.ico"));
 
     my_openGL.reset(new MyOpenGL(256, 240, this));
-    my_openGL->setMinimumSize(500, 500);
+    my_openGL->setMinimumSize(800, 600);
     ui->verticalLayout->addWidget(my_openGL.get());
 
     outBuffer.resize(256 * 240);
+
+#ifdef DEBUG_ON
 
     debug_tiles_widget.reset(new MyOpenGL(128, 128, this));
     debug_tiles_widget->setFixedSize(300, 300);
@@ -32,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->verticalLayout_3->addWidget(cpu_debuger.get());
 
     ui->verticalLayout_3->addStretch();
+#endif
 }
 
 MainWindow::~MainWindow()

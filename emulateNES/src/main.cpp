@@ -19,18 +19,18 @@ int main(int argc, char *argv[])
     MainWindow w;
     w.show();
 
-#ifdef LOG_ON
-    LOG::Init();
-#endif
-
     Bus bus;
 
     PPU ppu(&w, &bus);
     bus.init_PPU(&ppu);
 
+#ifdef LOG_ON
+    LOG::Init(&ppu);
+#endif
+
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/ppu_vbl_nmi.nes");
+    bool rez = cpu.slot_init_new_cartridge(":/games/nestest.nes");
 
     return a.exec();
 }

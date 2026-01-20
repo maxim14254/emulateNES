@@ -2,13 +2,16 @@
 #include <QString>
 #include <QDir>
 #include "QFile"
+#include "ppu.h"
 
 
 QFile log_file;
+PPU* ppu;
 
-
-void LOG::Init()
+void LOG::Init(PPU* _ppu)
 {
+    ppu = _ppu;
+
     QString path = QString("%1/log.txt").arg(QDir::currentPath());
     log_file.setFileName(path);
 
@@ -56,8 +59,11 @@ void LOG::Write(uint16_t PC, const int16_t operands[3], const QString &instructi
         n = sprintf(&rez[68], "SP:%02X", SP);
         rez[n + 68] = ' ';
         n = sprintf(&rez[74], "CYC:%d", cycles);
-        rez[n + 74] = '\n';
-        rez[n + 75] = '\0';
+        rez[n + 74] = ' ';
+        int s = n;
+        n = sprintf(&rez[s + 75], "PPUSTATUS:%d", ppu->getppustatus());
+        rez[n + s + 75] = '\n';
+        rez[n + s + 76] = '\0';
 
         log_file.write(rez.data());
     }

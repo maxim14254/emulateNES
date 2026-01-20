@@ -79,6 +79,15 @@ uint8_t Cartridge::mapper_read_prg(uint16_t addr)
         uint32_t offset = addr - 0x8000;
         return prg_rom[offset];
     }
+
+//    if (addr >= 0x8000 && addr <= 0xFFFF)
+//    {
+//        auto mapped_addr =  addr & (header.prg_rom > 1 ? 0x7FFF : 0x3FFF);
+//        return prg_rom[mapped_addr];
+
+//    }
+
+    return 0;
 }
 
 uint8_t Cartridge::mapper_read_chr(uint16_t addr)
