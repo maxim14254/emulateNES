@@ -248,32 +248,65 @@ void PPU::run(int cycles)
 void PPU::run_watch_all_tiles()
 {
     int numb_table = 0;
-    int palette = 1;
-    static std::vector<uint32_t> pColData(128 * 128);
+    int palette = 0;
 
-    for (uint16_t nTileY = 0; nTileY < 16; nTileY++)
+    static std::vector<uint32_t> pColData1(128 * 128);
+    static std::vector<uint32_t> pColData2(128 * 128);
+
+    for (uint16_t nTileY = 0; nTileY < 16; ++nTileY)
     {
-        for (uint16_t nTileX = 0; nTileX < 16; nTileX++)
+        for (uint16_t nTileX = 0; nTileX < 16; ++nTileX)
         {
             uint16_t nOffset = nTileY * 256 + nTileX * 16;
 
-            for (uint16_t row = 0; row < 8; row++)
+            for (uint16_t row = 0; row < 8; ++row)
             {
                 uint8_t tile_lsb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0000);
                 uint8_t tile_msb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0008);
 
-                for (uint16_t col = 0; col < 8; col++)
+                for (uint16_t col = 0; col < 8; ++col)
                 {
                     uint8_t pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
 
-                    tile_lsb >>= 1; tile_msb >>= 1;
+                    tile_lsb >>= 1;
+                    tile_msb >>= 1;
 
-                    int x = (nTileY * 16 + nTileX) * 64;
-                    int y = x + (row * 8 + col);
+                    int x = nTileX * 8 + (7 - col);
+                    int y = nTileY * 8 + row;
                     Color color = nesPalette[bus->read_ppu(0x3F00 + (palette << 2) + pixel) & 0x3F];
 
                     uint32_t pixel2 = (static_cast<uint32_t>(color.r) << 16) | (static_cast<uint32_t>(color.g) << 8) | (static_cast<uint32_t>(color.b) << 0);
-                    pColData[y] = pixel2;
+                    pColData1[y * 128 + x] = pixel2;
+                }
+            }
+        }
+    }
+
+    numb_table = 1;
+    for (uint16_t nTileY = 0; nTileY < 16; ++nTileY)
+    {
+        for (uint16_t nTileX = 0; nTileX < 16; ++nTileX)
+        {
+            uint16_t nOffset = nTileY * 256 + nTileX * 16;
+
+            for (uint16_t row = 0; row < 8; ++row)
+            {
+                uint8_t tile_lsb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0000);
+                uint8_t tile_msb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0008);
+
+                for (uint16_t col = 0; col < 8; ++col)
+                {
+                    uint8_t pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
+
+                    tile_lsb >>= 1;
+                    tile_msb >>= 1;
+
+                    int x = nTileX * 8 + (7 - col);
+                    int y = nTileY * 8 + row;
+                    Color color = nesPalette[bus->read_ppu(0x3F00 + (palette << 2) + pixel) & 0x3F];
+
+                    uint32_t pixel2 = (static_cast<uint32_t>(color.r) << 16) | (static_cast<uint32_t>(color.g) << 8) | (static_cast<uint32_t>(color.b) << 0);
+                    pColData2[y * 128 + x] = pixel2;
                 }
             }
         }
@@ -281,9 +314,10 @@ void PPU::run_watch_all_tiles()
 
     QMetaObject::invokeMethod(window, [&]()
     {
-        window->render_debug_tiles(pColData.data());
+        window->render_debug_tiles(pColData1.data(), pColData2.data());
     },
     Qt::QueuedConnection);
+
 }
 
 void PPU::run_watch_cpu_instr(uint16_t PC)

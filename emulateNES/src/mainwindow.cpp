@@ -23,9 +23,13 @@ MainWindow::MainWindow(QWidget *parent)
 
 #ifdef DEBUG_ON
 
-    debug_tiles_widget.reset(new MyOpenGL(128, 128, this));
-    debug_tiles_widget->setFixedSize(300, 300);
-    ui->verticalLayout_3->addWidget(debug_tiles_widget.get());
+    debug_tiles_widget1.reset(new MyOpenGL(128, 128, this));
+    debug_tiles_widget1->setFixedSize(300, 300);
+    ui->horizontalLayout_2->addWidget(debug_tiles_widget1.get());
+
+    debug_tiles_widget2.reset(new MyOpenGL(128, 128, this));
+    debug_tiles_widget2->setFixedSize(300, 300);
+    ui->horizontalLayout_2->addWidget(debug_tiles_widget2.get());
 
     cpu_debuger.reset(new QTextEdit(this));
     cpu_debuger->setPlainText("");
@@ -63,9 +67,10 @@ void MainWindow::render_frame(const std::vector<std::vector<PPU::Color>>& frame_
     my_openGL->set_frame_buffer(outBuffer.data());
 }
 
-void MainWindow::render_debug_tiles(uint32_t *frame)
+void MainWindow::render_debug_tiles(uint32_t *frame1, uint32_t *frame2)
 {
-    debug_tiles_widget->set_frame_buffer(frame);
+    debug_tiles_widget1->set_frame_buffer(frame1);
+    debug_tiles_widget2->set_frame_buffer(frame2);
 }
 
 void MainWindow::render_cpu_debug(QString text)

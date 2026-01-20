@@ -46,7 +46,11 @@
         <layout class="QVBoxLayout" name="verticalLayout"/>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_3"/>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2"/>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>

@@ -24,7 +24,7 @@ public:
 
     void render_frame(const std::vector<std::vector<PPU::Color>>& frame_buffer, std::mutex& mutex_lock_frame_buffer);
 
-    void render_debug_tiles(uint32_t* frame);
+    void render_debug_tiles(uint32_t *frame1, uint32_t *frame2);
     void render_cpu_debug(QString text);
     void clear_cpu_debug();
 
@@ -35,7 +35,8 @@ private:
     Ui::MainWindow *ui;
     std::unique_ptr<MyOpenGL> my_openGL;
     std::vector<uint32_t> outBuffer;
-    std::unique_ptr<MyOpenGL> debug_tiles_widget;
+    std::unique_ptr<MyOpenGL> debug_tiles_widget1;
+    std::unique_ptr<MyOpenGL> debug_tiles_widget2;
     std::unique_ptr<QTextEdit> cpu_debuger;
 
 signals:
