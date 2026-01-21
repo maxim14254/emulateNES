@@ -34,6 +34,13 @@ public:
     uint16_t get_RESET();
     uint16_t get_IRQ();
 
+    uint16_t get_PC();
+    uint8_t get_SP();
+    uint8_t get_statusCPU();
+    uint8_t get_A();
+    uint8_t get_X();
+    uint8_t get_Y();
+
 private:
     std::vector<uint8_t> ram;               //ОЗУ
     std::vector<uint8_t> vram;              //видеопамять

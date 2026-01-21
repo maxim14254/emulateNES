@@ -36,6 +36,13 @@ public:
 
     void request_nmi();
 
+    uint16_t get_PC(){ return PC; }
+    uint8_t get_SP(){ return SP; }
+    uint8_t get_statusCPU(){ return status; }
+    uint8_t get_A(){ return A; }
+    uint8_t get_X(){ return X; }
+    uint8_t get_Y(){ return Y; }
+
 public slots:
     bool slot_init_new_cartridge(const QString& path);
 

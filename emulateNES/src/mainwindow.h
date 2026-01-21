@@ -25,7 +25,8 @@ public:
     void render_frame(const std::vector<std::vector<PPU::Color>>& frame_buffer, std::mutex& mutex_lock_frame_buffer);
 
     void render_debug_tiles(uint32_t *frame1, uint32_t *frame2);
-    void render_cpu_debug(QString text);
+    void render_cpu_debug(const QString& text, uint8_t PPUCTRL, uint8_t PPUMASK, uint8_t PPUSTATUS, uint8_t OAMADDR, uint8_t OAMDATA, uint8_t PPUSCROLL, uint8_t PPUDATA, uint16_t PPUADDR,
+                          uint16_t PC, uint8_t SP, uint8_t status, uint8_t A, uint8_t X, uint8_t Y);
     void clear_cpu_debug();
 
 public slots:

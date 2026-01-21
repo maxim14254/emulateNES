@@ -364,37 +364,23 @@ bool CPU::slot_init_new_cartridge(const QString& path)
 
 void CPU::run()
 {
-    int FPS = 60;
-
-    auto start_time = std::chrono::steady_clock::now();
-
     while (start)
     {
+        std::lock_guard<std::mutex> lock(mutex_stop);
+
+        uint8_t val = bus->read_cpu(PC, false);
+        uint64_t old_cycles = cycles;
+
+        std::function<void(CPU&)> instr_func = table_instructions[val].func;
+        instr_func(*this);
+
+        bus->run_steps_ppu(cycles - old_cycles);
+
+        if (nmi_pending)
         {
-            std::lock_guard<std::mutex> lock(mutex_stop);
-
-#if DEBUG_ON
-            bus->run_watch_all_tiles();
-            bus->run_watch_cpu_instr(PC);
-#endif
-            uint8_t val = bus->read_cpu(PC, false);
-            uint64_t old_cycles = cycles;
-
-            std::function<void(CPU&)> instr_func = table_instructions[val].func;
-            instr_func(*this);
-
-            bus->run_steps_ppu(cycles - old_cycles);
-
-            if (nmi_pending)
-            {
-                nmi_pending = false;
-                handle_nmi();
-            }
+            nmi_pending = false;
+            handle_nmi();
         }
-
-        auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time);
-        std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(((1 / FPS) * 1000) - elapsed_ms.count())));
-        start_time = std::chrono::steady_clock::now();
     }
 }
 
@@ -7700,6 +7686,6 @@ void CPU::KIL_imp()
 {
     emit signal_error_show();
 
-    start = false;     
+    start = false;
 }
 

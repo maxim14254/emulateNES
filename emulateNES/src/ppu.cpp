@@ -338,31 +338,34 @@ void PPU::run_watch_cpu_instr(uint16_t PC)
     if(it_a != assembler_buf.end())
     {
         for(int i = 0; i < 10; ++i)
+            --it_a;
+
+        for(int i = 0; i < 9; ++i)
         {
-            if (--it_a != assembler_buf.end())
+            if (++it_a != assembler_buf.end())
             {
-                value += QString("%1\n").arg(it_a->second.c_str());
+                value += QString("    %1\n").arg(it_a->second.c_str());
             }
         }
-        it_a = assembler_buf.find(PC);
     }
 
-    if(it_a != assembler_buf.end())
+    if(++it_a != assembler_buf.end())
     {
-        value += QString("==>%1\n").arg(it_a->second.c_str());
+        value += QString("=>%1\n").arg(it_a->second.c_str());
 
         for(int i = 0; i < 10; ++i)
         {
             if (++it_a != assembler_buf.end())
             {
-                value += QString("%1\n").arg(it_a->second.c_str());
+                value += QString("    %1\n").arg(it_a->second.c_str());
             }
         }
     }
 
     QMetaObject::invokeMethod(window, [&, value]()
     {
-        window->render_cpu_debug(value);
+        window->render_cpu_debug(value, PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA, PPUADDR,
+                                 bus->get_PC(), bus->get_SP(), bus->get_statusCPU(), bus->get_A(), bus->get_X(), bus->get_Y());
     },
     Qt::QueuedConnection);
 }
@@ -393,6 +396,11 @@ void PPU::ppu_tick()
 
             scanline = 0;
             ++frame;
+
+#if DEBUG_ON
+            run_watch_all_tiles();
+            run_watch_cpu_instr(bus->get_PC());
+#endif
         }
     }
     else if(scanline == 261 && cycle == 339 && (PPUMASK & 0x18) && (frame & 1))
@@ -400,6 +408,11 @@ void PPU::ppu_tick()
         std::lock_guard lock(mutex_lock_frame_buffer);
 
         scanline = cycle = 0;
+
+#if DEBUG_ON
+            run_watch_all_tiles();
+            run_watch_cpu_instr(bus->get_PC());
+#endif
     }
 }
 
@@ -443,73 +456,73 @@ void PPU::download_asm_buffer(std::map<uint16_t, std::string> &assembler_buf)
     {
         line_addr = addr;
 
-        std::string inst = "$" + hex(addr, 4) + ": ";
+        std::string inst = "$" + hex(addr, 4) + ":  ";
 
         uint8_t opcode = bus->read_cpu(addr++);
-        inst += table_instructions[opcode].name + " ";
+        inst += table_instructions[opcode].name + "  ";
 
         if (table_instructions[opcode].addrmode == "IMP")
         {
-            inst += " {IMP}";
+            inst += "  {IMP}";
         }
         else if (table_instructions[opcode].addrmode == "IMM")
         {
             uint8_t value = bus->read_cpu(addr++);
-            inst += "#$" + hex(value, 2) + " {IMM}";
+            inst += "#$" + hex(value, 2) + "  {IMM}";
         }
         else if (table_instructions[opcode].addrmode == "ZP0")
         {
             uint8_t lo = bus->read_cpu(addr++);
-            inst += "$" + hex(lo, 2) + " {ZP0}";
+            inst += "$" + hex(lo, 2) + "  {ZP0}";
         }
         else if (table_instructions[opcode].addrmode == "ZPX")
         {
             uint8_t lo = bus->read_cpu(addr++);
-            inst += "$" + hex(lo, 2) + ", X {ZPX}";
+            inst += "$" + hex(lo, 2) + ",  X  {ZPX}";
         }
         else if (table_instructions[opcode].addrmode == "ZPY")
         {
             uint8_t lo = bus->read_cpu(addr++);
-            inst += "$" + hex(lo, 2) + ", Y {ZPY}";
+            inst += "$" + hex(lo, 2) + ",  Y  {ZPY}";
         }
         else if (table_instructions[opcode].addrmode == "IZX")
         {
             uint8_t lo = bus->read_cpu(addr++);
-            inst += "($" + hex(lo, 2) + ", X) {IZX}";
+            inst += "($" + hex(lo, 2) + ",  X)  {IZX}";
         }
         else if (table_instructions[opcode].addrmode == "IZY")
         {
             uint8_t lo = bus->read_cpu(addr++);
-            inst += "($" + hex(lo, 2) + "), Y {IZY}";
+            inst += "($" + hex(lo, 2) + "),  Y  {IZY}";
         }
         else if (table_instructions[opcode].addrmode == "ABS")
         {
             uint8_t lo = bus->read_cpu(addr++);
             uint8_t hi = bus->read_cpu(addr++);
-            inst += "$" + hex((uint16_t)(hi << 8) | lo, 4) + " {ABS}";
+            inst += "$" + hex((uint16_t)(hi << 8) | lo, 4) + "  {ABS}";
         }
         else if (table_instructions[opcode].addrmode == "ABX")
         {
             uint8_t lo = bus->read_cpu(addr++);
             uint8_t hi = bus->read_cpu(addr++);
-            inst += "$" + hex((uint16_t)(hi << 8) | lo, 4) + ", X {ABX}";
+            inst += "$" + hex((uint16_t)(hi << 8) | lo, 4) + ",  X  {ABX}";
         }
         else if (table_instructions[opcode].addrmode == "ABY")
         {
             uint8_t lo = bus->read_cpu(addr++);
             uint8_t hi = bus->read_cpu(addr++);
-            inst += "$" + hex((uint16_t)(hi << 8) | lo, 4) + ", Y {ABY}";
+            inst += "$" + hex((uint16_t)(hi << 8) | lo, 4) + ",  Y  {ABY}";
         }
         else if (table_instructions[opcode].addrmode == "IND")
         {
             uint8_t lo = bus->read_cpu(addr++);
             uint8_t hi = bus->read_cpu(addr++);
-            inst += "($" + hex((uint16_t)(hi << 8) | lo, 4) + ") {IND}";
+            inst += "($" + hex((uint16_t)(hi << 8) | lo, 4) + ")  {IND}";
         }
         else if (table_instructions[opcode].addrmode == "REL")
         {
             uint8_t value = bus->read_cpu(addr++);
-            inst += "$" + hex(value, 2) + " [$" + hex(addr + (int8_t)value, 4) + "] {REL}";
+            inst += "$" + hex(value, 2) + "  [$" + hex(addr + (int8_t)value, 4) + "]  {REL}";
         }
 
         assembler_buf[line_addr] = inst;

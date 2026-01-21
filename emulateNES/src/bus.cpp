@@ -217,3 +217,33 @@ uint16_t Bus::get_IRQ()
 {
     return cartridge->get_IRQ();
 }
+
+uint16_t Bus::get_PC()
+{
+    return cpu->get_PC();
+}
+
+uint8_t Bus::get_SP()
+{
+    return cpu->get_SP();
+}
+
+uint8_t Bus::get_statusCPU()
+{
+    return cpu->get_statusCPU();
+}
+
+uint8_t Bus::get_A()
+{
+    return cpu->get_A();
+}
+
+uint8_t Bus::get_X()
+{
+    return cpu->get_X();
+}
+
+uint8_t Bus::get_Y()
+{
+    return cpu->get_Y();
+}

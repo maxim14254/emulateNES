@@ -19,6 +19,8 @@ MainWindow::MainWindow(QWidget *parent)
     my_openGL->setMinimumSize(800, 600);
     ui->verticalLayout->addWidget(my_openGL.get());
 
+    ui->cpu_debuger->setVisible(false);
+
     outBuffer.resize(256 * 240);
 
 #ifdef DEBUG_ON
@@ -31,13 +33,13 @@ MainWindow::MainWindow(QWidget *parent)
     debug_tiles_widget2->setFixedSize(300, 300);
     ui->horizontalLayout_2->addWidget(debug_tiles_widget2.get());
 
-    cpu_debuger.reset(new QTextEdit(this));
-    cpu_debuger->setPlainText("");
-    cpu_debuger->setFixedSize(610, 610);
-    cpu_debuger->setTextInteractionFlags(Qt::NoTextInteraction);
-    ui->verticalLayout_3->addWidget(cpu_debuger.get());
+    ui->cpu_debuger->setVisible(true);
+    ui->cpu_debuger->setPlainText("");
+    ui->cpu_debuger->setFixedSize(350, 450);
+    ui->cpu_debuger->setTextInteractionFlags(Qt::NoTextInteraction);
 
     ui->verticalLayout_3->addStretch();
+
 #endif
 }
 
@@ -73,14 +75,32 @@ void MainWindow::render_debug_tiles(uint32_t *frame1, uint32_t *frame2)
     debug_tiles_widget2->set_frame_buffer(frame2);
 }
 
-void MainWindow::render_cpu_debug(QString text)
-{
-    cpu_debuger->setText(text);
+void MainWindow::render_cpu_debug(const QString& text,uint8_t PPUCTRL, uint8_t PPUMASK, uint8_t PPUSTATUS, uint8_t OAMADDR, uint8_t OAMDATA, uint8_t PPUSCROLL, uint8_t PPUDATA, uint16_t PPUADDR,
+                                  uint16_t PC, uint8_t SP, uint8_t status, uint8_t A, uint8_t X, uint8_t Y)
+{    
+    ui->cpu_debuger->setText(text);
+
+    ui->label_PC->setText(QString("%1").arg(PC, 4, 16, QChar('0')).toUpper());
+    ui->label_SP->setText(QString("%1").arg(SP, 2, 16, QChar('0')).toUpper());
+    ui->label_status->setText(QString("%1").arg(status, 8, 2, QChar('0')));
+    ui->label_A->setText(QString("%1").arg(A, 2, 16, QChar('0')).toUpper());
+    ui->label_X->setText(QString("%1").arg(X, 2, 16, QChar('0')).toUpper());
+    ui->label_Y->setText(QString("%1").arg(Y, 2, 16, QChar('0')).toUpper());
+
+    ui->label_ppustatus_2->setText(QString("%1").arg(PPUSTATUS, 2, 16, QChar('0')).toUpper());
+    ui->label_ppuctrl->setText(QString("%1").arg(PPUCTRL, 2, 16, QChar('0')).toUpper());
+    ui->label_ppumask->setText(QString("%1").arg(PPUMASK, 2, 16, QChar('0')).toUpper());
+    ui->label_oamddr->setText(QString("%1").arg(OAMADDR, 2, 16, QChar('0')).toUpper());
+    ui->label_oamdata->setText(QString("%1").arg(OAMDATA, 2, 16, QChar('0')).toUpper());
+    ui->label_ppuscroll->setText(QString("%1").arg(PPUSCROLL, 2, 16, QChar('0')).toUpper());
+    ui->label_ppudata->setText(QString("%1").arg(PPUDATA, 2, 16, QChar('0')).toUpper());
+    ui->label_ppuadr->setText(QString("%1").arg(PPUADDR, 4, 16, QChar('0')).toUpper());
+
 }
 
 void MainWindow::clear_cpu_debug()
 {
-    cpu_debuger->clear();
+    ui->cpu_debuger->clear();
 }
 
 void MainWindow::slot_show_error_message()

@@ -52,6 +52,12 @@ void MyOpenGL::resizeGL(int w, int h)
 
 void MyOpenGL::paintGL()
 {
+    static auto start_time = std::chrono::steady_clock::now();
+
+    auto elapsed_ms = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time);
+    double aaa = ((1.0 / 60.0) * 1000000.0) - elapsed_ms.count();
+    std::this_thread::sleep_for(std::chrono::microseconds((int64_t)aaa));
+
     glClear(GL_COLOR_BUFFER_BIT);
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -84,5 +90,7 @@ void MyOpenGL::paintGL()
 
     glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    start_time = std::chrono::steady_clock::now();
 }
 
