@@ -20,8 +20,6 @@ typedef struct
 } NESHeader;
 
 
-
-
 class Cartridge
 {
 public:
@@ -41,6 +39,14 @@ public:
     uint16_t get_NMI();
     uint16_t get_RESET();
     uint16_t get_IRQ();
+
+    enum MIRROR
+    {
+        HORIZONTAL,
+        VERTICAL,
+        ONESCREEN_LO,
+        ONESCREEN_HI,
+    } Orintation = HORIZONTAL;
 
 
 private:

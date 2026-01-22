@@ -34,6 +34,8 @@ Cartridge::Cartridge(const QString& path, bool* status)
 
             uint8_t mapper = (map_hi << 8) | map_lo;
 
+            Orintation = map_lo & 0x01 ? VERTICAL : HORIZONTAL;
+
             if(mapper == 0)
             {
                 // NROM
@@ -116,7 +118,7 @@ void Cartridge::write_chr_ram(uint16_t addr, uint8_t data)
 
 uint8_t Cartridge::map_nametable_addr(uint16_t addr)
 {
-    return 1; // TO DO
+    return addr; // TO DO
 }
 
 uint16_t Cartridge::get_NMI()

@@ -1,7 +1,7 @@
 TEMPLATE = subdirs
 
 BIN_DIR = $$shadowed(emulateNES)
-LOG = 1
+LOG = 0
 DEBUG = 1
 
 SUBDIRS += \
