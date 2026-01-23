@@ -86,7 +86,7 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     }
 }
 
-uint8_t Bus::read_ppu(uint16_t addr)
+uint8_t Bus:: read_ppu(uint16_t addr)
 {
     addr &= 0x3FFF;
 

@@ -43,31 +43,36 @@ public:
     uint8_t getppustatus(){return PPUSTATUS;}
 
 private:
-    uint8_t PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA;
+    uint8_t PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA; // регистры
     // PPUSTATUS 0x80 VBlank
     // PPUSTATUS 0x40 попадание по спрайту 0
     // PPUSTATUS 0x20 переполнение спрайтов не более 8
 
     // PPUCTRL 0x80 Формирование запроса прерывания NMI
     // PPUCTRL 0x20 Размер спрайтов (0 - 8x8; 1 - 8x16)
-    // PPUCTRL 0x10 Выбор знакогенератора фона (0/1)
+    // PPUCTRL 0x10 Выбор номера таблицы chr
     // PPUCTRL 0x08 Выбор знакогенератора спрайтов (0/1)
     // PPUCTRL 0x04 Выбор режима инкремента (0 – увеличение на единицу; 1 - увеличение на 32)
     // PPUCTRL 0x03 Адрес активной экранной страницы
 
-    uint16_t PPUADDR;                                   // регистры
+    uint16_t PPUADDR;                                   // регистр
     std::vector<uint8_t> oam;                           // 256 байт OAM (64 спрайта по 4 байта)
-    std::vector<std::vector<Color>> frame_buffer;       // результат кадра (цвета ARGB/RGBA)
+    std::vector<std::vector<Color>> frame_buffer;       // результат кадра RGB
     std::vector<Sprite> sprites_current_scanline;       // спрайты для текущей линии
 
     int16_t scanline = 0;
     uint16_t cycle = 0;
     uint64_t frame = 0;
 
+    //5бит - X тайла
+    //5бит - Y тайла
+    //2бита - nametable по x, y
+    //3бита - сдвиг по Y у пикселя внутри тайла
     uint16_t current_VRAM = 0;
     uint16_t render_VRAM = 0;
     uint16_t temp_VRAM = 0;
-    uint8_t numb_pixelX = 0;
+    uint8_t numb_pixelX = 0; // сдвиг по X у пикселя внутри тайла
+
     uint8_t ppu_data_buffer = 0;
     bool w;
     uint8_t openBus = 0;

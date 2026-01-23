@@ -597,7 +597,7 @@ uint8_t PPU::get_sprite(const Sprite& sprite)
     return colorByte;
 }
 
-uint8_t PPU::  get_background()
+uint8_t PPU::get_background()
 {   
     uint8_t x = cycle - 1;
     uint8_t y = scanline;
@@ -611,47 +611,48 @@ uint8_t PPU::  get_background()
     if(!(PPUMASK & 0x08) || (!(PPUMASK & 0x02) && cycle - 1 < 8))
         return 0;
 
-    uint16_t nameTableBase = 0x2000 | (render_VRAM & 0x0C00);
+    uint16_t nameTableBase = 0x2000 | (render_VRAM & 0x0C00); // номер таблицы экрана
     uint16_t tileIndex = y * 256 + x;
     uint8_t tileByte = bus->read_ppu(nameTableBase + tileIndex);
 
     uint16_t attrTableBase = nameTableBase + 0x3C0;
-    uint16_t attrIndex = (numb_tileY / 4) * 8 + (numb_tileX / 4);
+    uint8_t numb_blockX = numb_tileX / 4;
+    uint8_t numb_blockY = numb_tileY / 4;
+
+    uint16_t attrIndex = numb_blockX * 8 + numb_blockY;
     uint8_t attrByte = bus->read_ppu(attrTableBase + attrIndex);
+    uint16_t deltaX = (x - numb_blockX * 32);
+    uint16_t deltaY = (y - numb_blockY * 32);
 
-    uint8_t quadrantX = (x / 2) % 2;
-    uint8_t quadrantY = (y / 2) % 2;
-    uint8_t shift = (quadrantY * 2 + quadrantX) * 2;
+    if(deltaX >= 16 && deltaY < 16)
+        attrByte >>= 2;
+    else if(deltaX < 16 && deltaY >= 16)
+        attrByte >>= 4;
+    else if(deltaX >= 16 && deltaY >= 16)
+        attrByte >>= 6;
 
-    uint8_t paletteNumb = (attrByte >> shift) & 0x03;
+    uint8_t paletteNumb = attrByte & 0x03;
 
     uint16_t patternBase = (PPUCTRL & 0x10) ? 0x1000 : 0x0000;
-    uint16_t tileAddr = patternBase + tileByte * 16 + y;
 
-    uint8_t lowByte  = bus->read_ppu(tileAddr);
-    uint8_t highByte = bus->read_ppu(tileAddr + 8);
+    uint8_t numb_pixelX = (x - numb_tileX * 8);
+    uint8_t numb_pixelY = (y - numb_tileY * 8);
 
-    uint8_t step_bit = 7 - x;
-    bool highBit = (highByte >> step_bit) & 1;
-    bool lowBit = (lowByte >> step_bit) & 1;
+    uint8_t tile_lsb = bus->read_ppu(patternBase + tileByte * 16 * numb_pixelY + 0x0000);
+    uint8_t tile_msb = bus->read_ppu(patternBase + tileByte * 16 * numb_pixelY + 0x0008);
+
+    uint8_t step_bit = 7 - numb_pixelX;
+    bool highBit = (tile_msb >> step_bit) & 1;
+    bool lowBit = (tile_lsb >> step_bit) & 1;
     uint8_t color = (highBit << 1) | lowBit;
-
 
     uint8_t colorByte;
     if (color == 0)
         colorByte = bus->read_ppu(0x3F00);
     else
     {
-        uint16_t addr = 0x3F00 + paletteNumb * 4 + color;
+        uint16_t addr = 0x3F00 + paletteNumb + color;
         colorByte = bus->read_ppu(addr);
-    }
-
-
-    ++numb_pixelX;
-    if (numb_pixelX == 8)
-    {
-        numb_pixelX = 0;
-        increment_x();
     }
 
     return colorByte & 0x3F;
