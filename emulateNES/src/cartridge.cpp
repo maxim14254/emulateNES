@@ -116,7 +116,7 @@ void Cartridge::write_chr_ram(uint16_t addr, uint8_t data)
         chr_ram[addr] = data;
 }
 
-uint8_t Cartridge::map_nametable_addr(uint16_t addr)
+uint16_t Cartridge::map_nametable_addr(uint16_t addr)
 {
     return addr; // TO DO
 }

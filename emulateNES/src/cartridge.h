@@ -34,7 +34,7 @@ public:
 
     void write_chr_ram(uint16_t addr, uint8_t data);
 
-    uint8_t map_nametable_addr(uint16_t addr);
+    uint16_t map_nametable_addr(uint16_t addr);
 
     uint16_t get_NMI();
     uint16_t get_RESET();

@@ -200,8 +200,10 @@ void PPU::run(int cycles)
                 render_VRAM = (render_VRAM & 0xFBFF) | (temp_VRAM & 0x400);
                 render_VRAM = (render_VRAM & 0xFFE0) | (temp_VRAM & 0x1F);
             }
-            //else if(cycle > 257 && cycle < 320)
-                //get_current_sprites();
+            else if(cycle > 257 && cycle < 320)
+                get_current_sprites();
+            else if(cycle > 320 && cycle <= 336)
+                shifts_calculation();
         }
 
         if (scanline == 261)
@@ -599,51 +601,12 @@ uint8_t PPU::get_sprite(const Sprite& sprite)
 
 uint8_t PPU::get_background()
 {   
-    uint8_t x = cycle - 1;
-    uint8_t y = scanline;
-
-    uint8_t numb_tileX = x / 8;
-    uint8_t numb_tileY = y / 8;
-
-//    x = numb_tileX * 8 + numb_pixelX;
-//    y = numb_tileY * 8 + numb_pixelY;
-
     if(!(PPUMASK & 0x08) || (!(PPUMASK & 0x02) && cycle - 1 < 8))
         return 0;
 
-    uint16_t nameTableBase = 0x2000 | (render_VRAM & 0x0C00); // номер таблицы экрана
-    uint16_t tileIndex = y * 256 + x;
-    uint8_t tileByte = bus->read_ppu(nameTableBase + tileIndex);
-
-    uint16_t attrTableBase = nameTableBase + 0x3C0;
-    uint8_t numb_blockX = numb_tileX / 4;
-    uint8_t numb_blockY = numb_tileY / 4;
-
-    uint16_t attrIndex = numb_blockX * 8 + numb_blockY;
-    uint8_t attrByte = bus->read_ppu(attrTableBase + attrIndex);
-    uint16_t deltaX = (x - numb_blockX * 32);
-    uint16_t deltaY = (y - numb_blockY * 32);
-
-    if(deltaX >= 16 && deltaY < 16)
-        attrByte >>= 2;
-    else if(deltaX < 16 && deltaY >= 16)
-        attrByte >>= 4;
-    else if(deltaX >= 16 && deltaY >= 16)
-        attrByte >>= 6;
-
-    uint8_t paletteNumb = attrByte & 0x03;
-
-    uint16_t patternBase = (PPUCTRL & 0x10) ? 0x1000 : 0x0000;
-
-    uint8_t numb_pixelX = (x - numb_tileX * 8);
-    uint8_t numb_pixelY = (y - numb_tileY * 8);
-
-    uint8_t tile_lsb = bus->read_ppu(patternBase + tileByte * 16 * numb_pixelY + 0x0000);
-    uint8_t tile_msb = bus->read_ppu(patternBase + tileByte * 16 * numb_pixelY + 0x0008);
-
-    uint8_t step_bit = 7 - numb_pixelX;
-    bool highBit = (tile_msb >> step_bit) & 1;
-    bool lowBit = (tile_lsb >> step_bit) & 1;
+    uint8_t fx = numb_pixelX & 0x07;
+    bool highBit = (shift_tile_msb >> (15 - fx)) & 1;
+    bool lowBit = (shift_tile_lsb >> (15 - fx)) & 1;
     uint8_t color = (highBit << 1) | lowBit;
 
     uint8_t colorByte;
@@ -651,9 +614,14 @@ uint8_t PPU::get_background()
         colorByte = bus->read_ppu(0x3F00);
     else
     {
-        uint16_t addr = 0x3F00 + paletteNumb + color;
+        uint16_t addr = 0x3F00 + (shift_attrByte) * 4 + color;
         colorByte = bus->read_ppu(addr);
     }
+
+    shift_tile_msb = shift_tile_msb << 1;
+    shift_tile_lsb = shift_tile_lsb << 1;
+
+    shifts_calculation();
 
     return colorByte & 0x3F;
 }
@@ -689,6 +657,68 @@ void PPU::increment_y()
             temp_numb_pixelY += 0x20;
 
         render_VRAM = (render_VRAM & ~0x03E0) | temp_numb_pixelY;
+    }
+}
+
+void PPU::shifts_calculation()
+{
+    uint8_t x = (cycle - 1) % 8;
+
+    static uint8_t tileByte = 0;
+    static uint8_t attrByte = 0;
+    static uint8_t tile_lsb = 0;
+    static uint8_t tile_msb = 0;
+
+    if(x == 0)
+    {
+        tileByte = bus->read_ppu(0x2000 | (render_VRAM & 0x0FFF));
+
+        if(tileByte != 0x20)
+        {
+            int f = 0;
+        }
+    }
+    else if(x == 2)
+    {
+        uint16_t nameTableBase = 0x2000 | (render_VRAM & 0x0C00);
+        uint16_t attrTableBase = nameTableBase + 0x3C0;
+        uint8_t numb_blockX = (render_VRAM & 0x1F) / 4;
+        uint8_t numb_blockY = ((render_VRAM >> 5) & 0x1F) / 4;
+
+        uint16_t attrIndex = numb_blockY * 8 + numb_blockX;
+        attrByte = bus->read_ppu(attrTableBase + attrIndex);
+
+        uint16_t deltaX = ((render_VRAM & 0x1F) - numb_blockX * 4);
+        uint16_t deltaY = (((render_VRAM >> 5) & 0x1F) - numb_blockY * 4);
+
+        if(deltaX >= 2 && deltaY < 2)
+            attrByte >>= 2;
+        else if(deltaX < 2 && deltaY >= 2)
+            attrByte >>= 4;
+        else if(deltaX >= 2 && deltaY >= 2)
+            attrByte >>= 6;
+
+        attrByte &= 0x03;
+    }
+    else if(x == 4)
+    {
+        uint16_t patternBase = (PPUCTRL & 0x10) ? 0x1000 : 0x0000;
+        uint16_t numb_pixelY =  (render_VRAM >> 12) & 0x07;
+        tile_lsb = bus->read_ppu(patternBase + tileByte * 16 + numb_pixelY + 0x0000);
+    }
+    else if(x == 6)
+    {
+        uint16_t patternBase = (PPUCTRL & 0x10) ? 0x1000 : 0x0000;
+        uint16_t numb_pixelY =  (render_VRAM >> 12) & 0x07;
+        tile_msb = bus->read_ppu(patternBase + tileByte * 16 + numb_pixelY + 0x0008);
+    }
+    else if(x == 7)
+    {
+        shift_tile_lsb = (shift_tile_lsb & 0xFF00) | tile_lsb;
+        shift_tile_msb = (shift_tile_msb & 0xFF00) | tile_msb;
+        shift_attrByte = attrByte;
+
+        increment_x();
     }
 }
 

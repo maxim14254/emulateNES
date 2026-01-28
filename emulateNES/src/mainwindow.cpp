@@ -59,7 +59,7 @@ void MainWindow::render_frame(const std::vector<std::vector<PPU::Color>>& frame_
             {
                 PPU::Color color = frame_buffer[y][x];
 
-                uint32_t pixel = (static_cast<uint32_t>(color.r) << 16) | (static_cast<uint32_t>(color.g) << 8) | (static_cast<uint32_t>(color.b) << 0);
+                uint32_t pixel = (color.r) | (color.g << 8) | (color.b << 16 | 0xFF << 24);
 
                 outBuffer[y * 256 + x] = pixel;
             }

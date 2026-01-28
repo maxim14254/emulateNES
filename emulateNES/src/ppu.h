@@ -77,6 +77,10 @@ private:
     bool w;
     uint8_t openBus = 0;
 
+    uint8_t shift_attrByte = 0;
+    uint16_t shift_tile_lsb = 0;
+    uint16_t shift_tile_msb = 0;
+
     std::mutex mutex_lock_frame_buffer;
 
     MainWindow* window;
@@ -90,6 +94,7 @@ private:
     uint8_t read_vram_buffered();
     void increment_x();
     void increment_y();
+    void shifts_calculation();
     void get_current_sprites();
     void download_asm_buffer(std::map<uint16_t, std::string>& assembler_buf);
 
