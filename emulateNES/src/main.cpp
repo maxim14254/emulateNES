@@ -5,10 +5,13 @@
 #include <QMetaObject>
 #include "bus.h"
 #include "ppu.h"
+#include <mutex>
+
 
 #ifdef LOG_ON
 #include "log.h"
 #endif
+
 
 int main(int argc, char *argv[])
 {
@@ -30,7 +33,9 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/nestest.nes");
+    bool rez = cpu.slot_init_new_cartridge(":/games/Donkey Kong (Japan).nes");
 
-    return a.exec();
+    int exec = a.exec();
+
+    return exec;
 }

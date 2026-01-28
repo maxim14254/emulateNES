@@ -231,11 +231,19 @@ void PPU::run(int cycles)
 
         if (scanline == 241 && cycle == 1)
         {
+
             QMetaObject::invokeMethod(window, [&]()
             {
                 window->render_frame(frame_buffer, mutex_lock_frame_buffer);
             },
             Qt::QueuedConnection);
+
+#ifdef DEBUG_ON
+            if(!run_without_mutex)
+            {
+                step_by_step_mutex.lock();
+            }
+#endif
 
             PPUSTATUS |= 0x80;
 
@@ -673,7 +681,7 @@ void PPU::shifts_calculation()
     {
         tileByte = bus->read_ppu(0x2000 | (render_VRAM & 0x0FFF));
 
-        if(tileByte != 0x20)
+        if(tileByte == 0x2A)
         {
             int f = 0;
         }

@@ -32,6 +32,10 @@ public:
 public slots:
     void slot_show_error_message();
 
+protected:
+    void keyPressEvent(QKeyEvent* e) override;
+    void closeEvent(QCloseEvent* event) override;
+
 private:
     Ui::MainWindow *ui;
     std::unique_ptr<MyOpenGL> my_openGL;
@@ -39,6 +43,7 @@ private:
     std::unique_ptr<MyOpenGL> debug_tiles_widget1;
     std::unique_ptr<MyOpenGL> debug_tiles_widget2;
     std::unique_ptr<QTextEdit> cpu_debuger;
+
 
 signals:
     void signal_init_new_cartridge(const QString& path);

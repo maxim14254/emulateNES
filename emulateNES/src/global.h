@@ -7,6 +7,8 @@
 #include <iostream>
 #include <functional>
 #include <vector>
+#include <mutex>
+#include <atomic>
 
 class CPU;
 
@@ -19,5 +21,11 @@ struct INSTRUCTION
 };
 
 inline std::vector<INSTRUCTION<CPU>> table_instructions;
+
+
+#ifdef DEBUG_ON
+inline std::mutex step_by_step_mutex;
+inline std::atomic<bool> run_without_mutex;
+#endif
 
 #endif // GLOBAL_H

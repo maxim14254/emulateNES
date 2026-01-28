@@ -366,6 +366,7 @@ void CPU::run()
 {
     while (start)
     {
+
         std::lock_guard<std::mutex> lock(mutex_stop);
 
         uint8_t val = bus->read_cpu(PC, false);

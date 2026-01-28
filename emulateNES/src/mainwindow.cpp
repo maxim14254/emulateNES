@@ -4,12 +4,13 @@
 #include <QSurface>
 #include <qmessagebox.h>
 #include <QApplication>
+#include "global.h"
 
 
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    : QMainWindow(parent),
+      ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
@@ -22,6 +23,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->cpu_debuger->setVisible(false);
 
     outBuffer.resize(256 * 240);
+
+    setFocusPolicy(Qt::StrongFocus);
+    setFocus();
 
 #ifdef DEBUG_ON
 
@@ -107,4 +111,35 @@ void MainWindow::slot_show_error_message()
 {
     QMessageBox message(QMessageBox::Icon::Critical, "Error", "Ошибка эмуляции KIL", QMessageBox::StandardButton::Ok);
     message.exec();
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *e)
+{
+
+#ifdef DEBUG_ON
+
+    if(e->key() == Qt::Key_Space)
+    {
+        run_without_mutex = false;
+        step_by_step_mutex.unlock();
+    }
+    else if(e->key() == Qt::Key_Shift)
+    {
+        run_without_mutex = !run_without_mutex;
+        step_by_step_mutex.unlock();
+    }
+
+#endif
+
+    QMainWindow::keyPressEvent(e);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+
+#ifdef DEBUG_ON
+    step_by_step_mutex.unlock();
+#endif
+
+    QMainWindow::closeEvent(event);
 }

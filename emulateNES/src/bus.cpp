@@ -36,7 +36,7 @@ uint8_t Bus::read_cpu(uint16_t addr, bool onlyRead)
     }
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода
     {
-        return 0xFF; // TO DO
+        return 0x00; // TO DO
     }
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
     {
