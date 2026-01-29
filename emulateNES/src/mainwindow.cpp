@@ -37,6 +37,10 @@ MainWindow::MainWindow(QWidget *parent)
     debug_tiles_widget2->setFixedSize(300, 300);
     ui->horizontalLayout_2->addWidget(debug_tiles_widget2.get());
 
+    debug_palettes_widget.reset(new MyOpenGL(610, 26, this));
+    debug_palettes_widget->setFixedSize(610, 20);
+    ui->horizontalLayout_5->addWidget(debug_palettes_widget.get());
+
     ui->cpu_debuger->setVisible(true);
     ui->cpu_debuger->setPlainText("");
     ui->cpu_debuger->setFixedSize(350, 450);
@@ -70,13 +74,18 @@ void MainWindow::render_frame(const std::vector<std::vector<PPU::Color>>& frame_
         }
     }
 
-    my_openGL->set_frame_buffer(outBuffer.data());
+    my_openGL->set_frame_buffer(outBuffer);
 }
 
-void MainWindow::render_debug_tiles(uint32_t *frame1, uint32_t *frame2)
+void MainWindow::render_debug_tiles(std::vector<uint32_t>& frame1, std::vector<uint32_t>& frame2)
 {
     debug_tiles_widget1->set_frame_buffer(frame1);
     debug_tiles_widget2->set_frame_buffer(frame2);
+}
+
+void MainWindow::render_debug_palettes(std::vector<uint32_t> &frame)
+{
+    debug_palettes_widget->set_frame_buffer(frame);
 }
 
 void MainWindow::render_cpu_debug(const QString& text,uint8_t PPUCTRL, uint8_t PPUMASK, uint8_t PPUSTATUS, uint8_t OAMADDR, uint8_t OAMDATA, uint8_t PPUSCROLL, uint8_t PPUDATA, uint16_t PPUADDR,

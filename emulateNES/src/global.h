@@ -25,7 +25,7 @@ inline std::vector<INSTRUCTION<CPU>> table_instructions;
 
 #ifdef DEBUG_ON
 inline std::mutex step_by_step_mutex;
-inline std::atomic<bool> run_without_mutex;
+inline std::atomic<bool> run_without_mutex = true;
 #endif
 
 #endif // GLOBAL_H

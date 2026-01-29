@@ -66,6 +66,13 @@
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <property name="sizeConstraint">
+               <enum>QLayout::SetMaximumSize</enum>
+              </property>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_5">
+              <property name="sizeConstraint">
                <enum>QLayout::SetFixedSize</enum>
               </property>
              </layout>

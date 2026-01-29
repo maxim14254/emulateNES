@@ -231,12 +231,11 @@ void PPU::run(int cycles)
 
         if (scanline == 241 && cycle == 1)
         {
-
             QMetaObject::invokeMethod(window, [&]()
             {
                 window->render_frame(frame_buffer, mutex_lock_frame_buffer);
             },
-            Qt::QueuedConnection);
+            Qt::BlockingQueuedConnection);
 
 #ifdef DEBUG_ON
             if(!run_without_mutex)
@@ -285,7 +284,7 @@ void PPU::run_watch_all_tiles()
                     int y = nTileY * 8 + row;
                     Color color = nesPalette[bus->read_ppu(0x3F00 + (palette * 4) + pixel) & 0x3F];
 
-                    uint32_t pixel2 = (static_cast<uint32_t>(color.r) << 16) | (static_cast<uint32_t>(color.g) << 8) | (static_cast<uint32_t>(color.b) << 0);
+                    uint32_t pixel2 = (color.r) | (color.g << 8) | (color.b << 16 | 0xFF << 24);
                     pColData1[y * 128 + x] = pixel2;
                 }
             }
@@ -315,7 +314,7 @@ void PPU::run_watch_all_tiles()
                     int y = nTileY * 8 + row;
                     Color color = nesPalette[bus->read_ppu(0x3F00 + (palette << 2) + pixel) & 0x3F];
 
-                    uint32_t pixel2 = (static_cast<uint32_t>(color.r) << 16) | (static_cast<uint32_t>(color.g) << 8) | (static_cast<uint32_t>(color.b) << 0);
+                    uint32_t pixel2 = (color.r) | (color.g << 8) | (color.b << 16 | 0xFF << 24);
                     pColData2[y * 128 + x] = pixel2;
                 }
             }
@@ -324,7 +323,7 @@ void PPU::run_watch_all_tiles()
 
     QMetaObject::invokeMethod(window, [&]()
     {
-        window->render_debug_tiles(pColData1.data(), pColData2.data());
+        window->render_debug_tiles(pColData1, pColData2);
     },
     Qt::QueuedConnection);
 
@@ -343,7 +342,7 @@ void PPU::run_watch_cpu_instr(uint16_t PC)
 
     auto it_a = assembler_buf.find(PC);
 
-    QString value = "";
+    QString value;
 
     if(it_a != assembler_buf.end())
     {
@@ -380,6 +379,38 @@ void PPU::run_watch_cpu_instr(uint16_t PC)
     Qt::QueuedConnection);
 }
 
+void PPU::run_watch_palettes()
+{
+    static std::vector<uint32_t> pColData(610 * 26);
+
+    for(int j = 4; j < 22; ++j)
+    {
+        for (int pal = 0; pal < 8; ++pal)
+        {
+            int b = pal * 0;
+
+            for(int col = 0; col < 4; ++col)
+            {
+                uint16_t colorByte = bus->read_ppu(0x3F00 + pal * 4 + col);
+                auto color = nesPalette[colorByte];
+
+                uint32_t pixel = (color.r) | (color.g << 8) | (color.b << 16 | 0xFF << 24);
+
+                int a = j * 610 + ((pal * 4 + col) * 19) + b;
+
+                for(int i = 4; i < 20; ++i)
+                    pColData[a + i] = pixel;
+            }
+        }
+    }
+
+    QMetaObject::invokeMethod(window, [&]()
+    {
+        window->render_debug_palettes(pColData);
+    },
+    Qt::QueuedConnection);
+}
+
 void PPU::reset()
 {
     scanline = 0;
@@ -410,6 +441,7 @@ void PPU::ppu_tick()
 #if DEBUG_ON
             run_watch_all_tiles();
             run_watch_cpu_instr(bus->get_PC());
+            run_watch_palettes();
 #endif
         }
     }
@@ -422,6 +454,7 @@ void PPU::ppu_tick()
 #if DEBUG_ON
         run_watch_all_tiles();
         run_watch_cpu_instr(bus->get_PC());
+        run_watch_palettes();
 #endif
     }
 }
@@ -612,22 +645,30 @@ uint8_t PPU::get_background()
     if(!(PPUMASK & 0x08) || (!(PPUMASK & 0x02) && cycle - 1 < 8))
         return 0;
 
-    uint8_t fx = numb_pixelX & 0x07;
-    bool highBit = (shift_tile_msb >> (15 - fx)) & 1;
-    bool lowBit = (shift_tile_lsb >> (15 - fx)) & 1;
-    uint8_t color = (highBit << 1) | lowBit;
+    uint16_t bit_mux = 0x8000 >> numb_pixelX;
+
+    bool highBit = (shift_tile_lsb & bit_mux) > 0;
+    bool lowBit = (shift_tile_msb & bit_mux) > 0;
+    uint8_t color = (lowBit << 1) | highBit;
+
+    bool pal0 = (shift_attrib_lsb & bit_mux) > 0;
+    bool pal1 = (shift_attrib_msb & bit_mux) > 0;
+    uint8_t palette = (pal1 << 1) | pal0;
 
     uint8_t colorByte;
     if (color == 0)
         colorByte = bus->read_ppu(0x3F00);
     else
     {
-        uint16_t addr = 0x3F00 + (shift_attrByte) * 4 + color;
+        uint16_t addr = 0x3F00 + palette * 4 + color;
         colorByte = bus->read_ppu(addr);
     }
 
-    shift_tile_msb = shift_tile_msb << 1;
-    shift_tile_lsb = shift_tile_lsb << 1;
+    shift_tile_lsb <<= 1;
+    shift_tile_msb <<= 1;
+
+    shift_attrib_lsb <<= 1;
+    shift_attrib_msb <<= 1;
 
     shifts_calculation();
 
@@ -680,11 +721,6 @@ void PPU::shifts_calculation()
     if(x == 0)
     {
         tileByte = bus->read_ppu(0x2000 | (render_VRAM & 0x0FFF));
-
-        if(tileByte == 0x2A)
-        {
-            int f = 0;
-        }
     }
     else if(x == 2)
     {
@@ -724,7 +760,9 @@ void PPU::shifts_calculation()
     {
         shift_tile_lsb = (shift_tile_lsb & 0xFF00) | tile_lsb;
         shift_tile_msb = (shift_tile_msb & 0xFF00) | tile_msb;
-        shift_attrByte = attrByte;
+
+        shift_attrib_lsb = (shift_attrib_lsb & 0xFF00) | ((attrByte & 0b01) ? 0xFF : 0x00);
+        shift_attrib_msb = (shift_attrib_msb & 0xFF00) | ((attrByte & 0b10) ? 0xFF : 0x00);
 
         increment_x();
     }

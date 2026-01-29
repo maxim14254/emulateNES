@@ -12,7 +12,7 @@ Cartridge::Cartridge(const QString& path, bool* status)
     {
         file.read(reinterpret_cast<char*>(&header), 16);
 
-        if(header.magic[0] == 'N' && header.magic[1] == 'E' && header.magic[2] == 'S')
+        if(header.magic[0] == 'N' && header.magic[1] == 'E' && header.magic[2] == 'S' && header.magic[3] == 0x1A)
         {
             prg_rom.resize(header.prg_rom * 0x4000);
 

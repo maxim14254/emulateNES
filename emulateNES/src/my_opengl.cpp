@@ -7,10 +7,20 @@
 MyOpenGL::MyOpenGL(GLsizei _width, GLsizei _height, QWidget* parent, Qt::WindowFlags f) : QOpenGLWidget(parent)
 {
     textureId = 0;
-    nesFrame = nullptr;
+    nesFrame.resize(256 * 240);
 
     width = _width;
     height = _height;
+
+    QTimer* timerFPS = new QTimer(this);
+    timerFPS->setTimerType(Qt::PreciseTimer);
+
+    connect(timerFPS, &QTimer::timeout, this, [this]()
+    {
+        update();
+    });
+
+    timerFPS->start(1000 / 60);
 }
 
 MyOpenGL::~MyOpenGL()
@@ -18,10 +28,9 @@ MyOpenGL::~MyOpenGL()
 
 }
 
-void MyOpenGL::set_frame_buffer(uint32_t* frame_buffer)
+void MyOpenGL::set_frame_buffer(std::vector<uint32_t>& frame_buffer)
 {
-    nesFrame = frame_buffer;
-    update();
+    nesFrame.swap(frame_buffer);
 }
 
 void MyOpenGL::initializeGL()
@@ -52,17 +61,19 @@ void MyOpenGL::resizeGL(int w, int h)
 
 void MyOpenGL::paintGL()
 {
-    static auto start_time = std::chrono::steady_clock::now();
+    //            static auto start_time = std::chrono::steady_clock::now();
 
-    auto elapsed_ms = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time);
-    double aaa = ((1.0 / 60.0) * 1000000.0) - elapsed_ms.count();
-    std::this_thread::sleep_for(std::chrono::microseconds((int64_t)aaa));
+    //            auto elapsed_ms = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time);
+    //            double aaa = ((1.0 / 60.0) * 1000000.0) - elapsed_ms.count();
+    //            std::this_thread::sleep_for(std::chrono::microseconds((int64_t)aaa));
+    //            start_time = std::chrono::steady_clock::now();
+    glDisable(GL_DEPTH_TEST);
 
     glClear(GL_COLOR_BUFFER_BIT);
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    if (!nesFrame || textureId == 0)
+    if (!nesFrame.data() || textureId == 0)
         return;
 
     glBindTexture(GL_TEXTURE_2D, textureId);
@@ -70,7 +81,7 @@ void MyOpenGL::paintGL()
     glTexSubImage2D(GL_TEXTURE_2D, 0,
                     0, 0, width, height,
                     GL_RGBA, GL_UNSIGNED_BYTE,
-                    nesFrame);
+                    nesFrame.data());
 
     glEnable(GL_TEXTURE_2D);
 
@@ -90,7 +101,5 @@ void MyOpenGL::paintGL()
 
     glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
-
-    start_time = std::chrono::steady_clock::now();
 }
 

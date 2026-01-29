@@ -39,6 +39,7 @@ public:
     void run(int cycles);
     void run_watch_all_tiles();
     void run_watch_cpu_instr(uint16_t PC);
+    void run_watch_palettes();
     void reset();
     uint8_t getppustatus(){return PPUSTATUS;}
 
@@ -77,9 +78,11 @@ private:
     bool w;
     uint8_t openBus = 0;
 
-    uint8_t shift_attrByte = 0;
     uint16_t shift_tile_lsb = 0;
     uint16_t shift_tile_msb = 0;
+
+    uint16_t shift_attrib_msb = 0;
+    uint16_t shift_attrib_lsb = 0;
 
     std::mutex mutex_lock_frame_buffer;
 
