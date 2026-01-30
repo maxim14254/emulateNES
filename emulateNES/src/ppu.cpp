@@ -9,12 +9,9 @@
 
 PPU::PPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 {
-    oam.resize(0x100);
-    //pColData.resize(128 * 128);
+    oam.resize(256);
 
-    frame_buffer.resize(240);
-    for (auto &row : frame_buffer)
-        row.resize(256, Color{0, 0, 0});
+    frame_buffer.resize(256 * 240);
 
     PPUCTRL = PPUMASK = PPUSTATUS = OAMADDR = OAMDATA = PPUSCROLL = PPUDATA = PPUADDR = 0;
 }
@@ -187,10 +184,18 @@ void PPU::run(int cycles)
                 if(!(PPUSTATUS & 0x40) && sprite_from_sprite0 && color_pixel != 0 && sprite_color_final != 0)
                     PPUSTATUS |= 0x40;
 
+                PPU::Color color;
                 if(sprite_color_final != 0 && color_pixel == 0)
-                    frame_buffer[y][x] = nesPalette[sprite_color_final];
+                    color = nesPalette[sprite_color_final];
                 else
-                    frame_buffer[y][x] = nesPalette[color_pixel];
+                    color = nesPalette[color_pixel];
+
+                uint32_t pixel = (color.r) | (color.g << 8) | (color.b << 16 | 0xFF << 24);
+
+                {
+                    std::lock_guard lock(mutex_lock_frame_buffer);
+                    frame_buffer[y * 256 + x] = pixel;
+                }
 
                 if(cycle == 256)
                     increment_y();
@@ -231,16 +236,24 @@ void PPU::run(int cycles)
 
         if (scanline == 241 && cycle == 1)
         {
+            std::unique_lock<std::mutex> update_frame(update_frame_mutex);
+            cv.wait(update_frame, [&]{ return _update; });
+            update_frame_mutex.unlock();
+
             QMetaObject::invokeMethod(window, [&]()
             {
-                window->render_frame(frame_buffer, mutex_lock_frame_buffer);
+                window->render_frame(frame_buffer);
             },
-            Qt::BlockingQueuedConnection);
+            Qt::QueuedConnection);
 
 #ifdef DEBUG_ON
             if(!run_without_mutex)
             {
-                step_by_step_mutex.lock();
+                std::unique_lock<std::mutex> step_by_step(step_by_step_mutex);
+                cv.wait(step_by_step, []{ return !pause; });
+                step_by_step.unlock();
+
+                pause = true;
             }
 #endif
 
@@ -433,8 +446,6 @@ void PPU::ppu_tick()
 
         if(scanline > 261)
         {
-            std::lock_guard lock(mutex_lock_frame_buffer);
-
             scanline = 0;
             ++frame;
 
@@ -447,8 +458,6 @@ void PPU::ppu_tick()
     }
     else if(scanline == 261 && cycle == 339 && (PPUMASK & 0x18) && (frame & 1))
     {
-        std::lock_guard lock(mutex_lock_frame_buffer);
-
         scanline = cycle = 0;
 
 #if DEBUG_ON

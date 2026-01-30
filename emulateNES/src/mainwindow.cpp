@@ -27,7 +27,10 @@ MainWindow::MainWindow(QWidget *parent)
     setFocusPolicy(Qt::StrongFocus);
     setFocus();
 
+    ui->widget_2->setVisible(false);
+
 #ifdef DEBUG_ON
+    ui->widget_2->setVisible(true);
 
     debug_tiles_widget1.reset(new MyOpenGL(128, 128, this));
     debug_tiles_widget1->setFixedSize(300, 300);
@@ -56,22 +59,11 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::render_frame(const std::vector<std::vector<PPU::Color>>& frame_buffer, std::mutex& mutex_lock_frame_buffer)
-{   
+void MainWindow::render_frame(std::vector<uint32_t>& frame_buffer)
+{
     {
         std::lock_guard lock(mutex_lock_frame_buffer);
-
-        for(size_t y = 0; y < frame_buffer.size(); ++y)
-        {
-            for(size_t x = 0; x < frame_buffer[y].size(); ++x)
-            {
-                PPU::Color color = frame_buffer[y][x];
-
-                uint32_t pixel = (color.r) | (color.g << 8) | (color.b << 16 | 0xFF << 24);
-
-                outBuffer[y * 256 + x] = pixel;
-            }
-        }
+        outBuffer.swap(frame_buffer);
     }
 
     my_openGL->set_frame_buffer(outBuffer);
@@ -116,6 +108,11 @@ void MainWindow::clear_cpu_debug()
     ui->cpu_debuger->clear();
 }
 
+void MainWindow::show_real_FPS(int microsec)
+{
+    ui->label_read_FPS->setText(QString("%1").arg(1000000 / microsec));
+}
+
 void MainWindow::slot_show_error_message()
 {
     QMessageBox message(QMessageBox::Icon::Critical, "Error", "Ошибка эмуляции KIL", QMessageBox::StandardButton::Ok);
@@ -129,13 +126,23 @@ void MainWindow::keyPressEvent(QKeyEvent *e)
 
     if(e->key() == Qt::Key_Space)
     {
-        run_without_mutex = false;
-        step_by_step_mutex.unlock();
+        {
+            run_without_mutex = false;
+            std::lock_guard<std::mutex> lg(step_by_step_mutex);
+            pause = false;
+        }
+
+        cv.notify_one();
     }
     else if(e->key() == Qt::Key_Shift)
     {
-        run_without_mutex = !run_without_mutex;
-        step_by_step_mutex.unlock();
+        {
+            std::lock_guard<std::mutex> lg(step_by_step_mutex);
+            pause = false;
+            run_without_mutex = !run_without_mutex;
+        }
+
+        cv.notify_one();
     }
 
 #endif
@@ -147,7 +154,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
 
 #ifdef DEBUG_ON
-    step_by_step_mutex.unlock();
+    {
+        std::lock_guard<std::mutex> lg(step_by_step_mutex);
+        pause = false;
+    }
+
+    cv.notify_one();
 #endif
 
     QMainWindow::closeEvent(event);

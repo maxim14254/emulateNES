@@ -26,6 +26,8 @@ private:
     std::vector<uint32_t> nesFrame;
     GLsizei width, height;
 
+    MainWindow* window;
+
 };
 
 #endif // MY_OPENGL_H

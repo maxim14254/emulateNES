@@ -22,13 +22,14 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    void render_frame(const std::vector<std::vector<PPU::Color>>& frame_buffer, std::mutex& mutex_lock_frame_buffer);
+    void render_frame(std::vector<uint32_t>& frame_buffer);
 
     void render_debug_tiles(std::vector<uint32_t>& frame1, std::vector<uint32_t>& frame2);
     void render_debug_palettes(std::vector<uint32_t>& frame);
     void render_cpu_debug(const QString& text, uint8_t PPUCTRL, uint8_t PPUMASK, uint8_t PPUSTATUS, uint8_t OAMADDR, uint8_t OAMDATA, uint8_t PPUSCROLL, uint8_t PPUDATA, uint16_t PPUADDR,
                           uint16_t PC, uint8_t SP, uint8_t status, uint8_t A, uint8_t X, uint8_t Y);
     void clear_cpu_debug();
+    void show_real_FPS(int microsec);
 
 public slots:
     void slot_show_error_message();
@@ -46,6 +47,7 @@ private:
     std::unique_ptr<MyOpenGL> debug_palettes_widget;
     std::unique_ptr<QTextEdit> cpu_debuger;
 
+    bool _update = true;
 
 signals:
     void signal_init_new_cartridge(const QString& path);
