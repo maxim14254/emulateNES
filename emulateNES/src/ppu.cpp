@@ -12,6 +12,7 @@ PPU::PPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
     oam.resize(256);
 
     frame_buffer.resize(256 * 240);
+    outBuffer.resize(256 * 240);
 
     PPUCTRL = PPUMASK = PPUSTATUS = OAMADDR = OAMDATA = PPUSCROLL = PPUDATA = PPUADDR = 0;
 }
@@ -193,7 +194,7 @@ void PPU::run(int cycles)
                 uint32_t pixel = (color.r) | (color.g << 8) | (color.b << 16 | 0xFF << 24);
 
                 {
-                    std::lock_guard lock(mutex_lock_frame_buffer);
+                    //std::lock_guard lock(mutex_lock_frame_buffer);
                     frame_buffer[y * 256 + x] = pixel;
                 }
 
@@ -236,13 +237,21 @@ void PPU::run(int cycles)
 
         if (scanline == 241 && cycle == 1)
         {
-            std::unique_lock<std::mutex> update_frame(update_frame_mutex);
-            cv.wait(update_frame, [&]{ return _update; });
-            update_frame_mutex.unlock();
+            {
+                std::unique_lock<std::mutex> update_frame(update_frame_mutex);
+                cv.wait(update_frame, [&]{ return _update; });
+            }
+
+            {
+                std::lock_guard lock(mutex_lock_frame_buffer);
+                outBuffer.swap(frame_buffer);
+            }
+
+            _update = false;
 
             QMetaObject::invokeMethod(window, [&]()
             {
-                window->render_frame(frame_buffer);
+                window->render_frame(outBuffer);
             },
             Qt::QueuedConnection);
 

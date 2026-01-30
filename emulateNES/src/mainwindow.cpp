@@ -61,12 +61,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::render_frame(std::vector<uint32_t>& frame_buffer)
 {
-    {
-        std::lock_guard lock(mutex_lock_frame_buffer);
-        outBuffer.swap(frame_buffer);
-    }
-
-    my_openGL->set_frame_buffer(outBuffer);
+    my_openGL->set_frame_buffer(frame_buffer);
 }
 
 void MainWindow::render_debug_tiles(std::vector<uint32_t>& frame1, std::vector<uint32_t>& frame2)

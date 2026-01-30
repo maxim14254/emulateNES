@@ -17,14 +17,14 @@ MyOpenGL::MyOpenGL(GLsizei _width, GLsizei _height, QWidget* parent, Qt::WindowF
     window = qobject_cast<MainWindow*>(parent);
 
     QTimer* timerFPS = new QTimer();
-    timerFPS->setTimerType(Qt::PreciseTimer);
+    timerFPS->setTimerType(Qt::CoarseTimer);
 
     connect(timerFPS, &QTimer::timeout, this, [&]()
     {
         update();
     });
 
-    timerFPS->start(1000 / 60);
+    timerFPS->start(1000 / 50);
 }
 
 MyOpenGL::~MyOpenGL()
@@ -36,10 +36,8 @@ void MyOpenGL::set_frame_buffer(std::vector<uint32_t>& frame_buffer)
 {
     if(width == 256 && height == 240) // условие для отсевания дебажных экранов от главного
     {
+        std::lock_guard lock(mutex_lock_frame_buffer);
         nesFrame.swap(frame_buffer);
-
-        std::lock_guard<std::mutex> lg(update_frame_mutex);
-        _update = false;
     }
     else
         nesFrame.swap(frame_buffer);

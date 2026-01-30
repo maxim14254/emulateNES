@@ -58,8 +58,9 @@ private:
 
     uint16_t PPUADDR;                                   // регистр
     std::vector<uint8_t> oam;                           // 256 байт OAM (64 спрайта по 4 байта)
-    std::vector<uint32_t> frame_buffer;       // результат кадра RGB
+    std::vector<uint32_t> frame_buffer;                 // результат кадра RGB
     std::vector<Sprite> sprites_current_scanline;       // спрайты для текущей линии
+    std::vector<uint32_t> outBuffer;
 
     int16_t scanline = 0;
     uint16_t cycle = 0;
