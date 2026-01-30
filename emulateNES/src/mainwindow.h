@@ -47,8 +47,6 @@ private:
     std::unique_ptr<MyOpenGL> debug_palettes_widget;
     std::unique_ptr<QTextEdit> cpu_debuger;
 
-    bool _update = true;
-
 signals:
     void signal_init_new_cartridge(const QString& path);
 

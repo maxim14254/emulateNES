@@ -3,7 +3,6 @@
 #include <QMessageBox>
 #include <QMetaObject>
 #include "mainwindow.h"
-#include <chrono>
 #include <QDebug>
 #include "global.h"
 
@@ -364,7 +363,7 @@ bool CPU::slot_init_new_cartridge(const QString& path)
 
 void CPU::run()
 {
-    while (start)
+    while (start.load())
     {
 
         std::lock_guard<std::mutex> lock(mutex_stop);

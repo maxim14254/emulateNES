@@ -157,5 +157,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
     cv.notify_one();
 #endif
 
+    {
+        std::lock_guard<std::mutex> lg(update_frame_mutex);
+        _update = true;
+    }
+    cv.notify_one();
+
+    start = false;
+
     QMainWindow::closeEvent(event);
 }

@@ -64,7 +64,6 @@ private:
     std::mutex mutex_stop;
     std::once_flag start_once_flag;
     std::thread run_t;
-    bool start;
     bool nmi_pending = false;
     MainWindow* window;
 

@@ -22,6 +22,8 @@ struct INSTRUCTION
 
 inline std::vector<INSTRUCTION<CPU>> table_instructions;
 
+inline std::atomic<bool> start;
+
 inline std::mutex update_frame_mutex;
 inline bool _update = true;
 inline std::mutex mutex_lock_frame_buffer;

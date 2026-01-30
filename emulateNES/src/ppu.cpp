@@ -145,7 +145,7 @@ void PPU::run(int cycles)
 {
     int count = cycles * 3;
 
-    for(int i = 0; i < count; ++i)
+    for(int i = 0; i < count && start.load(); ++i)
     {
         ppu_tick();
 
@@ -193,10 +193,7 @@ void PPU::run(int cycles)
 
                 uint32_t pixel = (color.r) | (color.g << 8) | (color.b << 16 | 0xFF << 24);
 
-                {
-                    //std::lock_guard lock(mutex_lock_frame_buffer);
-                    frame_buffer[y * 256 + x] = pixel;
-                }
+                frame_buffer[y * 256 + x] = pixel;
 
                 if(cycle == 256)
                     increment_y();
@@ -260,7 +257,6 @@ void PPU::run(int cycles)
             {
                 std::unique_lock<std::mutex> step_by_step(step_by_step_mutex);
                 cv.wait(step_by_step, []{ return !pause; });
-                step_by_step.unlock();
 
                 pause = true;
             }
