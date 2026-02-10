@@ -69,7 +69,7 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     }
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода DMA
     {
-        if(addr == 0x4014)
+        if(addr == 0x4014) // DMA
             ppu->set_oam(&ram[data << 8]);
     }
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ

@@ -28,11 +28,12 @@ inline std::mutex update_frame_mutex;
 inline bool _update = true;
 inline std::mutex mutex_lock_frame_buffer;
 
+inline std::condition_variable cv;
+
 #ifdef DEBUG_ON
 inline std::mutex step_by_step_mutex;
 inline std::atomic<bool> run_without_mutex = true;
 inline bool pause = false;
-inline std::condition_variable cv;
 #endif
 
 #endif // GLOBAL_H

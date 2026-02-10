@@ -56,6 +56,11 @@ private:
     // PPUCTRL 0x04 Выбор режима инкремента (0 – увеличение на единицу; 1 - увеличение на 32)
     // PPUCTRL 0x03 Адрес активной экранной страницы
 
+    // OAM 1байт Y
+    // OAM 3байт ID тайла
+    // OAM 4байт атрибут
+    // OAM 2байт X
+
     uint16_t PPUADDR;                                   // регистр
     std::vector<uint8_t> oam;                           // 256 байт OAM (64 спрайта по 4 байта)
     std::vector<uint32_t> frame_buffer;                 // результат кадра RGB
@@ -85,18 +90,23 @@ private:
     uint16_t shift_attrib_msb = 0;
     uint16_t shift_attrib_lsb = 0;
 
+    uint8_t shif_sprite_lsb[8];
+    uint8_t shif_sprite_msb[8];
+    bool sprite_from_sprite0  = false;
+
     MainWindow* window;
     Bus* bus;
 
 
     void ppu_tick();
     uint8_t get_background();
-    uint8_t get_sprite(const Sprite& sprite);
+    uint8_t get_sprite(uint8_t& priority);
     void increment_VRAM_address();
     uint8_t read_vram_buffered();
     void increment_x();
     void increment_y();
     void shifts_calculation();
+    void get_sprites_on_next_scanline();
     void get_current_sprites();
     void download_asm_buffer(std::map<uint16_t, std::string>& assembler_buf);
 

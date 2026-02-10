@@ -46,7 +46,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->cpu_debuger->setVisible(true);
     ui->cpu_debuger->setPlainText("");
-    ui->cpu_debuger->setFixedSize(350, 450);
+    ui->cpu_debuger->setFixedSize(350, 425);
     ui->cpu_debuger->setTextInteractionFlags(Qt::NoTextInteraction);
 
     ui->verticalLayout_3->addStretch();
@@ -96,6 +96,21 @@ void MainWindow::render_cpu_debug(const QString& text,uint8_t PPUCTRL, uint8_t P
     ui->label_ppudata->setText(QString("%1").arg(PPUDATA, 2, 16, QChar('0')).toUpper());
     ui->label_ppuadr->setText(QString("%1").arg(PPUADDR, 4, 16, QChar('0')).toUpper());
 
+}
+
+void MainWindow::render_sprites_debug(std::vector<uint8_t> &oam)
+{
+    QString text;
+
+    for(int i = 0; i < oam.size(); i += 4)
+    {
+        text += QString("%5.   Y = %1  X = %2  ID = %3  AT = %4\n").arg(oam[i], 3, 10, QChar('0')).arg(oam[i + 3], 3, 10, QChar('0')).
+                                                                    arg(oam[i + 1], 2, 16, QChar('0')).toUpper().
+                                                                    arg(oam[i + 2], 2, 16, QChar('0')).toUpper().
+                                                                    arg(i / 4, 2, 10, QChar('0'));
+    }
+
+    ui->sprites_debug->setText(text);
 }
 
 void MainWindow::clear_cpu_debug()

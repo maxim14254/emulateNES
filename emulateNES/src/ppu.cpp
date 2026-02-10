@@ -34,10 +34,10 @@ uint8_t PPU::get_register(uint16_t addr, bool onlyRead)
             result = PPUMASK;
         else if(addr == 0x2002)
             result = PPUSTATUS;
-//        else if(addr == 0x2003)
-//            result = OAMADDR;
-//        else if(addr == 0x2004)
-//            result = oam[OAMADDR];
+        else if(addr == 0x2003)
+            result = OAMADDR;
+        else if(addr == 0x2004)
+            result = oam[OAMADDR];
 //        else if(addr == 0x2005)
 //            result = openBus;
 //        else if(addr == 0x2006)
@@ -137,8 +137,16 @@ void PPU::set_register(uint16_t addr, uint8_t data)
 
 void PPU::set_oam(const uint8_t* _oam)
 {
-    for(int i = 0; i < 0x100; ++i)
+    for(int i = 0; i < 256; ++i)
         oam[i] = _oam[i];
+
+#ifdef DEBUG_ON
+    QMetaObject::invokeMethod(window, [&]()
+    {
+        window->render_sprites_debug(oam);
+    },
+    Qt::QueuedConnection);
+#endif
 }
 
 void PPU::run(int cycles)
@@ -156,40 +164,50 @@ void PPU::run(int cycles)
                 uint8_t x = cycle - 1;
                 uint8_t y = scanline;
 
-                uint8_t color_pixel = get_background();
-                uint8_t color_sprite = 0;
-                uint8_t sprite_color_final = 0;
-                bool sprite_from_sprite0 = false;
+                uint8_t color_pixel = 0;
+                uint8_t color_back = get_background();
 
-                if((PPUMASK & 0x10) || ((PPUMASK & 0x04) && x >= 8))
+                uint8_t priority = 0;
+                uint8_t color_sprite = get_sprite(priority);
+
+                if (color_back == 0 && color_sprite == 0)
+                    color_pixel = 0;
+                else if (color_back == 0 && color_sprite > 0)
+                    color_pixel = color_sprite;
+                else if (color_back > 0 && color_sprite == 0)
+                    color_pixel = color_back;
+                else if (color_back > 0 && color_sprite > 0)
                 {
-                    for(size_t j = 0; j < sprites_current_scanline.size(); ++j)
-                    {
-                        color_sprite = get_sprite(sprites_current_scanline[j]);
+                    if (priority)
+                        color_pixel = color_sprite;
+                    else
+                        color_pixel = color_back;
 
-                        if (color_sprite != 0)
-                        {
-                            bool front = (sprites_current_scanline[j].attr & 0x20) == 0;
 
-                            if(sprites_current_scanline[j].index == 0)
-                                sprite_from_sprite0 = true;
-
-                            if(front || color_pixel == 0)
-                                sprite_color_final = color_sprite;
-
-                            break;
-                        }
-                    }
+//                    if (sprite_from_sprite0)
+//                    {
+//                        if (mask.render_background & mask.render_sprites)
+//                        {
+//                            if (~(mask.render_background_left | mask.render_sprites_left))
+//                            {
+//                                if (cycle >= 9 && cycle < 257)
+//                                {
+//                                    status.sprite_zero_hit = 1;
+//                                }
+//                            }
+//                            else
+//                            {
+//                                if (cycle >= 1 && cycle < 257)
+//                                {
+//                                    status.sprite_zero_hit = 1;
+//                                }
+//                            }
+//                        }
+//                    }
                 }
 
-                if(!(PPUSTATUS & 0x40) && sprite_from_sprite0 && color_pixel != 0 && sprite_color_final != 0)
-                    PPUSTATUS |= 0x40;
 
-                PPU::Color color;
-                if(sprite_color_final != 0 && color_pixel == 0)
-                    color = nesPalette[sprite_color_final];
-                else
-                    color = nesPalette[color_pixel];
+                PPU::Color color = nesPalette[color_pixel];
 
                 uint32_t pixel = (color.r) | (color.g << 8) | (color.b << 16 | 0xFF << 24);
 
@@ -202,11 +220,13 @@ void PPU::run(int cycles)
             {
                 render_VRAM = (render_VRAM & 0xFBFF) | (temp_VRAM & 0x400);
                 render_VRAM = (render_VRAM & 0xFFE0) | (temp_VRAM & 0x1F);
-            }
-            else if(cycle > 257 && cycle < 320)
+
                 get_current_sprites();
+            }
             else if(cycle > 320 && cycle <= 336)
                 shifts_calculation();
+            else if(cycle == 340)
+                get_sprites_on_next_scanline();
         }
 
         if (scanline == 261)
@@ -371,7 +391,7 @@ void PPU::run_watch_cpu_instr(uint16_t PC)
         {
             if (++it_a != assembler_buf.end())
             {
-                value += QString("    %1\n").arg(it_a->second.c_str());
+                value += QString("     %1\n").arg(it_a->second.c_str());
             }
         }
     }
@@ -384,7 +404,7 @@ void PPU::run_watch_cpu_instr(uint16_t PC)
         {
             if (++it_a != assembler_buf.end())
             {
-                value += QString("    %1\n").arg(it_a->second.c_str());
+                value += QString("     %1\n").arg(it_a->second.c_str());
             }
         }
     }
@@ -479,17 +499,25 @@ void PPU::get_current_sprites()
 
     sprites_current_scanline.clear();
 
+    for (uint8_t i = 0; i < 8; ++i)
+    {
+        shif_sprite_lsb[i] = 0;
+        shif_sprite_lsb[i] = 0;
+    }
+
     for(size_t i = 0; i < oam.size(); i+=4)
     {
-        if(scanline >= oam[i] && scanline < oam[i] + sprite_height)
+        int16_t diff = scanline - oam[i];
+
+        if(diff >= 0 && diff < sprite_height)
         {
+            sprites_current_scanline.push_back(Sprite{oam[i], oam[i + 1], oam[i + 2], oam[i + 3], i / 4});
+
             if(sprites_current_scanline.size() == 8)
             {
                 PPUSTATUS |= 0x20;
                 break;
             }
-
-            sprites_current_scanline.push_back(Sprite{oam[i], oam[i + 1], oam[i + 2], oam[i + 3], i / 4});
         }
     }
 }
@@ -586,69 +614,56 @@ void PPU::download_asm_buffer(std::map<uint16_t, std::string> &assembler_buf)
     }
 }
 
-uint8_t PPU::get_sprite(const Sprite& sprite)
+uint8_t PPU::get_sprite(uint8_t& priority)
 {
-    int spriteScreenY = sprite.y + 1;
-    int spriteScreenX = sprite.x;
-    uint8_t sprite_height = (PPUCTRL & 0x20) > 0 ? 16 : 8;
-
-    if (scanline < spriteScreenY || scanline >= spriteScreenY + sprite_height)
-        return 0;
-    if (cycle < spriteScreenX || cycle >= spriteScreenX + 8)
+    if(!(PPUMASK & 0x10) || (!(PPUMASK & 0x04)))
         return 0;
 
-    int localY = scanline - spriteScreenY;
-    int localX = cycle - spriteScreenX;
+    uint8_t colorByte = 0;
+    sprite_from_sprite0  = false;
 
-    bool flipY = (sprite.attr & 0x80) != 0;
-    bool flipX = (sprite.attr & 0x40) != 0;
-
-    if (flipY)
-        localY = sprite_height - 1 - localY;
-    if (flipX)
-        localX = 7 - localX;
-
-    uint16_t patternBase;
-    uint16_t tileAddr;
-
-    if(sprite_height == 8)
+    for (int i = 0; i < sprites_current_scanline.size(); ++i)
     {
-        patternBase = (PPUCTRL & 0x08) ? 0x1000 : 0x0000;
-        tileAddr = patternBase + sprite.tile * 16;
-    }
-    else
-    {
-        patternBase = (sprite.tile & 1) ? 0x1000 : 0x0000;
-
-        uint8_t tileIndex = (sprite.tile & 0xFE);
-        if (localY >= 8)
+        if (sprites_current_scanline[i].x == 0)
         {
-            tileIndex += 1;
-            localY -= 8;
-        }
 
-        tileAddr = patternBase + tileIndex * 16;
+            uint8_t pixel_lo = (shif_sprite_lsb[i] & 0x80) > 0;
+            uint8_t pixel_hi = (shif_sprite_lsb[i] & 0x80) > 0;
+            uint8_t color = (pixel_hi << 1) | pixel_lo;
+
+            uint8_t paletteIndex = (sprites_current_scanline[i].attr & 0x03) + 0x04;
+            priority = (sprites_current_scanline[i].attr & 0x20) == 0;
+
+            if (color != 0)
+            {
+                if (i == 0)
+                    sprite_from_sprite0  = true;
+
+                if (color == 0)
+                    colorByte = color;
+                else
+                {
+                    uint16_t addr = 0x3F10 + paletteIndex * 4 + color;
+                    colorByte = bus->read_ppu(addr);
+                }
+
+                break;
+            }
+        }
     }
 
-    uint8_t lowByte = bus->read_ppu(tileAddr + localY);
-    uint8_t highByte = bus->read_ppu(tileAddr + localY + 8);
 
-    uint8_t bitIndex = 7 - localX;
-
-    uint8_t lo = (lowByte  >> bitIndex) & 1;
-    uint8_t hi = (highByte >> bitIndex) & 1;
-
-    uint8_t color = (hi << 1) | lo;
-
-    uint8_t paletteIndex = sprite.attr & 0x03;
-
-    uint8_t colorByte;
-    if (color == 0)
-        colorByte = color;
-    else
+    for(int i = 0; i < sprites_current_scanline.size(); ++i)
     {
-        uint16_t addr = 0x3F10 + paletteIndex * 4 + color;
-        colorByte = bus->read_ppu(addr);
+        if (sprites_current_scanline[i].x > 0)
+        {
+            --sprites_current_scanline[i].x;
+        }
+        else
+        {
+            shif_sprite_lsb[i] <<= 1;
+            shif_sprite_msb[i] <<= 1;
+        }
     }
 
     return colorByte;
@@ -656,7 +671,7 @@ uint8_t PPU::get_sprite(const Sprite& sprite)
 
 uint8_t PPU::get_background()
 {   
-    if(!(PPUMASK & 0x08) || (!(PPUMASK & 0x02) && cycle - 1 < 8))
+    if(!(PPUMASK & 0x08) || (!(PPUMASK & 0x02)))
         return 0;
 
     uint16_t bit_mux = 0x8000 >> numb_pixelX;
@@ -779,6 +794,48 @@ void PPU::shifts_calculation()
         shift_attrib_msb = (shift_attrib_msb & 0xFF00) | ((attrByte & 0b10) ? 0xFF : 0x00);
 
         increment_x();
+    }
+}
+
+void PPU::get_sprites_on_next_scanline()
+{
+    for(int i = 0; i < sprites_current_scanline.size(); ++i)
+    {
+        uint8_t sprite_lsb = 0;
+
+        if(!(PPUCTRL & 0x20)) // 8x8
+        {
+            uint16_t patternBase = (PPUCTRL & 0x10) ? 0x1000 : 0x0000;
+
+            if(!(sprites_current_scanline[i].attr & 0x80)) // нормальная ориентация
+                sprite_lsb = bus->read_ppu(patternBase + sprites_current_scanline[i].tile * 16 + (scanline - sprites_current_scanline[i].y));
+            else                                           // зеркальная ориентация по вертикали
+                sprite_lsb = bus->read_ppu(patternBase + sprites_current_scanline[i].tile * 16 + (7 - (scanline - sprites_current_scanline[i].y)));
+        }
+        else // 8x16
+        {
+
+        }
+
+        uint8_t sprite_bits_lo = bus->read_ppu(sprite_lsb);
+        uint8_t sprite_bits_hi = bus->read_ppu(sprite_lsb + 8);
+
+        if(!(sprites_current_scanline[i].attr & 0x40)) // зеркальная ориентация по горизонтали
+        {
+            auto flipbyte = [](uint8_t b)
+            {
+                b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+                b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+                b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+                return b;
+            };
+
+            sprite_bits_lo = flipbyte(sprite_bits_lo);
+            sprite_bits_hi = flipbyte(sprite_bits_hi);
+        }
+
+        shif_sprite_lsb[i] = sprite_bits_lo;
+        shif_sprite_msb[i] = sprite_bits_hi;
     }
 }
 
