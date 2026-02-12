@@ -24,7 +24,7 @@ MyOpenGL::MyOpenGL(GLsizei _width, GLsizei _height, QWidget* parent, Qt::WindowF
         update();
     });
 
-    timerFPS->start(1000.0 / 60.0);
+    timerFPS->start(1000 / 58);
 }
 
 MyOpenGL::~MyOpenGL()
@@ -85,12 +85,6 @@ void MyOpenGL::paintGL()
         window->show_real_FPS(elapsed_ms.count());
         time_update = std::chrono::steady_clock::now();
     }
-
-
-    //            auto elapsed_ms = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time);
-    //            double aaa = ((1.0 / 60.0) * 1000000.0) - elapsed_ms.count();
-    //            std::this_thread::sleep_for(std::chrono::microseconds((int64_t)aaa));
-    //            start_time = std::chrono::steady_clock::now();
 #endif
 
     glDisable(GL_DEPTH_TEST);

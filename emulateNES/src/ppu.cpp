@@ -184,26 +184,22 @@ void PPU::run(int cycles)
                         color_pixel = color_back;
 
 
-//                    if (sprite_from_sprite0)
-//                    {
-//                        if (mask.render_background & mask.render_sprites)
-//                        {
-//                            if (~(mask.render_background_left | mask.render_sprites_left))
-//                            {
-//                                if (cycle >= 9 && cycle < 257)
-//                                {
-//                                    status.sprite_zero_hit = 1;
-//                                }
-//                            }
-//                            else
-//                            {
-//                                if (cycle >= 1 && cycle < 257)
-//                                {
-//                                    status.sprite_zero_hit = 1;
-//                                }
-//                            }
-//                        }
-//                    }
+                    if (sprite_from_sprite0)
+                    {
+                        if ((PPUMASK & 0x08) & (PPUMASK & 0x10))
+                        {
+                            if (~((PPUMASK & 0x02) | (PPUMASK & 0x04)))
+                            {
+                                if (cycle >= 9)
+                                    PPUSTATUS |= 0x40;
+                            }
+                            else
+                            {
+                                if (cycle >= 1)
+                                    PPUSTATUS |= 0x40;
+                            }
+                        }
+                    }
                 }
 
 
@@ -627,11 +623,11 @@ uint8_t PPU::get_sprite(uint8_t& priority)
         if (sprites_current_scanline[i].x == 0)
         {
 
-            uint8_t pixel_lo = (shif_sprite_lsb[i] & 0x80) > 0;
-            uint8_t pixel_hi = (shif_sprite_lsb[i] & 0x80) > 0;
+            bool pixel_lo = (shif_sprite_lsb[i] & 0x80) > 0;
+            bool pixel_hi = (shif_sprite_msb[i] & 0x80) > 0;
             uint8_t color = (pixel_hi << 1) | pixel_lo;
 
-            uint8_t paletteIndex = (sprites_current_scanline[i].attr & 0x03) + 0x04;
+            uint8_t paletteIndex = (sprites_current_scanline[i].attr & 0x03) + 4;
             priority = (sprites_current_scanline[i].attr & 0x20) == 0;
 
             if (color != 0)
@@ -643,7 +639,7 @@ uint8_t PPU::get_sprite(uint8_t& priority)
                     colorByte = color;
                 else
                 {
-                    uint16_t addr = 0x3F10 + paletteIndex * 4 + color;
+                    uint16_t addr = 0x3F00 + paletteIndex * 4 + color;
                     colorByte = bus->read_ppu(addr);
                 }
 
@@ -801,26 +797,41 @@ void PPU::get_sprites_on_next_scanline()
 {
     for(int i = 0; i < sprites_current_scanline.size(); ++i)
     {
-        uint8_t sprite_lsb = 0;
+        uint16_t sprite_lsb = 0;
 
         if(!(PPUCTRL & 0x20)) // 8x8
         {
-            uint16_t patternBase = (PPUCTRL & 0x10) ? 0x1000 : 0x0000;
+            uint16_t patternBase = (PPUCTRL & 0x8) ? 0x1000 : 0x0000;
 
             if(!(sprites_current_scanline[i].attr & 0x80)) // нормальная ориентация
-                sprite_lsb = bus->read_ppu(patternBase + sprites_current_scanline[i].tile * 16 + (scanline - sprites_current_scanline[i].y));
-            else                                           // зеркальная ориентация по вертикали
-                sprite_lsb = bus->read_ppu(patternBase + sprites_current_scanline[i].tile * 16 + (7 - (scanline - sprites_current_scanline[i].y)));
+                sprite_lsb = patternBase + sprites_current_scanline[i].tile * 16 + (scanline - sprites_current_scanline[i].y);
+            else // зеркальная ориентация по вертикали
+                sprite_lsb = patternBase + sprites_current_scanline[i].tile * 16 + (7 - (scanline - sprites_current_scanline[i].y));
         }
         else // 8x16
         {
+            uint16_t patternBase = (sprites_current_scanline[i].tile & 0x01) ? 0x1000 : 0x0000;
 
+            if(!(sprites_current_scanline[i].attr & 0x80)) // нормальная ориентация
+            {
+                if (scanline - sprites_current_scanline[i].y < 8)
+                    sprite_lsb = patternBase + (sprites_current_scanline[i].tile & 0xFE) * 16 + ((scanline - sprites_current_scanline[i].y) & 0x07);
+                else
+                    sprite_lsb = patternBase + ((sprites_current_scanline[i].tile & 0xFE) + 1) * 16 + ((scanline - sprites_current_scanline[i].y) & 0x07);
+            }
+            else // зеркальная ориентация по вертикали
+            {
+                if (scanline - sprites_current_scanline[i].y < 8)
+                    sprite_lsb = patternBase + (sprites_current_scanline[i].tile & 0xFE) * 16 + (7 - (scanline - sprites_current_scanline[i].y) & 0x07);
+                else
+                    sprite_lsb = patternBase + ((sprites_current_scanline[i].tile & 0xFE) + 1) * 16 + (7 - (scanline - sprites_current_scanline[i].y) & 0x07);
+            }
         }
 
         uint8_t sprite_bits_lo = bus->read_ppu(sprite_lsb);
         uint8_t sprite_bits_hi = bus->read_ppu(sprite_lsb + 8);
 
-        if(!(sprites_current_scanline[i].attr & 0x40)) // зеркальная ориентация по горизонтали
+        if((sprites_current_scanline[i].attr & 0x40)) // зеркальная ориентация по горизонтали
         {
             auto flipbyte = [](uint8_t b)
             {
