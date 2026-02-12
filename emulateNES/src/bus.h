@@ -52,6 +52,7 @@ private:
     uint16_t cycle;
     uint16_t scanline;
     uint16_t frame;
+    uint8_t controller;
 };
 
 #endif // BUS_H

@@ -16,6 +16,7 @@ CPU::CPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 {
     connect(this, &CPU::signal_error_show, window, &MainWindow::slot_show_error_message, Qt::QueuedConnection);
     connect(window, &MainWindow::signal_init_new_cartridge, this, &CPU::slot_init_new_cartridge);
+    connect(window, &MainWindow::signal_press_key, this, &CPU::slot_press_key);
 
     table_instructions.resize(256);
 
@@ -361,11 +362,27 @@ bool CPU::slot_init_new_cartridge(const QString& path)
 
 }
 
+void CPU::slot_press_key(Qt::Key key)
+{
+    uint8_t game_pad = 0;
+    game_pad |= key == Qt::Key::Key_X ? 0x80 : 0x00;
+    game_pad |= key == Qt::Key::Key_Z ? 0x40 : 0x00;
+    game_pad |= key == Qt::Key::Key_A ? 0x20 : 0x00;
+    game_pad |= key == Qt::Key::Key_S ? 0x10 : 0x00;
+    game_pad |= key == Qt::Key::Key_Up ? 0x08 : 0x00;
+    game_pad |= key == Qt::Key::Key_Down ? 0x04 : 0x00;
+    game_pad |= key == Qt::Key::Key_Left ? 0x02 : 0x00;
+    game_pad |= key == Qt::Key::Key_Right ? 0x01 : 0x00;
+
+    std::lock_guard<std::mutex> lock(mutex_stop);
+
+    bus->write_cpu(0x4016, game_pad);
+}
+
 void CPU::run()
 {
     while (start.load())
     {
-
         std::lock_guard<std::mutex> lock(mutex_stop);
 
         uint8_t val = bus->read_cpu(PC, false);

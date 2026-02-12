@@ -46,6 +46,9 @@ public:
 public slots:
     bool slot_init_new_cartridge(const QString& path);
 
+private slots:
+    void slot_press_key(Qt::Key key);
+
 signals:
     void signal_error_show();
 

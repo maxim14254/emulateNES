@@ -51,6 +51,7 @@ private:
 
 signals:
     void signal_init_new_cartridge(const QString& path);
+    void signal_press_key(Qt::Key);
 
 };
 

@@ -157,6 +157,8 @@ void MainWindow::keyPressEvent(QKeyEvent *e)
 
 #endif
 
+    emit signal_press_key((Qt::Key)e->key());
+
     QMainWindow::keyPressEvent(e);
 }
 

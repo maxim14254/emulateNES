@@ -36,7 +36,15 @@ uint8_t Bus::read_cpu(uint16_t addr, bool onlyRead)
     }
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода
     {
-        return 0x00; // TO DO
+        if(addr == 0x4016) // джойстики
+        {
+            uint8_t rez = controller;
+            controller <<= 1;
+
+            return (rez & 0x80) > 0;
+        }
+        else
+            return 0x00; // TO DO
     }
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
     {
@@ -71,6 +79,8 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     {
         if(addr == 0x4014) // DMA
             ppu->set_oam(&ram[data << 8]);
+        else if(addr == 0x4016) // джойстики
+            controller = data;
     }
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
     {
