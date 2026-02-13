@@ -162,6 +162,13 @@ void MainWindow::keyPressEvent(QKeyEvent *e)
     QMainWindow::keyPressEvent(e);
 }
 
+void MainWindow::keyReleaseEvent(QKeyEvent *event)
+{
+    emit signal_release_key((Qt::Key)event->key());
+
+    QMainWindow::keyReleaseEvent(event);
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
 

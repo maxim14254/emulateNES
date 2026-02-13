@@ -38,6 +38,7 @@ public slots:
 
 protected:
     void keyPressEvent(QKeyEvent* e) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
     void closeEvent(QCloseEvent* event) override;
 
 private:
@@ -52,6 +53,7 @@ private:
 signals:
     void signal_init_new_cartridge(const QString& path);
     void signal_press_key(Qt::Key);
+    void signal_release_key(Qt::Key);
 
 };
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>997</width>
-    <height>718</height>
+    <width>1147</width>
+    <height>1007</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -61,6 +61,12 @@
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>622</width>
+             <height>967</height>
+            </size>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_5">
             <property name="sizeConstraint">
@@ -440,7 +446,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>997</width>
+     <width>1147</width>
      <height>27</height>
     </rect>
    </property>

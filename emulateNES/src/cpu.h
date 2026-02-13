@@ -42,12 +42,14 @@ public:
     uint8_t get_A(){ return A; }
     uint8_t get_X(){ return X; }
     uint8_t get_Y(){ return Y; }
+    uint8_t get_gamepad(uint8_t i){ return gamepad[i]; }
 
 public slots:
     bool slot_init_new_cartridge(const QString& path);
 
 private slots:
-    void slot_press_key(Qt::Key key);
+    void slot_press_key(int key);
+    void slot_release_key(int key);
 
 signals:
     void signal_error_show();
@@ -70,6 +72,7 @@ private:
     bool nmi_pending = false;
     MainWindow* window;
 
+    uint8_t gamepad[2];
 
     void run();
     void reset();

@@ -17,6 +17,10 @@ CPU::CPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
     connect(this, &CPU::signal_error_show, window, &MainWindow::slot_show_error_message, Qt::QueuedConnection);
     connect(window, &MainWindow::signal_init_new_cartridge, this, &CPU::slot_init_new_cartridge);
     connect(window, &MainWindow::signal_press_key, this, &CPU::slot_press_key);
+    connect(window, &MainWindow::signal_release_key, this, &CPU::slot_release_key);
+
+    gamepad[0] = 0;
+    gamepad[1] = 0;
 
     table_instructions.resize(256);
 
@@ -296,10 +300,7 @@ CPU::CPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 
 CPU::~CPU()
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_stop);
-        start = false;
-    }
+    start = false;
 
     if(run_t.joinable())
         run_t.join();
@@ -362,21 +363,66 @@ bool CPU::slot_init_new_cartridge(const QString& path)
 
 }
 
-void CPU::slot_press_key(Qt::Key key)
+void CPU::slot_press_key(int key)
 {
-    uint8_t game_pad = 0;
-    game_pad |= key == Qt::Key::Key_X ? 0x80 : 0x00;
-    game_pad |= key == Qt::Key::Key_Z ? 0x40 : 0x00;
-    game_pad |= key == Qt::Key::Key_A ? 0x20 : 0x00;
-    game_pad |= key == Qt::Key::Key_S ? 0x10 : 0x00;
-    game_pad |= key == Qt::Key::Key_Up ? 0x08 : 0x00;
-    game_pad |= key == Qt::Key::Key_Down ? 0x04 : 0x00;
-    game_pad |= key == Qt::Key::Key_Left ? 0x02 : 0x00;
-    game_pad |= key == Qt::Key::Key_Right ? 0x01 : 0x00;
+    switch (key)
+    {
+    case Qt::Key::Key_X:
+        gamepad[0] |= 0x80;
+        break;
+    case Qt::Key::Key_Z:
+        gamepad[0] |= 0x40;
+        break;
+    case Qt::Key::Key_Alt:
+        gamepad[0] |= 0x20;
+        break;
+    case Qt::Key::Key_Control:
+        gamepad[0] |= 0x10;
+        break;
+    case Qt::Key::Key_Up:
+        gamepad[0] |= 0x08;
+        break;
+    case Qt::Key::Key_Down:
+        gamepad[0] |= 0x04;
+        break;
+    case Qt::Key::Key_Left:
+        gamepad[0] |= 0x02;
+        break;
+    case Qt::Key::Key_Right:
+        gamepad[0] |= 0x01;
+        break;
+    }
+}
 
-    std::lock_guard<std::mutex> lock(mutex_stop);
-
-    bus->write_cpu(0x4016, game_pad);
+void CPU::slot_release_key(int key)
+{
+    switch (key)
+    {
+    case Qt::Key::Key_X:
+        gamepad[0] &= ~0x80;
+        break;
+    case Qt::Key::Key_Z:
+        gamepad[0] &= ~0x40;
+        break;
+    case Qt::Key::Key_Alt:
+        gamepad[0] &= ~0x20;
+        break;
+    case Qt::Key::Key_Control:
+        gamepad[0] &= ~0x10;
+        break;
+    case Qt::Key::Key_Up:
+        gamepad[0] &= ~0x08;
+        break;
+    case Qt::Key::Key_Down:
+        gamepad[0] &= ~0x04;
+        break;
+    case Qt::Key::Key_Left:
+        gamepad[0] &= ~0x02;
+        break;
+    case Qt::Key::Key_Right:
+        gamepad[0] &= ~0x01;
+        break;
+    }
 }
 
 void CPU::run()

@@ -24,7 +24,10 @@ protected:
 private:
     GLuint textureId;
     std::vector<uint32_t> nesFrame;
-    GLsizei width, height;
+    GLsizei width1, height1;
+
+    QRect m_viewport;
+    qreal m_dpr = 1.0;
 
     MainWindow* window;
 

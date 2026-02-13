@@ -183,7 +183,6 @@ void PPU::run(int cycles)
                     else
                         color_pixel = color_back;
 
-
                     if (sprite_from_sprite0)
                     {
                         if ((PPUMASK & 0x08) & (PPUMASK & 0x10))
