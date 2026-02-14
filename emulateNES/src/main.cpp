@@ -5,7 +5,11 @@
 #include <QMetaObject>
 #include "bus.h"
 #include "ppu.h"
-#include <mutex>
+#include "apu.h"
+#include <QtMultimedia/QAudioDeviceInfo>
+#include <QtMultimedia/QAudioOutput>
+#include <QtMultimedia/QAudioFormat>
+#include <QMessageBox>
 
 
 #ifdef LOG_ON
@@ -23,6 +27,33 @@ int main(int argc, char *argv[])
     w.show();
 
     Bus bus;
+
+    QAudioFormat format;
+    format.setSampleRate(48000);
+    format.setChannelCount(1);
+    format.setCodec("audio/pcm");
+    format.setSampleSize(32);
+    format.setSampleType(QAudioFormat::SignedInt);
+    format.setByteOrder(QAudioFormat::LittleEndian);
+
+    QAudioDeviceInfo dev = QAudioDeviceInfo::defaultOutputDevice();
+
+    if (dev.isFormatSupported(format))
+    {
+        QAudioOutput sink(dev, format);
+        APU apu(0.0, format.sampleRate());
+
+        apu.start();
+        sink.start(&apu);
+
+        bus.init_APU(&apu);
+    }
+    else
+    {
+        QMessageBox message(QMessageBox::Icon::Critical, "Error", "Аудио устройство не поддерживает аудио формат:\nSampleRate(48000)\nCodec(audio/pcm)\nSampleSize(32)\nSampleType(SignedInt)\nByteOrder(LittleEndian)",
+                            QMessageBox::StandardButton::Ok);
+        message.exec();
+    }
 
     PPU ppu(&w, &bus);
     bus.init_PPU(&ppu);

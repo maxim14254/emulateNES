@@ -3,7 +3,7 @@ include(../NES.pro)
 TEMPLATE = app
 
 #QT       += core gui openglwidgets opengl
-QT       += core gui opengl
+QT       += core gui opengl multimedia multimediawidgets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -17,9 +17,11 @@ RC_ICONS = nintendoNES.ico
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += $$files(src/*.cpp) \
+    src/apu.cpp
 
 
 HEADERS += $$files(src/*.h) \
+    src/apu.h
 
 
 FORMS += $$files(forms/*)

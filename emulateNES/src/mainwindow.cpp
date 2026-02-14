@@ -157,14 +157,14 @@ void MainWindow::keyPressEvent(QKeyEvent *e)
 
 #endif
 
-    emit signal_press_key((Qt::Key)e->key());
+    emit signal_press_key(e->key());
 
     QMainWindow::keyPressEvent(e);
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent *event)
 {
-    emit signal_release_key((Qt::Key)event->key());
+    emit signal_release_key(event->key());
 
     QMainWindow::keyReleaseEvent(event);
 }

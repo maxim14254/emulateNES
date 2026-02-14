@@ -282,6 +282,11 @@ void Bus::init_CPU(CPU *_cpu)
     cpu = _cpu;
 }
 
+void Bus::init_APU(APU *_apu)
+{
+    apu = _apu;
+}
+
 void Bus::run_steps_ppu(int cycles)
 {
     ppu->run(cycles);
