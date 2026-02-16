@@ -40,13 +40,13 @@ int main(int argc, char *argv[])
 
     if (dev.isFormatSupported(format))
     {
-        QAudioOutput sink(dev, format);
-        APU apu(0.0, format.sampleRate());
+        QAudioOutput* sink = new QAudioOutput(dev, format);
+        APU* apu = new APU(440.0, format.sampleRate());
 
-        apu.start();
-        sink.start(&apu);
+        apu->start();
+        sink->start(apu);
 
-        bus.init_APU(&apu);
+        bus.init_APU(apu);
     }
     else
     {

@@ -154,6 +154,13 @@ void MainWindow::keyPressEvent(QKeyEvent *e)
 
         cv.notify_one();
     }
+    else if(e->key() == Qt::Key_Plus)
+        ++harmonics;
+    else if(e->key() == Qt::Key_Minus)
+    {
+        if(harmonics > 2)
+            --harmonics;
+    }
 
 #endif
 
