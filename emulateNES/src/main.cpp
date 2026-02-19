@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     format.setSampleRate(48000);
     format.setChannelCount(1);
     format.setCodec("audio/pcm");
-    format.setSampleSize(32);
+    format.setSampleSize(16);
     format.setSampleType(QAudioFormat::SignedInt);
     format.setByteOrder(QAudioFormat::LittleEndian);
 
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     if (dev.isFormatSupported(format))
     {
         QAudioOutput* sink = new QAudioOutput(dev, format);
-        APU* apu = new APU(440.0, format.sampleRate());
+        APU* apu = new APU(440.0, format.sampleRate(), &bus);
 
         apu->start();
         sink->start(apu);

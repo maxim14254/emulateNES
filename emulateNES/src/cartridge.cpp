@@ -71,23 +71,23 @@ Cartridge::~Cartridge()
 
 uint8_t Cartridge::mapper_read_prg(uint16_t addr)
 {
-    if (prg_rom.size() == 0x4000)
-    {
-        uint32_t offset = (addr - 0x8000) & 0x3FFF;
-        return prg_rom[offset];
-    }
-    else
-    {
-        uint32_t offset = addr - 0x8000;
-        return prg_rom[offset];
-    }
-
-//    if (addr >= 0x8000 && addr <= 0xFFFF)
+//    if (prg_rom.size() <= 0x4000)
 //    {
-//        auto mapped_addr =  addr & (header.prg_rom > 1 ? 0x7FFF : 0x3FFF);
-//        return prg_rom[mapped_addr];
-
+//        uint32_t offset = (addr - 0x8000) & 0x3FFF;
+//        return prg_rom[offset];
 //    }
+//    else
+//    {
+//        uint32_t offset = addr - 0x8000;
+//        return prg_rom[offset];
+//    }
+
+    if (addr >= 0x8000 && addr <= 0xFFFF)
+    {
+        auto mapped_addr =  addr & (header.prg_rom > 1 ? 0x7FFF : 0x3FFF);
+        return prg_rom[mapped_addr];
+
+    }
 
     return 0;
 }

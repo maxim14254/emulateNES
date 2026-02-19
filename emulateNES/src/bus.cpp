@@ -5,7 +5,15 @@
 #include <QDebug>
 #include "ppu.h"
 #include "cpu.h"
+#include "global.h"
+#include "apu.h"
 
+
+bool linear_reload_flag = false;
+uint8_t linear_counter_reload = 0;
+uint8_t linear_counter = 0;
+bool control_flag = false;
+bool pulse1_enable = false;
 
 Bus::Bus()
 {
@@ -77,10 +85,157 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     }
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода DMA
     {
-        if(addr == 0x4014) // DMA
+        if(addr == 0x4000)
+        {
+            switch ((data & 0xC0) >> 6)
+            {
+            case 0x00:
+                p1.duty = 0.125;
+                break;
+            case 0x01:
+                p1.duty = 0.25;
+                break;
+            case 0x02:
+                p1.duty = 0.5;
+                break;
+            case 0x03:
+                p1.duty = 0.75;
+                break;
+            }
+
+            envelope_loop_purse1 = (data & 0x20) > 0;
+            envelope_constant_volume_purse1 = (data & 0x10) > 0;
+            envelope_constant_period_purse1 = data & 0x0F;
+        }
+        else if(addr == 0x4001)
+        {
+            sweep_enabled_purse1 = (data & 0x80) > 0;
+            sweep_period_purse1 = (data & 0x70) >> 4;
+            sweep_negate_purse1 = (data & 0x08) > 0;
+            sweep_shift_purse1 = data & 0x07;
+            sweep_reload_purse1 = true;
+        }
+        else if(addr == 0x4002)
+        {
+            p1_timer_lo = data;
+        }
+        else if(addr == 0x4003)
+        {
+            p1_timer = (data & 0x07) << 8 | p1_timer_lo;
+            uint8_t length = (data & 0xF8) >> 3;
+
+            if (pulse1_enable)
+                length_counter_purse1 = LENGTH_TABLE[length];
+
+            envelope_start_purse1 = true;
+        }
+        else if(addr == 0x4004)
+        {
+            switch ((data & 0xC0) >> 6)
+            {
+            case 0x00:
+                p2.duty = 0.125;
+                break;
+            case 0x01:
+                p2.duty = 0.25;
+                break;
+            case 0x02:
+                p2.duty = 0.5;
+                break;
+            case 0x03:
+                p2.duty = 0.75;
+                break;
+            }
+
+            bool pulse2_halt = (data & 0x20) > 0;
+            constant_volume_purse2 = (data & 0x10) > 0;
+            bool pulse2_volume = data & 0x0F;
+        }
+        else if(addr == 0x4005)
+        {
+            bool sweep_enable = (data & 0x80) > 0;
+            uint8_t sweep_period = (data & 0x70) >> 4;
+            bool sweep_down = (data & 0x08) > 0;
+            uint8_t sweep_shift = data & 0x07;
+
+        }
+        else if(addr == 0x4006)
+        {
+            p2_timer_lo = data;
+        }
+        else if(addr == 0x4007)
+        {
+            p2_timer = (data & 0x07) << 8 | p2_timer_lo;
+            uint8_t length_counter = (data & 0xF8) >> 3;
+        }
+        else if(addr == 0x4008)
+        {
+            control_flag = (data & 0x80) > 0;
+            linear_counter_reload = data & 0x7F;
+        }
+        else if(addr == 0x400A)
+        {
+            triangle_timer_lo = data;
+        }
+        else if(addr == 0x400B)
+        {
+            linear_reload_flag = true;
+            uint8_t length_counter = (data & 0xF8) >> 3;
+
+            triangle_timer = (data & 0x07) << 8 | triangle_timer_lo;
+        }
+        else if(addr == 0x400C)
+        {
+            envelope_loop_noise =  (data & 0x20) > 0;
+            constant_volume_noise =  (data & 0x10) > 0;
+
+            if(constant_volume_noise)
+            {
+                uint8_t volume = data & 0x0F;
+            }
+            else
+            {
+                uint8_t envelope = data & 0x0F;
+            }
+        }
+        else if(addr == 0x400E)
+        {
+            n.shortMode = (data & 0x80) > 0;
+
+            noise_period = data & 0x0F;
+        }
+        else if(addr == 0x400F)
+        {
+            uint8_t length_counter = (data & 0xF8) >> 3;
+        }
+        else if(addr == 0x4014) // DMA
             ppu->set_oam(&ram[data << 8]);
+        else if(addr == 0x4015)
+        {
+            pulse1_enable = data & 0x01;
+            bool pulse2_enable = data & 0x02;
+            bool triangle_enable = data & 0x04;
+            bool noise_enable = data & 0x08;
+        }
         else if(addr == 0x4016 || addr == 0x4017) // джойстики
+        {
             controller[addr & 0x0001] = cpu->get_gamepad(addr & 0x0001);
+
+            if(linear_reload_flag)
+            {
+                linear_counter = linear_counter_reload;
+            }
+            else if(linear_counter > 0)
+            {
+                --linear_counter;
+            }
+
+            if(!control_flag)
+            {
+                linear_reload_flag = false;
+            }
+        }
+
     }
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
     {
@@ -290,6 +445,11 @@ void Bus::init_APU(APU *_apu)
 void Bus::run_steps_ppu(int cycles)
 {
     ppu->run(cycles);
+}
+
+void Bus::run_steps_apu()
+{
+    apu->run();
 }
 
 void Bus::cpu_request_nmi()

@@ -427,6 +427,8 @@ void CPU::slot_release_key(int key)
 
 void CPU::run()
 {
+    bool run_step_apu = false;
+
     while (start.load())
     {
         std::lock_guard<std::mutex> lock(mutex_stop);
@@ -438,6 +440,11 @@ void CPU::run()
         instr_func(*this);
 
         bus->run_steps_ppu(cycles - old_cycles);
+
+        if(run_step_apu)
+            bus->run_steps_apu();
+
+        run_step_apu = !run_step_apu;
 
         if (nmi_pending)
         {
