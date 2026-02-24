@@ -13,7 +13,7 @@ bool linear_reload_flag = false;
 uint8_t linear_counter_reload = 0;
 uint8_t linear_counter = 0;
 bool control_flag = false;
-bool pulse1_enable = false;
+
 
 Bus::Bus()
 {
@@ -104,8 +104,8 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
             }
 
             envelope_loop_purse1 = (data & 0x20) > 0;
-            envelope_constant_volume_purse1 = (data & 0x10) > 0;
-            envelope_constant_period_purse1 = data & 0x0F;
+            envelope_disable_purse1 = (data & 0x10) > 0;
+            envelope_constant_volume_purse1 = (data & 0x0F);
         }
         else if(addr == 0x4001)
         {
@@ -124,7 +124,7 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
             p1_timer = (data & 0x07) << 8 | p1_timer_lo;
             uint8_t length = (data & 0xF8) >> 3;
 
-            if (pulse1_enable)
+            if (pulse1_enable.load())
                 length_counter_purse1 = LENGTH_TABLE[length];
 
             envelope_start_purse1 = true;
@@ -447,9 +447,9 @@ void Bus::run_steps_ppu(int cycles)
     ppu->run(cycles);
 }
 
-void Bus::run_steps_apu()
+void Bus::run_steps_apu(int cycles)
 {
-    apu->run();
+    apu->run(cycles);
 }
 
 void Bus::cpu_request_nmi()

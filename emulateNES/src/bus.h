@@ -30,7 +30,7 @@ public:
     void init_APU(APU* _cpu);
 
     void run_steps_ppu(int cycles);
-    void run_steps_apu();
+    void run_steps_apu(int cycles);
 
     void cpu_request_nmi();
     void reset_ppu();
@@ -44,10 +44,10 @@ public:
     uint16_t get_noise_period() { return noise_period; }
     bool get_envelope_loop_noise(){ return envelope_loop_noise; }
 
-    uint8_t get_envelope_constant_period_purse1(){ return envelope_constant_period_purse1; }
+    bool get_envelope_disable_purse1(){ return envelope_disable_purse1; }
     bool get_envelope_loop_purse1(){ return envelope_loop_purse1; }
     bool get_envelope_start_purse1(){ return envelope_start_purse1; }
-    bool get_envelope_constant_volume_purse1(){ return envelope_constant_volume_purse1; }
+    uint16_t get_envelope_constant_volume_purse1(){ return envelope_constant_volume_purse1; }
     bool get_sweep_negate_purse1(){ return sweep_negate_purse1; }
     bool get_sweep_enabled_purse1(){ return sweep_enabled_purse1; }
     uint8_t get_sweep_period_purse1(){ return sweep_period_purse1; }
@@ -95,10 +95,10 @@ private:
     uint8_t sweep_period_purse1 = 0;
     uint8_t sweep_shift_purse1 = 0;
     uint8_t length_counter_purse1 = 0;
-    uint8_t envelope_constant_period_purse1 = 0;
-    bool envelope_loop_purse1 = false;
+    bool envelope_disable_purse1 = false;    // регулирование громкости/пакетный сигнал
+    bool envelope_loop_purse1 = false;              // флаг зацикливания
     bool envelope_start_purse1 = false;
-    bool envelope_constant_volume_purse1 = false;
+    uint16_t envelope_constant_volume_purse1 = 0;   // значение громкости/размер пакета
     bool sweep_negate_purse1 = false;
     bool sweep_enabled_purse1 = false;
     bool sweep_reload_purse1 = false;

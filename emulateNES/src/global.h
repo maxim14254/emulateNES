@@ -45,7 +45,7 @@ inline std::atomic<int> harmonics = 2;
 
 inline ChannelParams p1, p2, t;
 inline NoiseParams n;
-
+inline std::atomic<bool> pulse1_enable = false;
 
 #ifdef DEBUG_ON
 inline std::mutex step_by_step_mutex;

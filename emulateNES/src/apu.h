@@ -2,55 +2,56 @@
 #define APU_H
 
 #include <QIODevice>
-
+#include <deque>
 
 
 struct Envelope
 {
-    bool loop = false;              // он же length_halt для pulse/noise
-    bool constant_volume = false;   // D4
-    uint8_t period = 0;             // D0..D3 (если constant_volume=0)
-    uint8_t constant = 0;           // D0..D3 (если constant_volume=1)
-
-    // внутреннее состояние огибающей
-    uint8_t divider = 0;
-    uint8_t decay_level = 0;
     bool start = false;
+    bool disable = false;
+    bool bLoop = false;
 
-    uint8_t envelope_volume()
-    {
-        if (constant_volume)
-            return constant & 0x0F;
-        return decay_level & 0x0F;
-    }
+    uint16_t divider_count = 0;
+    uint16_t volume = 0;
+    uint16_t output = 0;
+    uint16_t decay_count = 0;
 
     void clock_envelope()
     {
-        if (start)
+        if (!start)
         {
-            start = false;
-            decay_level = 15;
-            divider = period;
-            return;
-        }
-
-        if (divider == 0)
-        {
-            divider = period;
-
-            if (decay_level == 0)
+            if (divider_count == 0)
             {
-                if (loop)
-                    decay_level = 15;
+                divider_count = volume;
+
+                if (decay_count == 0)
+                {
+                    if (bLoop)
+                    {
+                        decay_count = 15;
+                    }
+
+                }
+                else
+                    decay_count--;
             }
             else
-            {
-                decay_level--;
-            }
+                divider_count--;
         }
         else
         {
-            divider--;
+            start = false;
+            decay_count = 15;
+            divider_count = volume;
+        }
+
+        if (disable)
+        {
+            output = volume;
+        }
+        else
+        {
+            output = decay_count;
         }
     }
 };
@@ -63,8 +64,47 @@ struct Sweep
     uint8_t shift = 0;
 
     // внутреннее состояние sweep
-    uint8_t divider = 0;
     bool reload = false;
+    uint16_t change = 0;
+    uint8_t timer = 0;
+    bool mute = false;
+
+    bool clock(uint16_t& target, bool channel)
+    {
+        bool changed = false;
+        change = target >> shift;
+
+        if (timer == 0 && enabled && shift > 0 && !mute)
+        {
+            if (target >= 8 && change < 0x07FF)
+            {
+                if (negate)
+                {
+                    target -= change - channel;
+                }
+                else
+                {
+                    target += change;
+                }
+                changed = true;
+            }
+        }
+
+        //if (enabled)
+        {
+            if (timer == 0 || reload)
+            {
+                timer = period;
+                reload = false;
+            }
+            else
+                timer--;
+
+            mute = (target < 8) || (target > 0x7FF);
+        }
+
+        return changed;
+    }
 };
 
 
@@ -197,7 +237,7 @@ public:
     qint64 writeData(const char *, qint64) override { return 0; }
     qint64 bytesAvailable() const override { return 4096 + QIODevice::bytesAvailable(); }
 
-    void run();
+    void run(int cycles);
 
 private:
     double m_freq = 440.0;
@@ -209,6 +249,9 @@ private:
     NoiseLFSR noise;
 
     Bus* bus;
+
+    int frame_counter = 0;
+    std::deque<qint16> ring_buffer;
 
     int NTSC_periods[16]{4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068};
 };
