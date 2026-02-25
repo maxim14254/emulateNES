@@ -10,7 +10,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
-      ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
@@ -50,7 +50,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->cpu_debuger->setTextInteractionFlags(Qt::NoTextInteraction);
 
     ui->verticalLayout_3->addStretch();
-
+#else
+    delete ui->verticalLayout_6;
+    resize(850, 750);
 #endif
 }
 
@@ -66,18 +68,23 @@ void MainWindow::render_frame(std::vector<uint32_t>& frame_buffer)
 
 void MainWindow::render_debug_tiles(std::vector<uint32_t>& frame1, std::vector<uint32_t>& frame2)
 {
+#ifdef DEBUG_ON
     debug_tiles_widget1->set_frame_buffer(frame1);
     debug_tiles_widget2->set_frame_buffer(frame2);
+#endif
 }
 
 void MainWindow::render_debug_palettes(std::vector<uint32_t> &frame)
 {
+#ifdef DEBUG_ON
     debug_palettes_widget->set_frame_buffer(frame);
+#endif
 }
 
 void MainWindow::render_cpu_debug(const QString& text,uint8_t PPUCTRL, uint8_t PPUMASK, uint8_t PPUSTATUS, uint8_t OAMADDR, uint8_t OAMDATA, uint8_t PPUSCROLL, uint8_t PPUDATA, uint16_t PPUADDR,
                                   uint16_t PC, uint8_t SP, uint8_t status, uint8_t A, uint8_t X, uint8_t Y)
-{    
+{
+#ifdef DEBUG_ON
     ui->cpu_debuger->setText(text);
 
     ui->label_PC->setText(QString("%1").arg(PC, 4, 16, QChar('0')).toUpper());
@@ -95,32 +102,38 @@ void MainWindow::render_cpu_debug(const QString& text,uint8_t PPUCTRL, uint8_t P
     ui->label_ppuscroll->setText(QString("%1").arg(PPUSCROLL, 2, 16, QChar('0')).toUpper());
     ui->label_ppudata->setText(QString("%1").arg(PPUDATA, 2, 16, QChar('0')).toUpper());
     ui->label_ppuadr->setText(QString("%1").arg(PPUADDR, 4, 16, QChar('0')).toUpper());
-
+#endif
 }
 
 void MainWindow::render_sprites_debug(std::vector<uint8_t> &oam)
 {
+#ifdef DEBUG_ON
     QString text;
 
     for(int i = 0; i < oam.size(); i += 4)
     {
         text += QString("%5.   Y = %1  X = %2  ID = %3  AT = %4\n").arg(oam[i], 3, 10, QChar('0')).arg(oam[i + 3], 3, 10, QChar('0')).
-                                                                    arg(oam[i + 1], 2, 16, QChar('0')).toUpper().
-                                                                    arg(oam[i + 2], 2, 16, QChar('0')).toUpper().
-                                                                    arg(i / 4, 2, 10, QChar('0'));
+                arg(oam[i + 1], 2, 16, QChar('0')).toUpper().
+                arg(oam[i + 2], 2, 16, QChar('0')).toUpper().
+                arg(i / 4, 2, 10, QChar('0'));
     }
 
     ui->sprites_debug->setText(text);
+#endif
 }
 
 void MainWindow::clear_cpu_debug()
 {
+#ifdef DEBUG_ON
     ui->cpu_debuger->clear();
+#endif
 }
 
 void MainWindow::show_real_FPS(int microsec)
 {
+#ifdef DEBUG_ON
     ui->label_read_FPS->setText(QString("%1").arg(1000000 / microsec));
+#endif
 }
 
 void MainWindow::slot_show_error_message()

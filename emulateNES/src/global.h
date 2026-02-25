@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
@@ -9,6 +10,7 @@
 #include <mutex>
 #include <atomic>
 #include <condition_variable>
+#include <cmath>
 
 class CPU;
 
@@ -243,7 +245,6 @@ inline bool _update = true;
 inline std::mutex mutex_lock_frame_buffer;
 
 inline std::condition_variable cv;
-inline std::atomic<int> harmonics = 2;
 
 #ifdef DEBUG_ON
 inline std::mutex step_by_step_mutex;

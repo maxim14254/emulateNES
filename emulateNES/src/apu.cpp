@@ -1,17 +1,15 @@
 #include "apu.h"
-#include "qmath.h"
 #include <cmath>
 #include "global.h"
 #include "bus.h"
 
 
-APU::APU(double freq, double sampleRate, Bus* _bus, QObject *parent) : QIODevice(parent), m_sampleRate(sampleRate), bus(_bus)
+APU::APU(double freq, double sampleRate, Bus* _bus, QObject *parent)
+    : QIODevice(parent),
+      m_sampleRate(sampleRate),
+      bus(_bus)
 {
-    pulse1.sr = m_sampleRate;
-    pulse2.sr = m_sampleRate;
-    tri.sr = m_sampleRate;
-    noise.sr = m_sampleRate;
-
+    noise.sr = tri.sr = pulse2.sr = pulse1.sr = 1789773.0;
 }
 
 qint64 APU::readData(char *data, qint64 maxlen)
@@ -105,7 +103,7 @@ void APU::run(int cycles)
             });
         }
 
-        pulse1.freq= 1789773.0 / (16.0 * (double)(pulse1.sequencer.reload + 1.0));
+        pulse1.freq = 1789773.0 / (16.0 * (double)(pulse1.sequencer.reload + 1.0));
         double amplitude = (double)(pulse1.envelope.output) / 15.0;
        // pulse1.duty = p1.duty.load();
 
@@ -137,8 +135,7 @@ void APU::run(int cycles)
             0.10 * tri.process() +
             0.03 * noise.process();*/
 
-        // мягкий клип, чтобы не хрустело
-        s = std::tanh(1.5 * s);
+        s = std::tanh(0.8 * s);
 
         sampleAccum += m_sampleRate;
 
@@ -146,7 +143,6 @@ void APU::run(int cycles)
         {
             sampleAccum -= 1789773.0;
 
-            // посчитать mix 's' и записать ОДИН семпл
             qint16 out_sample = (qint16)std::lrint(s * 32767.0);
             ring_buffer.write(out_sample, 1);
         }
@@ -228,8 +224,8 @@ size_t RingBufferSPSC::availableToWrite() const
 
 size_t RingBufferSPSC::availableToRead() const
 {
-    const size_t h = head.load(std::memory_order_acquire);
-    const size_t t = tail.load(std::memory_order_acquire);
+    size_t h = head.load(std::memory_order_acquire);
+    size_t t = tail.load(std::memory_order_acquire);
 
     if (h >= t)
         return h - t;
