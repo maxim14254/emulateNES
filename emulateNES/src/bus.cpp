@@ -90,60 +90,64 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
             switch ((data & 0xC0) >> 6)
             {
             case 0x00:
-                p1.duty = 0.125;
+                pulse1.duty = 0.125;
+                pulse1.sequencer.sequence = 0b01000000;
                 break;
             case 0x01:
-                p1.duty = 0.25;
+                pulse1.duty = 0.25;
+                pulse1.sequencer.sequence = 0b01100000;
                 break;
             case 0x02:
-                p1.duty = 0.5;
+                pulse1.duty = 0.5;
+                pulse1.sequencer.sequence = 0b01111000;
                 break;
             case 0x03:
-                p1.duty = 0.75;
+                pulse1.duty = 0.75;
+                pulse1.sequencer.sequence = 0b10011111;
                 break;
             }
 
-            envelope_loop_purse1 = (data & 0x20) > 0;
-            envelope_disable_purse1 = (data & 0x10) > 0;
-            envelope_constant_volume_purse1 = (data & 0x0F);
+            pulse1.envelope.bLoop = (data & 0x20) > 0;
+            pulse1.envelope.disable = (data & 0x10) > 0;
+            pulse1.envelope.volume = (data & 0x0F);
         }
         else if(addr == 0x4001)
         {
-            sweep_enabled_purse1 = (data & 0x80) > 0;
-            sweep_period_purse1 = (data & 0x70) >> 4;
-            sweep_negate_purse1 = (data & 0x08) > 0;
-            sweep_shift_purse1 = data & 0x07;
-            sweep_reload_purse1 = true;
+            pulse1.sweep.enabled = (data & 0x80) > 0;
+            pulse1.sweep.period = (data & 0x70) >> 4;
+            pulse1.sweep.negate = (data & 0x08) > 0;
+            pulse1.sweep.shift = data & 0x07;
+            pulse1.sweep.reload = true;
         }
         else if(addr == 0x4002)
         {
-            p1_timer_lo = data;
+            pulse1.sequencer.reload = (pulse1.sequencer.reload & 0xFF00) | data;
         }
         else if(addr == 0x4003)
         {
-            p1_timer = (data & 0x07) << 8 | p1_timer_lo;
+            pulse1.sequencer.reload = pulse1.sequencer.timer = (data & 0x07) << 8 | (pulse1.sequencer.reload & 0x00FF);;
             uint8_t length = (data & 0xF8) >> 3;
 
             if (pulse1_enable.load())
-                length_counter_purse1 = LENGTH_TABLE[length];
+                pulse1.length_counter = LENGTH_TABLE[length];
 
-            envelope_start_purse1 = true;
+            pulse1.envelope.start = true;
         }
         else if(addr == 0x4004)
         {
             switch ((data & 0xC0) >> 6)
             {
             case 0x00:
-                p2.duty = 0.125;
+                pulse2.duty = 0.125;
                 break;
             case 0x01:
-                p2.duty = 0.25;
+                pulse2.duty = 0.25;
                 break;
             case 0x02:
-                p2.duty = 0.5;
+                pulse2.duty = 0.5;
                 break;
             case 0x03:
-                p2.duty = 0.75;
+                pulse2.duty = 0.75;
                 break;
             }
 
