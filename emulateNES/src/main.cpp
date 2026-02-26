@@ -41,7 +41,10 @@ int main(int argc, char *argv[])
     if (dev.isFormatSupported(format))
     {
         QAudioOutput* sink = new QAudioOutput(dev, format);
-        APU* apu = new APU(440.0, format.sampleRate(), &bus);
+        sink->setBufferSize(8192);
+        sink->setNotifyInterval(5);
+
+        APU* apu = new APU(440.0, format.sampleRate(), &bus, sink);
 
         apu->start();
         sink->start(apu);
@@ -64,7 +67,7 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/Donkey Kong (Japan).nes");
+    bool rez = cpu.slot_init_new_cartridge(":/games/Popeye (World) (Rev 1).nes");
 
     int exec = a.exec();
 

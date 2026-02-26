@@ -8,5 +8,6 @@
         <file>games/2-branch_timing.nes</file>
         <file>games/Donkey Kong (Japan).nes</file>
         <file>games/ppu_vbl_nmi.nes</file>
+        <file>games/Popeye (World) (Rev 1).nes</file>
     </qresource>
 </RCC>

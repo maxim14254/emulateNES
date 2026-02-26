@@ -2,14 +2,17 @@
 #include <cmath>
 #include "global.h"
 #include "bus.h"
+#include "QDebug"
 
 
-APU::APU(double freq, double sampleRate, Bus* _bus, QObject *parent)
+
+APU::APU(double freq, double sampleRate, Bus* _bus, QAudioOutput* _sink, QObject *parent)
     : QIODevice(parent),
       m_sampleRate(sampleRate),
-      bus(_bus)
+      bus(_bus),
+      sink(_sink)
 {
-    noise.sr = tri.sr = pulse2.sr = pulse1.sr = 1789773.0;
+    pulse2.sr = pulse1.sr = 1789773.0;
 }
 
 qint64 APU::readData(char *data, qint64 maxlen)
@@ -32,7 +35,6 @@ qint64 APU::readData(char *data, qint64 maxlen)
 
     }
 
-   // ring_buffer.clear();
     return samplesToWrite * bytesPerSample;
 }
 
@@ -44,7 +46,6 @@ void APU::run(int cycles)
 
         bool bQuarterFrameClock = false;
         bool bHalfFrameClock = false;
-        //pulse1.sequencer.reload = bus->get_timer_purse1();
 
         if (frame_counter == 3729)
         {
@@ -66,74 +67,85 @@ void APU::run(int cycles)
             frame_counter = 0;
         }
 
-//        pulse1.envelope.bLoop = bus->get_envelope_loop_purse1();
-//        pulse1.envelope.disable = bus->get_envelope_disable_purse1();
-//        pulse1.envelope.start = bus->get_envelope_start_purse1();
-//        pulse1.envelope.volume = bus->get_envelope_constant_volume_purse1();
-
         if (bQuarterFrameClock)
         {
             pulse1.envelope.clock();
-            //        pulse2_env.clock(pulse2_halt);
-            //        noise_env.clock(noise_halt);
+            pulse2.envelope.clock();
+            noise.envelope.clock();
         }
-
-//        pulse1.sweep.enabled = bus->get_sweep_enabled_purse1();
-//        pulse1.sweep.period = bus->get_sweep_period_purse1();
-//        pulse1.sweep.negate = bus->get_sweep_negate_purse1();
-//        pulse1.sweep.shift = bus->get_sweep_shift_purse1();
-//        pulse1.sweep.reload = bus->get_sweep_reload_purse1();
-//        pulse1.length_counter = bus->get_length_counter_purse1();
 
 
         if (bHalfFrameClock)
         {
-            pulse1.clock_counter(pulse1_enable.load(), pulse1.envelope.bLoop);
-            //        pulse2_lc.clock(pulse2_enable, pulse2_halt);
-            //        noise_lc.clock(noise_enable, noise_halt);
+            pulse1.clock_counter(pulse1_enable, pulse1.envelope.bLoop);
+            pulse2.clock_counter(pulse2_enable, pulse2.envelope.bLoop);
+            noise.clock_counter(noise_enable, noise.envelope.bLoop);
+
             pulse1.sweep.clock(pulse1.sequencer.reload, 0);
-            //        pulse2_sweep.clock(pulse2_seq.reload, 1);
+            pulse2.sweep.clock(pulse2.sequencer.reload, 0);
         }
 
         if ((i & 1) == 0)
         {
-            pulse1.sequencer.clock(pulse1_enable.load(), [](uint32_t &s)
+            pulse1.sequencer.clock(pulse1_enable, [](uint32_t &s)
             {
                 s = ((s & 0x0001) << 7) | ((s & 0x00FE) >> 1);
             });
+
+            pulse2.sequencer.clock(pulse2_enable, [](uint32_t &s)
+            {
+                s = ((s & 0x0001) << 7) | ((s & 0x00FE) >> 1);
+            });
+
+//            noise.sequencer.clock(noise_enable, [](uint32_t &s)
+//            {
+//                s = (((s & 0x0001) ^ ((s & 0x0002) >> 1)) << 14) | ((s & 0x7FFF) >> 1);
+//            });
         }
 
         pulse1.freq = 1789773.0 / (16.0 * (double)(pulse1.sequencer.reload + 1.0));
-        double amplitude = (double)(pulse1.envelope.output) / 15.0;
-       // pulse1.duty = p1.duty.load();
+        double amplitude1 = (double)(pulse1.envelope.output) / 15.0;
 
-//        pulse2.freq = p2.freq.load();
-//        pulse2.duty = p2.duty.load();
+        pulse2.freq = 1789773.0 / (16.0 * (double)(pulse2.sequencer.reload + 1.0));
+        double amplitude2 = (double)(pulse2.envelope.output) / 15.0;
 
 //        tri.freq = t.freq.load();
 
 //        noise.noiseFreq = n.noiseFreq.load();
 //        noise.shortMode = n.shortMode.load();
 
-        //pulse1_output = 0;
-        if(pulse1_enable.load())
+        if(pulse1_enable)
         {
-            double purse1_sample = 0;
-            purse1_sample = amplitude * pulse1.process();
+            double pulse1_sample = 0;
+            pulse1_sample = amplitude1 * pulse1.process();
 
             if (pulse1.length_counter > 0 && pulse1.sequencer.timer >= 8 && !pulse1.sweep.mute && pulse1.envelope.output > 2)
-                pulse1_output += (purse1_sample - pulse1_output) * 0.5;
+                pulse1_output += (pulse1_sample - pulse1_output) * 0.5;
             else
-                pulse1_output += (0.0 - pulse1_output) * 0.01;
-
-            //pulse1_output *= 0.2;
+                pulse1_output = (0.0 - pulse1_output) * 0.01;
         }
 
+        if(pulse2_enable)
+        {
+            double pulse2_sample = 0;
+            pulse2_sample = amplitude2 * pulse2.process();
 
-        double s = 0.18 * pulse1_output; /*+
-            0.14 * pulse2.process() +
-            0.10 * tri.process() +
-            0.03 * noise.process();*/
+            if (pulse2.length_counter > 0 && pulse2.sequencer.timer >= 8 && !pulse2.sweep.mute && pulse2.envelope.output > 2)
+                pulse2_output += (pulse2_sample - pulse2_output) * 0.5;
+            else
+                pulse2_output = (0.0 - pulse2_output) * 0.01;
+        }
+
+        if(noise_enable)
+        {
+            noise.clock_timer();
+            noise_output = (double)noise.output() / 15.0;
+        }
+        else
+            noise_output = 0;
+
+        double s = 0.25 * pulse1_output + 0.25 * pulse2_output + 0.25 * noise_output;
+            //0.10 * tri.process()
 
         s = std::tanh(0.8 * s);
 
@@ -147,12 +159,6 @@ void APU::run(int cycles)
             ring_buffer.write(out_sample, 1);
         }
     }
-
-
-
-//    p2.freq = 1789773.0 / (16.0 * (double)(bus->get_timer_purse2() + 1.0));
-//    t.freq = 1789773.0 / (32.0 * (double)(bus->get_timer_triangle() + 1.0));
-//    n.noiseFreq = 1789773.0 / (double)(NTSC_periods[bus->get_noise_period()]);
 }
 
 
@@ -177,13 +183,13 @@ bool RingBufferSPSC::write(qint16 val, size_t n)
 
     if (next == t)
     {
-        return false;
-//        size_t nt = t + 1;
+        //return false;
+        size_t nt = t + 1;
 
-//        if (nt == cap)
-//            nt = 0;
+        if (nt == cap)
+            nt = 0;
 
-//        tail.store(nt, std::memory_order_release);
+        tail.store(nt, std::memory_order_release);
     }
 
     buf[h] = val;

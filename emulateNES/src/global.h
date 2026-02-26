@@ -22,13 +22,6 @@ struct INSTRUCTION
     std::string addrmode;
 };
 
-//struct ChannelParams {
-//    std::atomic<double> freq {440.0};
-//    std::atomic<double> duty {0.5};
-//    std::atomic<double> gain {0.0}; // 0..1
-//    uint32_t sequence {0x00000000};
-//};
-
 struct Sequencer
 {
     uint32_t sequence = 0;
@@ -45,8 +38,8 @@ struct Sequencer
             if (timer == 0)
             {
                 timer = reload;
-                funcManip(sequence );
-                output = sequence  & 1u;
+                funcManip(sequence);
+                output = sequence & 1u;
             }
             else
             {
@@ -225,16 +218,98 @@ struct PulseBLEP
     }
 };
 
-inline PulseBLEP pulse1, pulse2;
-inline std::atomic<bool> pulse1_enable = false;
+struct NoiseLFSR
+{
+    bool shortMode = false;
+    uint8_t periodIndex = 0;
 
-struct NoiseParams {
-    std::atomic<double> noiseFreq {6000.0};
-    std::atomic<bool> shortMode {false};
-    std::atomic<double> gain {0.0};
+    Envelope envelope;
+    uint8_t length_counter = 0;
+
+    uint16_t timer = 0;
+    uint16_t shiftReg = 1;
+
+    int NTSC_periods[16]{4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068};
+
+    void clock_timer()
+    {
+        if (timer == 0)
+        {
+            timer = NTSC_periods[periodIndex];
+
+            // LFSR update (15-bit). Feedback is XOR of bit0 and (bit1 or bit6).
+            uint16_t bit0 = shiftReg & 0x0001;
+            uint16_t tap  = shortMode ? ((shiftReg >> 6) & 0x0001)
+                                            : ((shiftReg >> 1) & 0x0001);
+
+            int16_t feedback = bit0 ^ tap;
+
+            shiftReg >>= 1;
+            shiftReg |= (feedback << 14);
+        }
+        else
+           --timer;
+    }
+
+    uint8_t clock_counter(bool bEnable, bool bHalt)
+    {
+        if (!bEnable)
+            length_counter = 0;
+        else
+            if (length_counter > 0 && !bHalt)
+                --length_counter;
+
+        return length_counter;
+    }
+
+    uint8_t output()
+    {
+        if (length_counter == 0)
+            return 0;
+
+        if (shiftReg & 0x0001)
+            return 0;
+
+        return envelope.output;
+    }
 };
 
-inline NoiseParams n;
+struct Triangle
+{
+    double phase = 0.0;
+    double freq = 440.0;
+    double sr = 48000.0;
+
+    Envelope envelope;
+    Sweep sweep;
+
+    double process()
+    {
+        double dt = freq / sr;
+        double t = phase;
+
+        double y = 4.0 * std::abs(t - 0.5) - 1.0;
+        y = -y;
+
+        phase += dt;
+
+        if (phase >= 1.0)
+            phase -= 1.0;
+
+        return y;
+    }
+};
+
+
+inline PulseBLEP pulse1, pulse2;
+inline NoiseLFSR noise;
+inline Triangle triangle;
+
+inline bool pulse1_enable = false;
+inline bool pulse2_enable = false;
+inline bool noise_enable = false;
+inline bool triangle_enable = false;
+
 
 inline std::vector<INSTRUCTION<CPU>> table_instructions;
 

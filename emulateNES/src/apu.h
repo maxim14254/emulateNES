@@ -4,66 +4,7 @@
 #include <QIODevice>
 #include <deque>
 #include "global.h"
-
-
-
-struct TriangleClean
-{
-
-    double phase = 0.0;
-    double freq = 440.0;
-    double sr = 48000.0;
-    Envelope envelope;
-    Sweep sweep;
-
-    double process()
-    {
-        double dt = freq / sr;
-        double t = phase;
-
-        double y = 4.0 * std::abs(t - 0.5) - 1.0;
-        y = -y;
-
-        phase += dt;
-
-        if (phase >= 1.0)
-            phase -= 1.0;
-
-        return y;
-    }
-};
-
-struct NoiseLFSR
-{
-    uint16_t lfsr = 1u;
-    double sr = 48000.0;
-    double noiseFreq = 8000.0;
-    double phase = 0.0;
-    bool shortMode = false;
-    double last = 0.0;
-    Envelope envelope;
-    Sweep sweep;
-
-    double process()
-    {
-        double dt = noiseFreq / sr;
-        phase += dt;
-        if (phase >= 1.0)
-        {
-            phase -= 1.0;
-
-            uint16_t b0 = lfsr & 1u;
-            uint16_t tap = shortMode ? ((lfsr >> 6) & 1u) : ((lfsr >> 1) & 1u);
-            uint16_t fb = b0 ^ tap;
-
-            lfsr >>= 1;
-            lfsr |= (fb << 14);
-            last = (b0 ? 1.0 : -1.0);
-        }
-
-        return last;
-    }
-};
+#include <QtMultimedia/QAudioOutput>
 
 
 class RingBufferSPSC
@@ -95,7 +36,7 @@ class APU : public QIODevice
     Q_OBJECT
 
 public:
-    explicit APU(double freq, double sampleRate, Bus* _bus, QObject *parent = nullptr);
+    explicit APU(double freq, double sampleRate, Bus* _bus, QAudioOutput* sink, QObject *parent = nullptr);
 
     qint64 readData(char *data, qint64 maxlen) override;
 
@@ -112,17 +53,16 @@ private:
     double sampleAccum = 0.0;
     qint16 last = 0;
 
-    //PulseBLEP pulse1, pulse2;
-    TriangleClean tri;
-    NoiseLFSR noise;
-
     Bus* bus;
+    QAudioOutput* sink;
 
     int frame_counter = 0;
-    RingBufferSPSC ring_buffer{48000};
-    double pulse1_output = 0;
+    RingBufferSPSC ring_buffer{12500};
 
-    int NTSC_periods[16]{4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068};
+    double pulse1_output = 0;
+    double pulse2_output = 0;
+    double noise_output = 0;
+
 };
 
 #endif // APU_H

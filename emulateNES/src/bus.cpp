@@ -128,7 +128,7 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
             pulse1.sequencer.reload = pulse1.sequencer.timer = (data & 0x07) << 8 | (pulse1.sequencer.reload & 0x00FF);;
             uint8_t length = (data & 0xF8) >> 3;
 
-            if (pulse1_enable.load())
+            if (pulse1_enable)
                 pulse1.length_counter = LENGTH_TABLE[length];
 
             pulse1.envelope.start = true;
@@ -139,38 +139,48 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
             {
             case 0x00:
                 pulse2.duty = 0.125;
+                pulse2.sequencer.sequence = 0b01000000;
                 break;
             case 0x01:
                 pulse2.duty = 0.25;
+                pulse2.sequencer.sequence = 0b01100000;
                 break;
             case 0x02:
                 pulse2.duty = 0.5;
+                pulse2.sequencer.sequence = 0b01111000;
                 break;
             case 0x03:
                 pulse2.duty = 0.75;
+                pulse2.sequencer.sequence = 0b10011111;
                 break;
             }
 
-            bool pulse2_halt = (data & 0x20) > 0;
-            constant_volume_purse2 = (data & 0x10) > 0;
-            bool pulse2_volume = data & 0x0F;
+            pulse2.envelope.bLoop = (data & 0x20) > 0;
+            pulse2.envelope.disable = (data & 0x10) > 0;
+            pulse2.envelope.volume = (data & 0x0F);
         }
         else if(addr == 0x4005)
         {
-            bool sweep_enable = (data & 0x80) > 0;
-            uint8_t sweep_period = (data & 0x70) >> 4;
-            bool sweep_down = (data & 0x08) > 0;
-            uint8_t sweep_shift = data & 0x07;
+            pulse2.sweep.enabled = (data & 0x80) > 0;
+            pulse2.sweep.period = (data & 0x70) >> 4;
+            pulse2.sweep.negate = (data & 0x08) > 0;
+            pulse2.sweep.shift = data & 0x07;
+            pulse2.sweep.reload = true;
 
         }
         else if(addr == 0x4006)
         {
-            p2_timer_lo = data;
+            pulse2.sequencer.reload = (pulse2.sequencer.reload & 0xFF00) | data;
         }
         else if(addr == 0x4007)
         {
-            p2_timer = (data & 0x07) << 8 | p2_timer_lo;
-            uint8_t length_counter = (data & 0xF8) >> 3;
+            pulse2.sequencer.reload = pulse2.sequencer.timer = (data & 0x07) << 8 | (pulse2.sequencer.reload & 0x00FF);;
+            uint8_t length = (data & 0xF8) >> 3;
+
+            if (pulse2_enable)
+                pulse2.length_counter = LENGTH_TABLE[length];
+
+            pulse2.envelope.start = true;;
         }
         else if(addr == 0x4008)
         {
@@ -190,36 +200,30 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
         }
         else if(addr == 0x400C)
         {
-            envelope_loop_noise =  (data & 0x20) > 0;
-            constant_volume_noise =  (data & 0x10) > 0;
-
-            if(constant_volume_noise)
-            {
-                uint8_t volume = data & 0x0F;
-            }
-            else
-            {
-                uint8_t envelope = data & 0x0F;
-            }
+            noise.envelope.bLoop =  (data & 0x20) > 0;
+            noise.envelope.disable =  (data & 0x10) > 0;
+            noise.envelope.volume = (data & 0x0F);
         }
         else if(addr == 0x400E)
         {
-            n.shortMode = (data & 0x80) > 0;
-
-            noise_period = data & 0x0F;
+            noise.shortMode = (data & 0x80) > 0;
+            noise.periodIndex = data & 0x0F;
         }
         else if(addr == 0x400F)
         {
-            uint8_t length_counter = (data & 0xF8) >> 3;
+            if (noise_enable)
+                noise.length_counter = LENGTH_TABLE[(data & 0xF8) >> 3];
+
+            noise.envelope.start = true;
         }
         else if(addr == 0x4014) // DMA
             ppu->set_oam(&ram[data << 8]);
         else if(addr == 0x4015)
         {
             pulse1_enable = data & 0x01;
-            bool pulse2_enable = data & 0x02;
-            bool triangle_enable = data & 0x04;
-            bool noise_enable = data & 0x08;
+            pulse2_enable = data & 0x02;
+            noise_enable = data & 0x04;
+            triangle_enable = data & 0x08;
         }
         else if(addr == 0x4016 || addr == 0x4017) // джойстики
         {
