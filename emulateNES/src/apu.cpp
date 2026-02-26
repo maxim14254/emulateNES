@@ -119,18 +119,18 @@ void APU::run(int cycles)
         if(pulse1_enable.load())
         {
             double purse1_sample = 0;
-            purse1_sample = 0.18 * amplitude * pulse1.process();
+            purse1_sample = amplitude * pulse1.process();
 
             if (pulse1.length_counter > 0 && pulse1.sequencer.timer >= 8 && !pulse1.sweep.mute && pulse1.envelope.output > 2)
                 pulse1_output += (purse1_sample - pulse1_output) * 0.5;
             else
-                pulse1_output = 0;
+                pulse1_output += (0.0 - pulse1_output) * 0.01;
 
             //pulse1_output *= 0.2;
         }
 
 
-        double s = pulse1_output; /*+
+        double s = 0.18 * pulse1_output; /*+
             0.14 * pulse2.process() +
             0.10 * tri.process() +
             0.03 * noise.process();*/
@@ -175,18 +175,18 @@ bool RingBufferSPSC::write(qint16 val, size_t n)
     if (next == cap)
         next = 0;
 
-    buf[h] = val;
-
     if (next == t)
     {
-        size_t nt = t + 1;
+        return false;
+//        size_t nt = t + 1;
 
-        if (nt == cap)
-            nt = 0;
+//        if (nt == cap)
+//            nt = 0;
 
-        tail.store(nt, std::memory_order_release);
+//        tail.store(nt, std::memory_order_release);
     }
 
+    buf[h] = val;
     head.store(next, std::memory_order_release);
 
     return true;

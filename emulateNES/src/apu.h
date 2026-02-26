@@ -119,7 +119,7 @@ private:
     Bus* bus;
 
     int frame_counter = 0;
-    RingBufferSPSC ring_buffer{9600};
+    RingBufferSPSC ring_buffer{48000};
     double pulse1_output = 0;
 
     int NTSC_periods[16]{4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068};
