@@ -26,15 +26,20 @@ Cartridge::Cartridge(const QString& path, bool* status)
             else
                 prg_ram.resize(0x2000);
 
+            bool has_trainer = (header.flags6 & 0x04) != 0;
+            if (has_trainer)
+                file.seek(512);
+
             file.read(reinterpret_cast<char*>(prg_rom.data()), prg_rom.size());
             file.read(reinterpret_cast<char*>(chr_rom.data()), chr_rom.size());
 
-            uint8_t map_lo =  header.flags6 >> 4;
-            uint8_t map_hi =  header.flags7 & 0xF0;
+            uint8_t map_lo = (header.flags6 >> 4) & 0x0F;
+            uint8_t map_hi = (header.flags7 >> 4) & 0x0F;;
 
-            uint8_t mapper = (map_hi << 8) | map_lo;
+            uint8_t mapper = (map_hi << 4) | map_lo;
 
-            Orintation = map_lo & 0x01 ? VERTICAL : HORIZONTAL;
+            Orintation = header.flags6 & 0x01 ? VERTICAL : HORIZONTAL;
+
 
             if(mapper == 0)
             {
@@ -84,7 +89,7 @@ uint8_t Cartridge::mapper_read_prg(uint16_t addr)
 
     if (addr >= 0x8000 && addr <= 0xFFFF)
     {
-        auto mapped_addr =  addr & (header.prg_rom > 1 ? 0x7FFF : 0x3FFF);
+        auto mapped_addr = (addr - 0x8000) & (header.prg_rom > 1 ? 0x7FFF : 0x3FFF);
         return prg_rom[mapped_addr];
 
     }
@@ -125,16 +130,22 @@ uint16_t Cartridge::get_NMI()
 {
     if(prg_rom.size() > 0)
         return mapper_read_prg(0xFFFA) | mapper_read_prg(0xFFFB) << 8;
+    else
+        return 0;
 }
 
 uint16_t Cartridge::get_RESET()
 {
     if(prg_rom.size() > 0)
         return mapper_read_prg(0xFFFC) | mapper_read_prg(0xFFFD) << 8;
+    else
+        return 0;
 }
 
 uint16_t Cartridge::get_IRQ()
 {
     if(prg_rom.size() > 0)
         return mapper_read_prg(0xFFFE) | mapper_read_prg(0xFFFF) << 8;
+    else
+        return 0;
 }

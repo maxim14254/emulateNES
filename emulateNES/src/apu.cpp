@@ -13,11 +13,14 @@ APU::APU(double freq, double sampleRate, Bus* _bus, QAudioOutput* _sink, QObject
       sink(_sink)
 {
     pulse2.sr = pulse1.sr = 1789773.0;
+    onePoleLPF.setCutoff(14000.0, m_sampleRate);
 }
 
 qint64 APU::readData(char *data, qint64 maxlen)
 {
-    // 16-bit mono
+     if (maxlen <= 0)
+         return 0;
+
     int bytesPerSample = 2;
     qint64 samplesToWrite = maxlen / bytesPerSample;
     qint16* out = reinterpret_cast<qint16*>(data);
@@ -31,7 +34,7 @@ qint64 APU::readData(char *data, qint64 maxlen)
             out[i] = v;
         }
         else
-            out[i] = last;
+            out[i] = 0;
 
     }
 
@@ -72,14 +75,15 @@ void APU::run(int cycles)
             pulse1.envelope.clock();
             pulse2.envelope.clock();
             noise.envelope.clock();
+            triangle.clock_linear();
         }
-
 
         if (bHalfFrameClock)
         {
             pulse1.clock_counter(pulse1_enable, pulse1.envelope.bLoop);
             pulse2.clock_counter(pulse2_enable, pulse2.envelope.bLoop);
             noise.clock_counter(noise_enable, noise.envelope.bLoop);
+            triangle.clock_counter(triangle_enable, triangle.control_flag);
 
             pulse1.sweep.clock(pulse1.sequencer.reload, 0);
             pulse2.sweep.clock(pulse2.sequencer.reload, 0);
@@ -96,11 +100,6 @@ void APU::run(int cycles)
             {
                 s = ((s & 0x0001) << 7) | ((s & 0x00FE) >> 1);
             });
-
-//            noise.sequencer.clock(noise_enable, [](uint32_t &s)
-//            {
-//                s = (((s & 0x0001) ^ ((s & 0x0002) >> 1)) << 14) | ((s & 0x7FFF) >> 1);
-//            });
         }
 
         pulse1.freq = 1789773.0 / (16.0 * (double)(pulse1.sequencer.reload + 1.0));
@@ -108,11 +107,6 @@ void APU::run(int cycles)
 
         pulse2.freq = 1789773.0 / (16.0 * (double)(pulse2.sequencer.reload + 1.0));
         double amplitude2 = (double)(pulse2.envelope.output) / 15.0;
-
-//        tri.freq = t.freq.load();
-
-//        noise.noiseFreq = n.noiseFreq.load();
-//        noise.shortMode = n.shortMode.load();
 
         if(pulse1_enable)
         {
@@ -139,13 +133,25 @@ void APU::run(int cycles)
         if(noise_enable)
         {
             noise.clock_timer();
-            noise_output = (double)noise.output() / 15.0;
+            noise_output = noise.output() ;
         }
         else
             noise_output = 0;
 
-        double s = 0.25 * pulse1_output + 0.25 * pulse2_output + 0.25 * noise_output;
-            //0.10 * tri.process()
+        if(triangle_enable)
+        {
+            triangle.clock_timer();
+            triangle_output = triangle.output();
+        }
+        else
+            triangle_output = 0;
+
+
+        double p1_level = (pulse1_output * 0.5 + 0.5) * 15.0;
+        double p2_level = (pulse2_output * 0.5 + 0.5) * 15.0;
+
+        double s = mix_nes(p1_level, p2_level, triangle_output, noise_output);
+        s = onePoleLPF.process(s);
 
         s = std::tanh(0.8 * s);
 
@@ -159,6 +165,22 @@ void APU::run(int cycles)
             ring_buffer.write(out_sample, 1);
         }
     }
+}
+
+double APU::mix_nes(uint8_t p1, uint8_t p2, uint8_t t, uint8_t n)
+{
+    double pulse = 0.0;
+
+    if (p1 || p2)
+        pulse = 95.88 / ((8128.0 / (p1 + p2)) + 100.0);
+
+    double tnd = 0.0;
+    double tnd_in = (t / 8227.0) + (n / 12241.0);
+
+    if (tnd_in > 0.0)
+        tnd = 159.79 / ((1.0 / tnd_in) + 100.0);
+
+    return pulse + tnd;
 }
 
 

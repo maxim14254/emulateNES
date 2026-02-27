@@ -19,7 +19,7 @@ public:
 
 private:
     std::vector<qint16> buf;
-    const size_t cap = 0;
+    size_t cap = 0;
     std::atomic<size_t> head {0}; // write index
     std::atomic<size_t> tail {0}; // read index
 
@@ -34,6 +34,23 @@ class Bus;
 class APU : public QIODevice
 {
     Q_OBJECT
+
+    struct OnePoleLPF
+    {
+        double a = 0.0;
+        double y = 0.0;
+
+        void setCutoff(double fc, double fs)
+        {
+            a = 1.0 - std::exp(-2.0 * M_PI * fc / fs);
+        }
+
+        double process(double x)
+        {
+            y += a * (x - y);
+            return y;
+        }
+    };
 
 public:
     explicit APU(double freq, double sampleRate, Bus* _bus, QAudioOutput* sink, QObject *parent = nullptr);
@@ -57,11 +74,15 @@ private:
     QAudioOutput* sink;
 
     int frame_counter = 0;
-    RingBufferSPSC ring_buffer{12500};
+    RingBufferSPSC ring_buffer{13500};
+    OnePoleLPF onePoleLPF;
 
     double pulse1_output = 0;
     double pulse2_output = 0;
-    double noise_output = 0;
+    uint8_t noise_output = 0;
+    uint8_t triangle_output = 0;
+
+    double mix_nes(uint8_t p1, uint8_t p2, uint8_t t, uint8_t n);
 
 };
 

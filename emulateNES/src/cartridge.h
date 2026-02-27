@@ -53,6 +53,7 @@ private:
     NESHeader header;               // Заголовок
     std::vector<uint8_t> chr_ram;   // ОЗУ картриджа
     std::vector<uint8_t> prg_ram;   // ОЗУ картриджа
+
     std::vector<uint8_t> prg_rom;   // код
     std::vector<uint8_t> chr_rom;   // (графика), мапперы
 

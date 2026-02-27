@@ -9,12 +9,6 @@
 #include "apu.h"
 
 
-bool linear_reload_flag = false;
-uint8_t linear_counter_reload = 0;
-uint8_t linear_counter = 0;
-bool control_flag = false;
-
-
 Bus::Bus()
 {
     ram.resize(0x800);
@@ -56,7 +50,7 @@ uint8_t Bus::read_cpu(uint16_t addr, bool onlyRead)
     }
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
     {
-        return cartridge->mapper_read_prg(addr);
+        //return cartridge->mapper_read_prg(addr);
     }
     else if(addr >= 0x6000 && addr <= 0x7FFF) // ОЗУ картриджа
     {
@@ -166,7 +160,6 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
             pulse2.sweep.negate = (data & 0x08) > 0;
             pulse2.sweep.shift = data & 0x07;
             pulse2.sweep.reload = true;
-
         }
         else if(addr == 0x4006)
         {
@@ -174,7 +167,7 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
         }
         else if(addr == 0x4007)
         {
-            pulse2.sequencer.reload = pulse2.sequencer.timer = (data & 0x07) << 8 | (pulse2.sequencer.reload & 0x00FF);;
+            pulse2.sequencer.reload = pulse2.sequencer.timer = (data & 0x07) << 8 | (pulse2.sequencer.reload & 0x00FF);
             uint8_t length = (data & 0xF8) >> 3;
 
             if (pulse2_enable)
@@ -184,19 +177,24 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
         }
         else if(addr == 0x4008)
         {
-            control_flag = (data & 0x80) > 0;
-            linear_counter_reload = data & 0x7F;
+            triangle.control_flag = (data & 0x80) > 0;
+            triangle.linear_reload_value = data & 0x7F;
         }
         else if(addr == 0x400A)
         {
-            triangle_timer_lo = data;
+            triangle.reload = (triangle.reload & 0xFF00) | data;
         }
         else if(addr == 0x400B)
         {
-            linear_reload_flag = true;
-            uint8_t length_counter = (data & 0xF8) >> 3;
+            triangle.reload = (triangle.reload & 0x00FF) | ((data & 0x07) << 8);
+            triangle.timer = triangle.reload;
 
-            triangle_timer = (data & 0x07) << 8 | triangle_timer_lo;
+            uint8_t length = (data & 0xF8) >> 3;
+
+            if (triangle_enable)
+                triangle.length_counter = LENGTH_TABLE[length];
+
+             triangle.linear_reload_flag = true;
         }
         else if(addr == 0x400C)
         {
@@ -228,26 +226,11 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
         else if(addr == 0x4016 || addr == 0x4017) // джойстики
         {
             controller[addr & 0x0001] = cpu->get_gamepad(addr & 0x0001);
-
-            if(linear_reload_flag)
-            {
-                linear_counter = linear_counter_reload;
-            }
-            else if(linear_counter > 0)
-            {
-                --linear_counter;
-            }
-
-            if(!control_flag)
-            {
-                linear_reload_flag = false;
-            }
         }
-
     }
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
     {
-        // cartridge->mapper_write_prg(addr, data); TO DO
+         cartridge->write_chr_ram(addr, data);
     }
     else if(addr >= 0x6000 && addr <= 0x7FFF) // ОЗУ картриджа
     {

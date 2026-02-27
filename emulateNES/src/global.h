@@ -50,7 +50,6 @@ struct Sequencer
     }
 };
 
-
 struct Envelope
 {
     bool start = false;
@@ -152,7 +151,6 @@ struct Sweep
         return changed;
     }
 };
-
 
 struct PulseBLEP
 {
@@ -276,27 +274,71 @@ struct NoiseLFSR
 
 struct Triangle
 {
-    double phase = 0.0;
-    double freq = 440.0;
-    double sr = 48000.0;
+    uint16_t timer = 0;
+    uint16_t reload = 0;
 
-    Envelope envelope;
-    Sweep sweep;
+    uint8_t seq_index = 0;
 
-    double process()
+    uint8_t length_counter = 0;
+
+    uint8_t linear_counter = 0;
+    uint8_t linear_reload_value = 0;
+    bool linear_reload_flag = false;
+    bool control_flag = false;
+
+    uint8_t TRI_TABLE[32] = {
+        15,14,13,12,11,10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+         0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15
+    };
+
+    void clock_linear()
     {
-        double dt = freq / sr;
-        double t = phase;
+        if (linear_reload_flag)
+            linear_counter = linear_reload_value;
+        else if (linear_counter > 0)
+            linear_counter--;
 
-        double y = 4.0 * std::abs(t - 0.5) - 1.0;
-        y = -y;
+        if (!control_flag)
+            linear_reload_flag = false;
+    }
 
-        phase += dt;
+    uint8_t clock_counter(bool bEnable, bool bHalt)
+    {
+        if (!bEnable)
+            length_counter = 0;
+        else
+            if (length_counter > 0 && !bHalt)
+                --length_counter;
 
-        if (phase >= 1.0)
-            phase -= 1.0;
+        return length_counter;
+    }
 
-        return y;
+    void clock_timer()
+    {
+        if (timer == 0)
+        {
+            timer = reload;
+
+            if (length_counter > 0 && linear_counter > 0)
+                seq_index = (seq_index + 1) & 31;
+        }
+        else
+        {
+            timer--;
+        }
+    }
+
+    uint8_t output() const
+    {
+        if (length_counter == 0 || linear_counter == 0)
+            return 0;
+
+        return TRI_TABLE[seq_index];
+    }
+
+    double sample() const
+    {
+        return (double)output() / 15.0;
     }
 };
 
