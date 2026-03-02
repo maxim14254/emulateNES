@@ -1,6 +1,5 @@
 #include "apu.h"
 #include <cmath>
-#include "global.h"
 #include "bus.h"
 #include "QDebug"
 
@@ -8,47 +7,38 @@
 
 APU::APU(double freq, double sampleRate, Bus* _bus, QAudioOutput* _sink, QObject *parent)
     : QIODevice(parent),
-      m_sampleRate(sampleRate),
-      bus(_bus),
-      sink(_sink)
+    m_sampleRate(sampleRate),
+    bus(_bus),
+    sink(_sink)
 {
     pulse2.sr = pulse1.sr = 1789773.0;
+
+    antiAliasLPF.setCutoff(m_sampleRate * 0.45, 1789773.0);
+    dcBlocker37.setCutoff(37.0, m_sampleRate);
+    dcBlocker14.setCutoff(40.0, m_sampleRate);
     onePoleLPF.setCutoff(14000.0, m_sampleRate);
 }
 
 qint64 APU::readData(char *data, qint64 maxlen)
 {
-     if (maxlen <= 0)
-         return 0;
+    if (maxlen <= 0)
+        return 0;
 
     int bytesPerSample = 2;
     qint64 samplesToWrite = maxlen / bytesPerSample;
     qint16* out = reinterpret_cast<qint16*>(data);
-
-    QString line;
-    line.reserve(int(samplesToWrite) * 7); // грубо, чтобы меньше реаллокаций
 
     for (qint64 i = 0; i < samplesToWrite; ++i)
     {
         qint16 v;
         if(ring_buffer.read(&v, 1))
         {
-            qint16 next = ring_buffer.next();
-
-            if(v != last && next == last)
-                v = last;
-
             last = v;
             out[i] = v;
-
-            line += QString::number(v);
-            line += ' ';
         }
         else
-            out[i] = 0;
+            out[i] = last;
     }
-
-    qDebug().noquote() << line;
 
     return samplesToWrite * bytesPerSample;
 }
@@ -104,83 +94,83 @@ void APU::run(int cycles)
         if ((i & 1) == 0)
         {
             pulse1.sequencer.clock(pulse1_enable, [](uint32_t &s)
-            {
-                s = ((s & 0x0001) << 7) | ((s & 0x00FE) >> 1);
-            });
+                                   {
+                                       s = ((s & 0x0001) << 7) | ((s & 0x00FE) >> 1);
+                                   });
 
             pulse2.sequencer.clock(pulse2_enable, [](uint32_t &s)
-            {
-                s = ((s & 0x0001) << 7) | ((s & 0x00FE) >> 1);
-            });
+                                   {
+                                       s = ((s & 0x0001) << 7) | ((s & 0x00FE) >> 1);
+                                   });
         }
+
 
         pulse1.freq = 1789773.0 / (16.0 * (double)(pulse1.sequencer.reload + 1.0));
         double amplitude1 = (double)(pulse1.envelope.output) / 15.0;
 
+        double p1_raw = pulse1.process();
+
+        double p1_target = 0.0;
+        if (pulse1_enable && pulse1.length_counter > 0 && !pulse1.sweep.mute)
+            p1_target = 1.0;
+
+        pulse1_gate += GATE_SPEED * (p1_target - pulse1_gate);
+
+        pulse1_output = (p1_raw * 0.5 + 0.5) * amplitude1 * 15.0 * pulse1_gate;
+
+
         pulse2.freq = 1789773.0 / (16.0 * (double)(pulse2.sequencer.reload + 1.0));
         double amplitude2 = (double)(pulse2.envelope.output) / 15.0;
 
-        double p1_level = 0.0;
-        if (pulse1_enable)
-        {
-            p1_level = amplitude1 * pulse1.process();
+        double p2_raw = pulse2.process();
 
-//            if (pulse1.length_counter > 0 && pulse1.sequencer.timer >= 8 && !pulse1.sweep.mute && pulse1.envelope.output > 2)
-//            {
-//                pulse1_output += (pulse1_sample - pulse1_output) * 0.5;
-//                // Переводим из [-amp, +amp] → [0, 15]
-//                p1_level = (pulse1_output * 0.5 + 0.5) * 15.0;
-//                p1_level = std::clamp(p1_level, 0.0, 15.0);  // double, не int!
-//            }
-//            else
-//            {
-//                pulse1_output += (0.0 - pulse1_output) * 0.01;  // += !
-//            }
-        }
+        double p2_target = 0.0;
+        if (pulse2_enable && pulse2.length_counter > 0 && !pulse2.sweep.mute)
+            p2_target = 1.0;
 
-        double p2_level = 0.0;
-        if (pulse2_enable)
-        {
-            p2_level = amplitude2 * pulse2.process();
-//            if (pulse2.length_counter > 0 && pulse2.sequencer.timer >= 8 && !pulse2.sweep.mute && pulse2.envelope.output > 2)
-//            {
-//                pulse2_output += (pulse2_sample - pulse2_output) * 0.5;
-//                p2_level = (pulse2_output * 0.5 + 0.5) * 15.0;
-//                p2_level = std::clamp(p2_level, 0.0, 15.0);
-//            }
-//            else
-//            {
-//                pulse2_output += (0.0 - pulse2_output) * 0.01;
-//            }
-        }
+        pulse2_gate += GATE_SPEED * (p2_target - pulse2_gate);
 
-        if(noise_enable)
-        {
-            noise.clock_timer();
-            noise_output = noise.output();
-        }
+        pulse2_output = (p2_raw * 0.5 + 0.5) * amplitude2 * 15.0 * pulse2_gate;
+
+
+        double n_target = 0;
+        double t_target  = 0;
+
+
+        noise.clock_timer();
+        double noi_raw = (double)noise.output() / 15.0;
+
+        if (noise_enable && noise.length_counter > 0)
+            n_target = 1.0;
+
+        noise_gate += GATE_SPEED * (n_target - noise_gate);
+        if (n_target > 0.5)
+            noise_last_raw = noi_raw * 15.0;
+
+        noise_output = noise_last_raw * noise_gate;
+
+
+        triangle.clock_timer();
+        double raw = (double)triangle.output();
+        if (triangle_enable && triangle.length_counter > 0 && triangle.linear_counter > 0)
+            t_target = 1.0;
         else
-            noise_output = 0;
+            t_target = 0.0;
 
-        if(triangle_enable)
-        {
-            triangle.clock_timer();
-            triangle_output = triangle.output();
-        }
-        else
-            triangle_output = 0;
+        triangle_gate += GATE_SPEED * (t_target - triangle_gate);
+        if (t_target > 0.5)
+            triangle_last_raw = raw;
 
-        //double s = mix_nes(p1_level, p2_level, triangle_output, noise_output);
-//        double p1 = pulse1_blep_sample * (envelope1.output / 15.0);
-//        double p2 = pulse2_blep_sample * (envelope2.output / 15.0);
-        double tri = (triangle.output() / 7.5) - 1.0;  // [0..15]→[-1..+1]
-        double noi = (noise.output()   / 7.5) - 1.0;
+        triangle_output = triangle_last_raw * triangle_gate;
 
-        // Простой линейный микс с примерными весами NES:
-        double s = 0.26 * (p1_level + p2_level) + 0.20 * tri + 0.15 * noi;
 
-        s = onePoleLPF.process(s);
-        s = std::tanh(0.8 * s);
+        double s = mix_nes(pulse1_output, pulse2_output, triangle_output, noise_output);
+
+        s = std::tanh(1.2 * s);
+        s = antiAliasLPF.process(s);
+
+        prevMixSample = currMixSample;
+        currMixSample = s;
 
         sampleAccum += m_sampleRate;
 
@@ -188,7 +178,15 @@ void APU::run(int cycles)
         {
             sampleAccum -= 1789773.0;
 
-            qint16 out_sample = (qint16)std::lrint(s * 32766.0);
+            double fraction = sampleAccum / 1789773.0;
+            double interp = prevMixSample + fraction * (currMixSample - prevMixSample);
+
+            interp = dcBlocker14.process(interp);
+            interp = dcBlocker37.process(interp);
+            interp = onePoleLPF.process(interp);
+
+            double clamped = std::clamp(interp, -1.0, 1.0);
+            qint16 out_sample = (qint16)std::lrint(clamped * 32500.0);
 
             ring_buffer.write(out_sample, 1);
         }
@@ -244,6 +242,7 @@ void APU::write_registers(uint16_t addr, uint8_t data)
             pulse1.length_counter = LENGTH_TABLE[length];
 
         pulse1.envelope.start = true;
+        pulse1.phase = 0.0;
     }
     else if(addr == 0x4004)
     {
@@ -292,6 +291,7 @@ void APU::write_registers(uint16_t addr, uint8_t data)
             pulse2.length_counter = LENGTH_TABLE[length];
 
         pulse2.envelope.start = true;;
+        pulse2.phase = 0.0;
     }
     else if(addr == 0x4008)
     {
@@ -312,7 +312,7 @@ void APU::write_registers(uint16_t addr, uint8_t data)
         if (triangle_enable)
             triangle.length_counter = LENGTH_TABLE[length];
 
-         triangle.linear_reload_flag = true;
+        triangle.linear_reload_flag = true;
     }
     else if(addr == 0x400C)
     {
@@ -374,11 +374,11 @@ bool RingBufferSPSC::write(qint16 val, size_t n)
     size_t next = (h + 1 == cap) ? 0 : h + 1;
 
     if (next == t)
-        return false;          // буфер полон — дропаем
+        return false;
 
     buf[h] = val;
     head.store(next, std::memory_order_release);
-    return true;
+
     return true;
 }
 

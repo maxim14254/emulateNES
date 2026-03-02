@@ -2,8 +2,6 @@
 #define APU_H
 
 #include <QIODevice>
-#include <deque>
-#include "global.h"
 #include <QtMultimedia/QAudioOutput>
 
 
@@ -21,8 +19,8 @@ public:
 private:
     std::vector<qint16> buf;
     size_t cap = 0;
-    std::atomic<size_t> head {0}; // write index
-    std::atomic<size_t> tail {0}; // read index
+    std::atomic<size_t> head {0};
+    std::atomic<size_t> tail {0};
 
     size_t availableToRead() const;
     size_t availableToWrite() const;
@@ -35,6 +33,85 @@ class Bus;
 class APU : public QIODevice
 {
     Q_OBJECT
+    struct BiquadLPF
+    {
+        double b0 = 0, b1 = 0, b2 = 0;
+        double a1 = 0, a2 = 0;
+        double x1 = 0, x2 = 0;
+        double y1 = 0, y2 = 0;
+
+        void setCutoff(double fc, double fs)
+        {
+            // Butterworth Q = 1/√2
+            double Q  = 0.7071067811865476;
+            double w0 = 2.0 * 3.14 * fc / fs;
+            double alpha = std::sin(w0) / (2.0 * Q);
+
+            double a0_inv = 1.0 / (1.0 + alpha);
+            b1 = (1.0 - std::cos(w0)) * a0_inv;
+            b0 = b1 * 0.5;
+            b2 = b0;
+            a1 = -2.0 * std::cos(w0) * a0_inv;
+            a2 = (1.0 - alpha) * a0_inv;
+        }
+
+        double process(double x)
+        {
+            double y = b0 * x + b1 * x1 + b2 * x2
+                       - a1 * y1 - a2 * y2;
+            x2 = x1; x1 = x;
+            y2 = y1; y1 = y;
+            return y;
+        }
+
+        void reset()
+        {
+            x1 = x2 = y1 = y2 = 0.0;
+        }
+    };
+
+    struct DCBlocker
+    {
+        double R  = 0.0;
+        double xp = 0.0;
+        double yp = 0.0;
+
+        void setCutoff(double fc, double fs)
+        {
+            R = 1.0 - (2.0 * 3.14 * fc / fs);
+        }
+
+        double process(double x)
+        {
+            double y = x - xp + R * yp;
+            xp = x;
+            yp = y;
+            return y;
+        }
+    };
+
+    struct CascadeLPF
+    {
+        BiquadLPF stage1;
+        BiquadLPF stage2;
+
+        void setCutoff(double fc, double fs)
+        {
+            stage1.setCutoff(fc, fs);
+            stage2.setCutoff(fc, fs);
+        }
+
+        double process(double x)
+        {
+            return stage2.process(stage1.process(x));
+        }
+
+        void reset()
+        {
+            stage1.reset();
+            stage2.reset();
+        }
+    };
 
     struct OnePoleLPF
     {
@@ -43,7 +120,8 @@ class APU : public QIODevice
 
         void setCutoff(double fc, double fs)
         {
-            a = 1.0 - std::exp(-2.0 * M_PI * fc / fs);
+            double w = 2.0 * 3.14 * fc / fs;
+            a = w / (1.0 + w);
         }
 
         double process(double x)
@@ -272,7 +350,7 @@ class APU : public QIODevice
                 // LFSR update (15-bit). Feedback is XOR of bit0 and (bit1 or bit6).
                 uint16_t bit0 = shiftReg & 0x0001;
                 uint16_t tap  = shortMode ? ((shiftReg >> 6) & 0x0001)
-                                                : ((shiftReg >> 1) & 0x0001);
+                                         : ((shiftReg >> 1) & 0x0001);
 
                 int16_t feedback = bit0 ^ tap;
 
@@ -280,7 +358,7 @@ class APU : public QIODevice
                 shiftReg |= (feedback << 14);
             }
             else
-               --timer;
+                --timer;
         }
 
         uint8_t clock_counter(bool bEnable, bool bHalt)
@@ -322,7 +400,7 @@ class APU : public QIODevice
 
         uint8_t TRI_TABLE[32] = {
             15,14,13,12,11,10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
-             0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15
         };
 
         void clock_linear()
@@ -393,19 +471,31 @@ public:
 private:
     double m_sampleRate = 48000.0;
     double sampleAccum = 0.0;
+    double prevMixSample = 0.0;
+    double currMixSample = 0.0;
     qint16 last = 0;
+
+    CascadeLPF antiAliasLPF;
+    DCBlocker  dcBlocker37;
+    DCBlocker  dcBlocker14;
+    OnePoleLPF onePoleLPF;
 
     Bus* bus;
     QAudioOutput* sink;
 
     int frame_counter = 0;
     RingBufferSPSC ring_buffer{13500};
-    OnePoleLPF onePoleLPF;
 
     double pulse1_output = 0;
     double pulse2_output = 0;
-    uint8_t noise_output = 0;
-    uint8_t triangle_output = 0;
+    double noise_output = 0;
+    double triangle_output = 0;
+
+    double pulse1_gate   = 0.0;
+    double pulse2_gate   = 0.0;
+    double noise_gate    = 0.0;
+    double triangle_gate = 0.0;
+    double GATE_SPEED = 0.002;
 
     PulseBLEP pulse1, pulse2;
     NoiseLFSR noise;
@@ -415,14 +505,17 @@ private:
     bool pulse2_enable = false;
     bool noise_enable = false;
     bool triangle_enable = false;
+    double triangle_last_raw = 7.5;
+    double noise_last_raw = 0.0;
+
 
     double mix_nes(double p1, double p2, double t, double n);
 
     uint8_t LENGTH_TABLE[32] =
-    {
-        10,254,20, 2,40, 4,80, 6,160, 8,60,10,14,12,26,14,
-        12,16,24,18,48,20,96,22,192,24,72,26,16,28,32,30
-    };
+        {
+            10,254,20, 2,40, 4,80, 6,160, 8,60,10,14,12,26,14,
+            12,16,24,18,48,20,96,22,192,24,72,26,16,28,32,30
+        };
 
 };
 
