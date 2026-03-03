@@ -44,10 +44,10 @@ int main(int argc, char *argv[])
         sink->setBufferSize(8192);
         sink->setNotifyInterval(5);
 
-        APU* apu = new APU(440.0, format.sampleRate(), &bus, sink);
+        APU* apu = new APU(format.sampleRate(), &bus, sink);
 
-        apu->start();
-        sink->start(apu);
+
+        //QIODevice* audioDev = sink->start();
 
         bus.init_APU(apu);
     }

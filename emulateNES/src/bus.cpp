@@ -45,11 +45,16 @@ uint8_t Bus::read_cpu(uint16_t addr, bool onlyRead)
 
             return rez;
         }
+        else if(addr == 0x4015)
+        {
+            return apu->read_status();
+        }
         else
             return 0x00; // TO DO
     }
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
     {
+        return 0;
         //return cartridge->mapper_read_prg(addr);
     }
     else if(addr >= 0x6000 && addr <= 0x7FFF) // ОЗУ картриджа
@@ -311,6 +316,16 @@ void Bus::cpu_request_nmi()
 void Bus::reset_ppu()
 {
     ppu->reset();
+}
+
+void Bus::release_irq()
+{
+    cpu->release_irq();
+}
+
+void Bus::request_irq()
+{
+    cpu->request_irq();
 }
 
 void Bus::run_watch_all_tiles()

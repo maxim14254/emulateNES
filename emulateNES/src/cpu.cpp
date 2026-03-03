@@ -311,6 +311,16 @@ void CPU::request_nmi()
     nmi_pending = true;
 }
 
+void CPU::release_irq()
+{
+    --IRQ;
+}
+
+void CPU::request_irq()
+{
+    ++IRQ;
+}
+
 void CPU::set_flag(StatusFlags f, bool value)
 {
     if(value)
@@ -337,6 +347,23 @@ void CPU::handle_nmi()
     set_flag(StatusFlags::I, true);
 
     PC = bus->get_NMI();
+}
+
+void CPU::handle_irq()
+{
+    write(0x0100 + SP--, (PC >> 8) & 0xFF);
+    write(0x0100 + SP--, PC & 0xFF);
+
+    uint8_t p_to_push = status;
+    p_to_push &= ~0x10;
+    p_to_push |= 0x20;
+    write(0x0100 + SP--, p_to_push);
+
+    set_flag(StatusFlags::I, true);
+
+    PC = bus->get_IRQ();
+
+    cycles += 7;
 }
 
 bool CPU::slot_init_new_cartridge(const QString& path)
@@ -445,6 +472,10 @@ void CPU::run()
         {
             nmi_pending = false;
             handle_nmi();
+        }
+        else if (IRQ > 0 && !get_flag(StatusFlags::I))
+        {
+            handle_irq();
         }
     }
 }

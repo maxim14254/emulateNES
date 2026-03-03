@@ -44,6 +44,11 @@ public:
     uint8_t get_Y(){ return Y; }
     uint8_t get_gamepad(uint8_t i){ return gamepad[i]; }
 
+    void release_irq();
+    void request_irq();
+
+    static inline uint64_t cycles;     // счетчик циклов
+
 public slots:
     bool slot_init_new_cartridge(const QString& path);
 
@@ -60,11 +65,10 @@ private:
     uint16_t PC;                // счетчик команд
     uint8_t  status;            // флаги
     Bus* bus;                   // шина
-    uint64_t  cycles;           // счетчик циклов
 
     uint16_t NMI;
     uint16_t RESET;
-    uint16_t IRQ;
+    int IRQ;
 
     std::mutex mutex_stop;
     std::once_flag start_once_flag;
@@ -81,6 +85,8 @@ private:
     void set_flag(StatusFlags f, bool value);
     bool get_flag(StatusFlags f);
     void handle_nmi();
+    void handle_irq();
+
 
     //адресации
     uint8_t immediate(uint16_t* addr = nullptr, bool onlyRead = false);            // 1 цикл

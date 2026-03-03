@@ -35,6 +35,9 @@ public:
     void cpu_request_nmi();
     void reset_ppu();
 
+    void release_irq();
+    void request_irq();
+
     void run_watch_all_tiles();
     void run_watch_cpu_instr(uint16_t PC);
 

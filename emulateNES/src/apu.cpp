@@ -1,344 +1,363 @@
 #include "apu.h"
 #include <cmath>
+#include "global.h"
 #include "bus.h"
 #include "QDebug"
+#include "cpu.h"
+#include "blargg_source.h"
 
 
-
-APU::APU(double freq, double sampleRate, Bus* _bus, QAudioOutput* _sink, QObject *parent)
-    : QIODevice(parent),
-    m_sampleRate(sampleRate),
-    bus(_bus),
-    sink(_sink)
+int samplesToWrite = 0;
+APU::APU(double sampleRate, Bus* _bus, QAudioOutput* _sink)
+    : m_sampleRate(sampleRate),
+      bus(_bus),
+      sink(_sink),
+      square1( &square_synth ),
+      square2( &square_synth )
 {
-    pulse2.sr = pulse1.sr = 1789773.0;
+    tempo_ = 1.0;
+    dmc.apu = this;
+    dmc.prg_reader = NULL;
+    irq_notifier_ = NULL;
 
-    antiAliasLPF.setCutoff(m_sampleRate * 0.45, 1789773.0);
-    dcBlocker37.setCutoff(37.0, m_sampleRate);
-    dcBlocker14.setCutoff(40.0, m_sampleRate);
-    onePoleLPF.setCutoff(14000.0, m_sampleRate);
+    oscs [0] = &square1;
+    oscs [1] = &square2;
+    oscs [2] = &triangle;
+    oscs [3] = &noise;
+    oscs [4] = &dmc;
+
+    output( NULL );
+    volume( 1.0 );
+    reset( false );
+
+    qint64 freeBytes = sink->bytesFree();
+    qint64 bytesToWrite = freeBytes & ~qint64(1);
+    if (bytesToWrite <= 0)
+        return;
+
+    samplesToWrite = int(bytesToWrite / 2);
+
+    temp.resize(samplesToWrite);
 }
 
-qint64 APU::readData(char *data, qint64 maxlen)
+void APU::run_(uint64_t cycles)
 {
-    if (maxlen <= 0)
-        return 0;
-
-    int bytesPerSample = 2;
-    qint64 samplesToWrite = maxlen / bytesPerSample;
-    qint16* out = reinterpret_cast<qint16*>(data);
-
-    for (qint64 i = 0; i < samplesToWrite; ++i)
+    require( cycles >= last_dmc_cycles );
+    if ( cycles > next_dmc_read_cycles() )
     {
-        qint16 v;
-        if(ring_buffer.read(&v, 1))
-        {
-            last = v;
-            out[i] = v;
-        }
-        else
-            out[i] = last;
+        nes_time_t start = last_dmc_cycles;
+        last_dmc_cycles = cycles;
+        dmc.run( start, cycles );
     }
-
-    return samplesToWrite * bytesPerSample;
 }
 
-void APU::run(int cycles)
+template<class T>
+inline void zero_apu_osc( T* osc, nes_time_t time )
 {
-    for(int i = 0; i < cycles; ++i)
+    Blip_Buffer* output = osc->output;
+    int last_amp = osc->last_amp;
+    osc->last_amp = 0;
+    if ( output && last_amp )
+        osc->synth.offset( time, -last_amp, output );
+}
+
+void APU::end_frame(uint64_t cycles)
+{
+    if ( cycles > last_cycles )
+        run( cycles );
+
+    if ( dmc.nonlinear )
     {
-        ++frame_counter;
-
-        bool bQuarterFrameClock = false;
-        bool bHalfFrameClock = false;
-
-        if (frame_counter == 3729)
-        {
-            bQuarterFrameClock = true;
-        }
-        else if (frame_counter == 7457)
-        {
-            bQuarterFrameClock = true;
-            bHalfFrameClock = true;
-        }
-        else if (frame_counter == 11186)
-        {
-            bQuarterFrameClock = true;
-        }
-        else if (frame_counter == 14916)
-        {
-            bQuarterFrameClock = true;
-            bHalfFrameClock = true;
-            frame_counter = 0;
-        }
-
-        if (bQuarterFrameClock)
-        {
-            pulse1.envelope.clock();
-            pulse2.envelope.clock();
-            noise.envelope.clock();
-            triangle.clock_linear();
-        }
-
-        if (bHalfFrameClock)
-        {
-            pulse1.clock_counter(pulse1_enable, pulse1.envelope.bLoop);
-            pulse2.clock_counter(pulse2_enable, pulse2.envelope.bLoop);
-            noise.clock_counter(noise_enable, noise.envelope.bLoop);
-            triangle.clock_counter(triangle_enable, triangle.control_flag);
-
-            pulse1.sweep.clock(pulse1.sequencer.reload, 0);
-            pulse2.sweep.clock(pulse2.sequencer.reload, 1);
-        }
-
-        if ((i & 1) == 0)
-        {
-            pulse1.sequencer.clock(pulse1_enable, [](uint32_t &s)
-                                   {
-                                       s = ((s & 0x0001) << 7) | ((s & 0x00FE) >> 1);
-                                   });
-
-            pulse2.sequencer.clock(pulse2_enable, [](uint32_t &s)
-                                   {
-                                       s = ((s & 0x0001) << 7) | ((s & 0x00FE) >> 1);
-                                   });
-        }
-
-
-        pulse1.freq = 1789773.0 / (16.0 * (double)(pulse1.sequencer.reload + 1.0));
-        double amplitude1 = (double)(pulse1.envelope.output) / 15.0;
-
-        double p1_raw = pulse1.process();
-
-        double p1_target = 0.0;
-        if (pulse1_enable && pulse1.length_counter > 0 && !pulse1.sweep.mute)
-            p1_target = 1.0;
-
-        pulse1_gate += GATE_SPEED * (p1_target - pulse1_gate);
-
-        pulse1_output = (p1_raw * 0.5 + 0.5) * amplitude1 * 15.0 * pulse1_gate;
-
-
-        pulse2.freq = 1789773.0 / (16.0 * (double)(pulse2.sequencer.reload + 1.0));
-        double amplitude2 = (double)(pulse2.envelope.output) / 15.0;
-
-        double p2_raw = pulse2.process();
-
-        double p2_target = 0.0;
-        if (pulse2_enable && pulse2.length_counter > 0 && !pulse2.sweep.mute)
-            p2_target = 1.0;
-
-        pulse2_gate += GATE_SPEED * (p2_target - pulse2_gate);
-
-        pulse2_output = (p2_raw * 0.5 + 0.5) * amplitude2 * 15.0 * pulse2_gate;
-
-
-        double n_target = 0;
-        double t_target  = 0;
-
-
-        noise.clock_timer();
-        double noi_raw = (double)noise.output() / 15.0;
-
-        if (noise_enable && noise.length_counter > 0)
-            n_target = 1.0;
-
-        noise_gate += GATE_SPEED * (n_target - noise_gate);
-        if (n_target > 0.5)
-            noise_last_raw = noi_raw * 15.0;
-
-        noise_output = noise_last_raw * noise_gate;
-
-
-        triangle.clock_timer();
-        double raw = (double)triangle.output();
-        if (triangle_enable && triangle.length_counter > 0 && triangle.linear_counter > 0)
-            t_target = 1.0;
-        else
-            t_target = 0.0;
-
-        triangle_gate += GATE_SPEED * (t_target - triangle_gate);
-        if (t_target > 0.5)
-            triangle_last_raw = raw;
-
-        triangle_output = triangle_last_raw * triangle_gate;
-
-
-        double s = mix_nes(pulse1_output, pulse2_output, triangle_output, noise_output);
-
-        s = std::tanh(1.2 * s);
-        s = antiAliasLPF.process(s);
-
-        prevMixSample = currMixSample;
-        currMixSample = s;
-
-        sampleAccum += m_sampleRate;
-
-        while (sampleAccum >= 1789773.0)
-        {
-            sampleAccum -= 1789773.0;
-
-            double fraction = sampleAccum / 1789773.0;
-            double interp = prevMixSample + fraction * (currMixSample - prevMixSample);
-
-            interp = dcBlocker14.process(interp);
-            interp = dcBlocker37.process(interp);
-            interp = onePoleLPF.process(interp);
-
-            double clamped = std::clamp(interp, -1.0, 1.0);
-            qint16 out_sample = (qint16)std::lrint(clamped * 32500.0);
-
-            ring_buffer.write(out_sample, 1);
-        }
+        zero_apu_osc( &square1,  last_cycles );
+        zero_apu_osc( &square2,  last_cycles );
+        zero_apu_osc( &triangle, last_cycles );
+        zero_apu_osc( &noise,    last_cycles );
+        zero_apu_osc( &dmc,      last_cycles );
     }
+
+    // make times relative to new frame
+    last_cycles -= cycles;
+    require( last_cycles >= 0 );
+
+    last_dmc_cycles -= cycles;
+    require( last_dmc_cycles >= 0 );
+
+    if ( next_irq != no_irq )
+    {
+        next_irq -= cycles;
+        check( next_irq >= 0 );
+    }
+    if ( dmc.next_irq != no_irq )
+    {
+        dmc.next_irq -= cycles;
+        check( dmc.next_irq >= 0 );
+    }
+    if ( earliest_irq_ != no_irq )
+    {
+        earliest_irq_ -= cycles;
+        if ( earliest_irq_ < 0 )
+            earliest_irq_ = 0;
+    }
+}
+
+void APU::run(uint64_t cycles)
+{
+    require( cycles >= last_cycles );
+
+    if ( cycles == last_cycles )
+        return;
+
+    if ( last_dmc_cycles < cycles )
+    {
+        uint64_t start = last_dmc_cycles;
+        last_dmc_cycles = cycles;
+        dmc.run( start, cycles );
+    }
+
+    while ( true )
+    {
+        // earlier of next frame time or end time
+        uint64_t time = last_cycles + frame_delay;
+        if ( time > cycles )
+            time = cycles;
+        frame_delay -= time - last_cycles;
+
+        // run oscs to present
+        square1.run( last_cycles, time );
+        square2.run( last_cycles, time );
+        triangle.run( last_cycles, time );
+        noise.run( last_cycles, time );
+        last_cycles = time;
+
+        if ( time == cycles )
+            break; // no more frames to run
+
+        // take frame-specific actions
+        frame_delay = frame_period;
+        switch ( ++frame_counter )
+        {
+            case 0:
+                if ( !(frame_mode_5step & 0xC0) ) {
+                    next_irq = time + frame_period * 4 + 2;
+                    irq_flag = true;
+                }
+                // fall through
+            case 2:
+                // clock length and sweep on frames 0 and 2
+                square1.clock_length( 0x20 );
+                square2.clock_length( 0x20 );
+                noise.clock_length( 0x20 );
+                triangle.clock_length( 0x80 ); // different bit for halt flag on triangle
+
+                square1.clock_sweep( -1 );
+                square2.clock_sweep( 0 );
+
+                // frame 2 is slightly shorter in mode 1
+                if ( dmc.pal_mode && frame_counter == 3 )
+                    frame_delay -= 2;
+                break;
+
+            case 1:
+                // frame 1 is slightly shorter in mode 0
+                if ( !dmc.pal_mode )
+                    frame_delay -= 2;
+                break;
+
+            case 3:
+                frame_counter = 0;
+
+                // frame 3 is almost twice as long in mode 1
+                if ( frame_mode_5step & 0x80 )
+                    frame_delay += frame_period - (dmc.pal_mode ? 2 : 6);
+                break;
+        }
+
+        // clock envelopes and linear counter every frame
+        triangle.clock_linear_counter();
+        square1.clock_envelope();
+        square2.clock_envelope();
+        noise.clock_envelope();
+    }
+}
+
+void APU::treble_eq( const blip_eq_t& eq )
+{
+    square_synth.treble_eq( eq );
+    triangle.synth.treble_eq( eq );
+    noise.synth.treble_eq( eq );
+    dmc.synth.treble_eq( eq );
+}
+
+void APU::enable_nonlinear( double v )
+{
+    dmc.nonlinear = true;
+    square_synth.volume( 1.3 * 0.25751258 / 0.742467605 * 0.25 / amp_range * v );
+
+    const double tnd = 0.48 / 202 * nonlinear_tnd_gain();
+    triangle.synth.volume( 3.0 * tnd );
+    noise.synth.volume( 2.0 * tnd );
+    dmc.synth.volume( tnd );
+
+    square1 .last_amp = 0;
+    square2 .last_amp = 0;
+    triangle.last_amp = 0;
+    noise   .last_amp = 0;
+    dmc     .last_amp = 0;
 }
 
 void APU::write_registers(uint16_t addr, uint8_t data)
 {
-    if(addr == 0x4000)
+    require( addr > 0x20 );
+    require( (unsigned) data <= 0xFF );
+
+    uint64_t cycles = CPU::cycles;
+    run(cycles);
+
+    if ( addr < 0x4014 )
     {
-        switch ((data & 0xC0) >> 6)
+        // Write to channel
+        int osc_index = (addr - 0x4000) >> 2;
+        Nes_Osc* osc = oscs [osc_index];
+
+        int reg = addr & 3;
+        osc->regs [reg] = data;
+        osc->reg_written [reg] = true;
+
+        if ( osc_index == 4 )
         {
-        case 0x00:
-            pulse1.duty = 0.125;
-            pulse1.sequencer.sequence = 0b01000000;
-            break;
-        case 0x01:
-            pulse1.duty = 0.25;
-            pulse1.sequencer.sequence = 0b01100000;
-            break;
-        case 0x02:
-            pulse1.duty = 0.5;
-            pulse1.sequencer.sequence = 0b01111000;
-            break;
-        case 0x03:
-            pulse1.duty = 0.75;
-            pulse1.sequencer.sequence = 0b10011111;
-            break;
+            // handle DMC specially
+            dmc.write_register( reg, data );
+        }
+        else if ( reg == 3 )
+        {
+            // load length counter
+            if ( (osc_enables >> osc_index) & 1 )
+                osc->length_counter = LENGTH_TABLE [(data >> 3) & 0x1F];
+
+            // reset square phase
+            if ( osc_index < 2 )
+                ((Nes_Square*) osc)->phase = Nes_Square::phase_range - 1;
+        }
+    }
+    else if ( addr == 0x4015 )
+    {
+        // Channel enables
+        for ( int i = 5; i--; )
+            if ( !((data >> i) & 1) )
+                oscs [i]->length_counter = 0;
+
+        bool recalc_irq = dmc.irq_flag;
+        dmc.irq_flag = false;
+
+        int old_enables = osc_enables;
+        osc_enables = data;
+        if ( !(data & 0x10) ) {
+            dmc.next_irq = no_irq;
+            recalc_irq = true;
+        }
+        else if ( !(old_enables & 0x10) ) {
+            dmc.start(); // dmc just enabled
         }
 
-        pulse1.envelope.bLoop = (data & 0x20) > 0;
-        pulse1.envelope.disable = (data & 0x10) > 0;
-        pulse1.envelope.volume = (data & 0x0F);
+        if ( recalc_irq )
+            irq_changed();
     }
-    else if(addr == 0x4001)
+    else if (addr == 0x4017)
     {
-        pulse1.sweep.enabled = (data & 0x80) > 0;
-        pulse1.sweep.period = (data & 0x70) >> 4;
-        pulse1.sweep.negate = (data & 0x08) > 0;
-        pulse1.sweep.shift = data & 0x07;
-        pulse1.sweep.reload = true;
-    }
-    else if(addr == 0x4002)
-    {
-        pulse1.sequencer.reload = (pulse1.sequencer.reload & 0xFF00) | data;
-    }
-    else if(addr == 0x4003)
-    {
-        pulse1.sequencer.reload = pulse1.sequencer.timer = (data & 0x07) << 8 | (pulse1.sequencer.reload & 0x00FF);;
-        uint8_t length = (data & 0xF8) >> 3;
+        frame_mode_5step = data;
 
-        if (pulse1_enable)
-            pulse1.length_counter = LENGTH_TABLE[length];
+        bool irq_enabled = !(data & 0x40);
+        irq_flag &= irq_enabled;
+        next_irq = no_irq;
 
-        pulse1.envelope.start = true;
-        pulse1.phase = 0.0;
-    }
-    else if(addr == 0x4004)
-    {
-        switch ((data & 0xC0) >> 6)
+        frame_delay = (frame_delay & 1);
+        frame_counter = 0;
+
+        if ( !(data & 0x80) )
         {
-        case 0x00:
-            pulse2.duty = 0.125;
-            pulse2.sequencer.sequence = 0b01000000;
-            break;
-        case 0x01:
-            pulse2.duty = 0.25;
-            pulse2.sequencer.sequence = 0b01100000;
-            break;
-        case 0x02:
-            pulse2.duty = 0.5;
-            pulse2.sequencer.sequence = 0b01111000;
-            break;
-        case 0x03:
-            pulse2.duty = 0.75;
-            pulse2.sequencer.sequence = 0b10011111;
-            break;
+            // mode 0
+            frame_counter = 1;
+            frame_delay += frame_period;
+            if ( irq_enabled )
+                next_irq = cycles + frame_delay + frame_period * 3 + 1;
         }
 
-        pulse2.envelope.bLoop = (data & 0x20) > 0;
-        pulse2.envelope.disable = (data & 0x10) > 0;
-        pulse2.envelope.volume = (data & 0x0F);
-    }
-    else if(addr == 0x4005)
-    {
-        pulse2.sweep.enabled = (data & 0x80) > 0;
-        pulse2.sweep.period = (data & 0x70) >> 4;
-        pulse2.sweep.negate = (data & 0x08) > 0;
-        pulse2.sweep.shift = data & 0x07;
-        pulse2.sweep.reload = true;
-    }
-    else if(addr == 0x4006)
-    {
-        pulse2.sequencer.reload = (pulse2.sequencer.reload & 0xFF00) | data;
-    }
-    else if(addr == 0x4007)
-    {
-        pulse2.sequencer.reload = pulse2.sequencer.timer = (data & 0x07) << 8 | (pulse2.sequencer.reload & 0x00FF);
-        uint8_t length = (data & 0xF8) >> 3;
+        irq_changed();
 
-        if (pulse2_enable)
-            pulse2.length_counter = LENGTH_TABLE[length];
 
-        pulse2.envelope.start = true;;
-        pulse2.phase = 0.0;
-    }
-    else if(addr == 0x4008)
-    {
-        triangle.control_flag = (data & 0x80) > 0;
-        triangle.linear_reload_value = data & 0x7F;
-    }
-    else if(addr == 0x400A)
-    {
-        triangle.reload = (triangle.reload & 0xFF00) | data;
-    }
-    else if(addr == 0x400B)
-    {
-        triangle.reload = (triangle.reload & 0x00FF) | ((data & 0x07) << 8);
-        triangle.timer = triangle.reload;
 
-        uint8_t length = (data & 0xF8) >> 3;
 
-        if (triangle_enable)
-            triangle.length_counter = LENGTH_TABLE[length];
 
-        triangle.linear_reload_flag = true;
-    }
-    else if(addr == 0x400C)
-    {
-        noise.envelope.bLoop =  (data & 0x20) > 0;
-        noise.envelope.disable =  (data & 0x10) > 0;
-        noise.envelope.volume = (data & 0x0F);
-    }
-    else if(addr == 0x400E)
-    {
-        noise.shortMode = (data & 0x80) > 0;
-        noise.periodIndex = data & 0x0F;
-    }
-    else if(addr == 0x400F)
-    {
-        if (noise_enable)
-            noise.length_counter = LENGTH_TABLE[(data & 0xF8) >> 3];
 
-        noise.envelope.start = true;
+
+
+//        frame_mode_5step = (data & 0x80) != 0;   // bit 7: 0 = 4-step, 1 = 5-step
+//        frame_irq_inhibit = (data & 0x40) != 0;  // bit 6: запретить IRQ
+
+//        if (frame_irq_inhibit)
+//            frame_irq_flag = false;               // сброс флага при установке inhibit
+
+//        frame_counter = 0;
+
+//        // В 5-step режиме сразу тактируем quarter+half
+//        if (frame_mode_5step)
+//        {
+//            // немедленный clock quarter + half
+//            pulse1.envelope.clock();
+//            pulse2.envelope.clock();
+//            noise.envelope.clock();
+//            triangle.clock_linear();
+
+//            pulse1.clock_counter(pulse1_enable, pulse1.envelope.bLoop);
+//            pulse2.clock_counter(pulse2_enable, pulse2.envelope.bLoop);
+//            noise.clock_counter(noise_enable, noise.envelope.bLoop);
+//            triangle.clock_counter(triangle_enable, triangle.control_flag);
+
+//            pulse1.sweep.clock(pulse1.sequencer.reload, 0);
+//            pulse2.sweep.clock(pulse2.sequencer.reload, 1);
+//        }
     }
-    else if(addr == 0x4015)
+}
+
+uint8_t APU::read_status()
+{
+    uint64_t cyclse = CPU::cycles;
+
+    run( cyclse - 1 );
+
+    uint8_t result = (dmc.irq_flag << 7) | (irq_flag << 6);
+
+    for ( int i = 0; i < 5; i++ )
+        if ( oscs [i]->length_counter )
+            result |= 1 << i;
+
+    run( cyclse );
+
+    if ( irq_flag )
     {
-        pulse1_enable   = data & 0x01;
-        pulse2_enable   = data & 0x02;
-        triangle_enable = data & 0x04;  // bit 2
-        noise_enable    = data & 0x08;  // bit 3
+        result |= 0x40;
+        irq_flag = false;
+        irq_changed();
     }
+
+    return result;
+
+
+}
+
+void APU::set_tempo(double t)
+{
+    tempo_ = t;
+    frame_period = 7458;
+
+    if ( t != 1.0 )
+        frame_period = (int) (frame_period / t) & ~1;
+}
+
+void APU::output(Blip_Buffer *buffer)
+{
+    for ( int i = 0; i < 5; ++i )
+        osc_output(i, buffer);
 }
 
 double APU::mix_nes(double p1, double p2, double t, double n)
@@ -355,6 +374,88 @@ double APU::mix_nes(double p1, double p2, double t, double n)
         tnd = 159.79 / ((1.0 / tnd_in) + 100.0);
 
     return pulse + tnd;
+}
+
+void APU::pumpAudio()
+{
+    if (!audioDev || !sink)
+        return;
+
+
+    int produced = 0;
+    for (; produced < samplesToWrite; ++produced)
+    {
+        qint16 v = 0;
+        if (!ring_buffer.read(&v, 1))
+            break;
+        temp[produced] = v;
+    }
+
+    if (produced <= 0)
+        return;
+
+    const char* ptr = reinterpret_cast<const char*>(temp.constData());
+    const qint64 nbytes = produced * 2;
+
+    audioDev->write(ptr, nbytes);
+}
+
+void APU::irq_changed()
+{
+    uint64_t new_irq = dmc.next_irq;
+
+    if ( dmc.irq_flag | irq_flag )
+        new_irq = 0;
+
+    else if ( new_irq > next_irq )
+        new_irq = next_irq;
+
+
+    if ( new_irq != earliest_irq_ )
+    {
+        earliest_irq_ = new_irq;
+        if ( irq_notifier_ )
+            irq_notifier_( irq_data );
+    }
+}
+
+void APU::volume(double v)
+{
+    dmc.nonlinear = false;
+    square_synth.volume(   0.1128  / amp_range * v );
+    triangle.synth.volume( 0.12765 / amp_range * v );
+    noise.synth.volume(    0.0741  / amp_range * v );
+    dmc.synth.volume(      0.42545 / 127 * v );
+}
+
+void APU::reset(bool pal_mode, int initial_dmc_dac)
+{
+    dmc.pal_mode = pal_mode;
+    set_tempo( tempo_ );
+
+    square1.reset();
+    square2.reset();
+    triangle.reset();
+    noise.reset();
+    dmc.reset();
+
+    last_cycles = 0;
+    last_dmc_cycles = 0;
+    osc_enables = 0;
+    irq_flag = false;
+    earliest_irq_ = no_irq;
+    frame_delay = 1;
+    write_registers(0x4017, 0x00 );
+    write_registers(0x4015, 0x00 );
+
+    for ( nes_addr_t addr = 0x4000; addr <= 0x4013; addr++ )
+        write_registers(addr, (addr & 3) ? 0x00 : 0x10 );
+
+    dmc.dac = initial_dmc_dac;
+    if ( !dmc.nonlinear )
+        triangle.last_amp = 15;
+    if ( !dmc.nonlinear ) // TODO: remove?
+        dmc.last_amp = initial_dmc_dac; // prevent output transition
 }
 
 
@@ -374,11 +475,11 @@ bool RingBufferSPSC::write(qint16 val, size_t n)
     size_t next = (h + 1 == cap) ? 0 : h + 1;
 
     if (next == t)
-        return false;
+        return false;          // буфер полон — дропаем
 
     buf[h] = val;
     head.store(next, std::memory_order_release);
-
+    return true;
     return true;
 }
 
