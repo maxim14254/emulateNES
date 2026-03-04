@@ -466,11 +466,14 @@ void CPU::run()
 
         bus->run_steps_ppu(cycles - old_cycles);
 
-        if((bus->get_ppu_status() & 0x80) == 0)
+        // Вызываем end_frame_apu один раз за кадр при переходе VBlank
+        static bool last_vblank = false;
+        bool current_vblank = (bus->get_ppu_status() & 0x80) > 0;
+        if(current_vblank && !last_vblank)
+        {
             bus->end_frame_apu(cycles);
-
-        if((bus->get_ppu_status() & 0x80) > 0)
-            bus->end_frame_apu(cycles);
+        }
+        last_vblank = current_vblank;
 
         if (nmi_pending)
         {

@@ -471,7 +471,6 @@ bool RingBufferSPSC::write(qint16 val, size_t n)
     buf[h] = val;
     head.store(next, std::memory_order_release);
     return true;
-    return true;
 }
 
 bool RingBufferSPSC::read(qint16* val, size_t n)
