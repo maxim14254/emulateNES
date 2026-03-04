@@ -303,9 +303,20 @@ void Bus::run_steps_ppu(int cycles)
     ppu->run(cycles);
 }
 
-void Bus::run_steps_apu(int cycles)
+uint64_t old_cycles = 0;
+void Bus::end_frame_apu(int cycles)
 {
-    apu->run(cycles);
+    apu->end_frame(cycles, old_cycles);
+
+    old_cycles = cycles;
+}
+
+uint64_t old_cycles1 = 0;
+void Bus::run_apu(int cycles)
+{
+    apu->run(cycles - old_cycles1);
+
+    old_cycles1 = cycles;
 }
 
 void Bus::cpu_request_nmi()
@@ -351,6 +362,11 @@ uint16_t Bus::get_RESET()
 uint16_t Bus::get_IRQ()
 {
     return cartridge->get_IRQ();
+}
+
+uint8_t Bus::get_ppu_status()
+{
+    return ppu->getppustatus();
 }
 
 uint16_t Bus::get_PC()

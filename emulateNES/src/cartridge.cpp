@@ -28,7 +28,7 @@ Cartridge::Cartridge(const QString& path, bool* status)
 
             bool has_trainer = (header.flags6 & 0x04) != 0;
             if (has_trainer)
-                file.seek(512);
+                file.seek(16 + 512);
 
             file.read(reinterpret_cast<char*>(prg_rom.data()), prg_rom.size());
             file.read(reinterpret_cast<char*>(chr_rom.data()), chr_rom.size());
@@ -76,25 +76,22 @@ Cartridge::~Cartridge()
 
 uint8_t Cartridge::mapper_read_prg(uint16_t addr)
 {
-//    if (prg_rom.size() <= 0x4000)
-//    {
-//        uint32_t offset = (addr - 0x8000) & 0x3FFF;
-//        return prg_rom[offset];
-//    }
-//    else
-//    {
-//        uint32_t offset = addr - 0x8000;
-//        return prg_rom[offset];
-//    }
+    if (addr < 0x8000)
+        return 0;
 
-    if (addr >= 0x8000 && addr <= 0xFFFF)
-    {
-        auto mapped_addr = (addr - 0x8000) & (header.prg_rom > 1 ? 0x7FFF : 0x3FFF);
-        return prg_rom[mapped_addr];
+    uint32_t prgSize = prg_rom.size();
 
-    }
+    if (prgSize == 0)
+        return 0;
 
-    return 0;
+    uint32_t offset = addr - 0x8000;
+
+    if (prgSize == 0x4000)
+        offset &= 0x3FFF;
+
+    offset %= prgSize;
+
+    return prg_rom[offset];
 }
 
 uint8_t Cartridge::mapper_read_chr(uint16_t addr)
@@ -123,7 +120,21 @@ void Cartridge::write_chr_ram(uint16_t addr, uint8_t data)
 
 uint16_t Cartridge::map_nametable_addr(uint16_t addr)
 {
-    return addr; // TO DO
+    addr &= 0x0FFF;
+
+    switch (Orintation)
+    {
+        case VERTICAL:
+            return addr & 0x07FF;
+        case HORIZONTAL:
+            return ((addr & 0x0800) >> 1) | (addr & 0x03FF);
+        case ONESCREEN_LO:
+            return addr & 0x03FF;
+        case ONESCREEN_HI:
+            return 0x0400 | (addr & 0x03FF);
+    }
+
+    return addr & 0x07FF;
 }
 
 uint16_t Cartridge::get_NMI()

@@ -466,7 +466,11 @@ void CPU::run()
 
         bus->run_steps_ppu(cycles - old_cycles);
 
-        bus->run_steps_apu(cycles - old_cycles);
+        if((bus->get_ppu_status() & 0x80) == 0)
+            bus->end_frame_apu(cycles);
+
+        if((bus->get_ppu_status() & 0x80) > 0)
+            bus->end_frame_apu(cycles);
 
         if (nmi_pending)
         {

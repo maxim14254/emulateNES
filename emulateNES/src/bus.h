@@ -30,7 +30,8 @@ public:
     void init_APU(APU* _cpu);
 
     void run_steps_ppu(int cycles);
-    void run_steps_apu(int cycles);
+    void end_frame_apu(int cycles);
+    void run_apu(int cycles);
 
     void cpu_request_nmi();
     void reset_ppu();
@@ -44,6 +45,8 @@ public:
     uint16_t get_NMI();
     uint16_t get_RESET();
     uint16_t get_IRQ();
+
+    uint8_t get_ppu_status();
 
     uint16_t get_PC();
     uint8_t get_SP();

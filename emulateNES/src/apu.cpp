@@ -30,6 +30,11 @@ APU::APU(double sampleRate, Bus* _bus, QAudioOutput* _sink)
     volume( 1.0 );
     reset( false );
 
+    blip.set_sample_rate((long)m_sampleRate, 250);
+    blip.clock_rate(1789773);
+    output(&blip);
+
+    audioDev = sink->start();
     qint64 freeBytes = sink->bytesFree();
     qint64 bytesToWrite = freeBytes & ~qint64(1);
     if (bytesToWrite <= 0)
@@ -61,68 +66,71 @@ inline void zero_apu_osc( T* osc, nes_time_t time )
         osc->synth.offset( time, -last_amp, output );
 }
 
-void APU::end_frame(uint64_t cycles)
+void APU::end_frame(uint64_t cycles, uint64_t old_cycles)
 {
-    if ( cycles > last_cycles )
-        run( cycles );
+    uint64_t delta = cycles - old_cycles;
+    if ( delta > last_cycles )
+        run( delta );
 
     if ( dmc.nonlinear )
     {
-        zero_apu_osc( &square1,  last_cycles );
-        zero_apu_osc( &square2,  last_cycles );
-        zero_apu_osc( &triangle, last_cycles );
-        zero_apu_osc( &noise,    last_cycles );
-        zero_apu_osc( &dmc,      last_cycles );
+        zero_apu_osc(&square1, last_cycles );
+        zero_apu_osc(&square2, last_cycles );
+        zero_apu_osc(&triangle, last_cycles );
+        zero_apu_osc(&noise, last_cycles );
+        zero_apu_osc(&dmc, last_cycles );
     }
 
     // make times relative to new frame
-    last_cycles -= cycles;
+    last_cycles -= delta;
     require( last_cycles >= 0 );
 
-    last_dmc_cycles -= cycles;
+    last_dmc_cycles -= delta;
     require( last_dmc_cycles >= 0 );
 
     if ( next_irq != no_irq )
     {
-        next_irq -= cycles;
+        next_irq -= delta;
         check( next_irq >= 0 );
     }
     if ( dmc.next_irq != no_irq )
     {
-        dmc.next_irq -= cycles;
+        dmc.next_irq -= delta;
         check( dmc.next_irq >= 0 );
     }
     if ( earliest_irq_ != no_irq )
     {
-        earliest_irq_ -= cycles;
+        earliest_irq_ -= delta;
         if ( earliest_irq_ < 0 )
             earliest_irq_ = 0;
     }
+
+    blip.end_frame(delta);
+
+    pump_audio();
 }
 
 void APU::run(uint64_t cycles)
 {
-    require( cycles >= last_cycles );
+    require(cycles >= last_cycles);
 
-    if ( cycles == last_cycles )
+    if (cycles == last_cycles)
         return;
 
-    if ( last_dmc_cycles < cycles )
+    if (last_dmc_cycles < cycles)
     {
         uint64_t start = last_dmc_cycles;
         last_dmc_cycles = cycles;
         dmc.run( start, cycles );
     }
 
-    while ( true )
+    while (true)
     {
-        // earlier of next frame time or end time
         uint64_t time = last_cycles + frame_delay;
-        if ( time > cycles )
+        if (time > cycles)
             time = cycles;
         frame_delay -= time - last_cycles;
 
-        // run oscs to present
         square1.run( last_cycles, time );
         square2.run( last_cycles, time );
         triangle.run( last_cycles, time );
@@ -130,49 +138,42 @@ void APU::run(uint64_t cycles)
         last_cycles = time;
 
         if ( time == cycles )
-            break; // no more frames to run
+            break;
 
-        // take frame-specific actions
         frame_delay = frame_period;
         switch ( ++frame_counter )
         {
             case 0:
-                if ( !(frame_mode_5step & 0xC0) ) {
+                if (!(frame_mode_5step & 0xC0))
+                {
                     next_irq = time + frame_period * 4 + 2;
                     irq_flag = true;
                 }
-                // fall through
             case 2:
-                // clock length and sweep on frames 0 and 2
-                square1.clock_length( 0x20 );
-                square2.clock_length( 0x20 );
-                noise.clock_length( 0x20 );
-                triangle.clock_length( 0x80 ); // different bit for halt flag on triangle
+                square1.clock_length(0x20);
+                square2.clock_length(0x20);
+                noise.clock_length(0x20);
+                triangle.clock_length(0x80);
 
-                square1.clock_sweep( -1 );
-                square2.clock_sweep( 0 );
+                square1.clock_sweep(-1);
+                square2.clock_sweep(0);
 
-                // frame 2 is slightly shorter in mode 1
-                if ( dmc.pal_mode && frame_counter == 3 )
+                if (dmc.pal_mode && frame_counter == 3)
                     frame_delay -= 2;
                 break;
-
             case 1:
-                // frame 1 is slightly shorter in mode 0
-                if ( !dmc.pal_mode )
+                if (!dmc.pal_mode)
                     frame_delay -= 2;
                 break;
 
             case 3:
                 frame_counter = 0;
 
-                // frame 3 is almost twice as long in mode 1
-                if ( frame_mode_5step & 0x80 )
+                if (frame_mode_5step & 0x80)
                     frame_delay += frame_period - (dmc.pal_mode ? 2 : 6);
                 break;
         }
 
-        // clock envelopes and linear counter every frame
         triangle.clock_linear_counter();
         square1.clock_envelope();
         square2.clock_envelope();
@@ -182,10 +183,10 @@ void APU::run(uint64_t cycles)
 
 void APU::treble_eq( const blip_eq_t& eq )
 {
-    square_synth.treble_eq( eq );
-    triangle.synth.treble_eq( eq );
-    noise.synth.treble_eq( eq );
-    dmc.synth.treble_eq( eq );
+    square_synth.treble_eq(eq);
+    triangle.synth.treble_eq(eq);
+    noise.synth.treble_eq(eq);
+    dmc.synth.treble_eq(eq);
 }
 
 void APU::enable_nonlinear( double v )
@@ -198,11 +199,11 @@ void APU::enable_nonlinear( double v )
     noise.synth.volume( 2.0 * tnd );
     dmc.synth.volume( tnd );
 
-    square1 .last_amp = 0;
-    square2 .last_amp = 0;
+    square1.last_amp = 0;
+    square2.last_amp = 0;
     triangle.last_amp = 0;
-    noise   .last_amp = 0;
-    dmc     .last_amp = 0;
+    noise.last_amp = 0;
+    dmc.last_amp = 0;
 }
 
 void APU::write_registers(uint16_t addr, uint8_t data)
@@ -211,7 +212,7 @@ void APU::write_registers(uint16_t addr, uint8_t data)
     require( (unsigned) data <= 0xFF );
 
     uint64_t cycles = CPU::cycles;
-    run(cycles);
+    //run(cycles);
 
     if ( addr < 0x4014 )
     {
@@ -231,15 +232,15 @@ void APU::write_registers(uint16_t addr, uint8_t data)
         else if ( reg == 3 )
         {
             // load length counter
-            if ( (osc_enables >> osc_index) & 1 )
+            if ((osc_enables >> osc_index) & 1)
                 osc->length_counter = LENGTH_TABLE [(data >> 3) & 0x1F];
 
             // reset square phase
-            if ( osc_index < 2 )
+            if (osc_index < 2)
                 ((Nes_Square*) osc)->phase = Nes_Square::phase_range - 1;
         }
     }
-    else if ( addr == 0x4015 )
+    else if (addr == 0x4015)
     {
         // Channel enables
         for ( int i = 5; i--; )
@@ -323,7 +324,7 @@ uint8_t APU::read_status()
 {
     uint64_t cyclse = CPU::cycles;
 
-    run( cyclse - 1 );
+    //run( cyclse - 1 );
 
     uint8_t result = (dmc.irq_flag << 7) | (irq_flag << 6);
 
@@ -331,7 +332,7 @@ uint8_t APU::read_status()
         if ( oscs [i]->length_counter )
             result |= 1 << i;
 
-    run( cyclse );
+    //run( cyclse );
 
     if ( irq_flag )
     {
@@ -341,8 +342,6 @@ uint8_t APU::read_status()
     }
 
     return result;
-
-
 }
 
 void APU::set_tempo(double t)
@@ -376,46 +375,38 @@ double APU::mix_nes(double p1, double p2, double t, double n)
     return pulse + tnd;
 }
 
-void APU::pumpAudio()
+void APU::pump_audio()
 {
-    if (!audioDev || !sink)
+    if (!audioDev)
         return;
 
-
-    int produced = 0;
-    for (; produced < samplesToWrite; ++produced)
-    {
-        qint16 v = 0;
-        if (!ring_buffer.read(&v, 1))
-            break;
-        temp[produced] = v;
-    }
-
-    if (produced <= 0)
+    int avail = (int)blip.samples_avail();
+    if (avail <= 0)
         return;
 
-    const char* ptr = reinterpret_cast<const char*>(temp.constData());
-    const qint64 nbytes = produced * 2;
+    int toRead = qMin(avail, temp.size());
+    long got = blip.read_samples(reinterpret_cast<blip_sample_t*>(temp.data()), toRead, 0);
 
-    audioDev->write(ptr, nbytes);
+    if (got > 0)
+        audioDev->write(reinterpret_cast<const char*>(temp.constData()), got * sizeof(qint16));
 }
 
 void APU::irq_changed()
 {
     uint64_t new_irq = dmc.next_irq;
 
-    if ( dmc.irq_flag | irq_flag )
+    if (dmc.irq_flag | irq_flag)
         new_irq = 0;
 
-    else if ( new_irq > next_irq )
+    else if (new_irq > next_irq)
         new_irq = next_irq;
 
 
-    if ( new_irq != earliest_irq_ )
+    if (new_irq != earliest_irq_)
     {
         earliest_irq_ = new_irq;
-        if ( irq_notifier_ )
-            irq_notifier_( irq_data );
+        if (irq_notifier_)
+            irq_notifier_(irq_data);
     }
 }
 

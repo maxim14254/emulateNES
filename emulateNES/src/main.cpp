@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/Donkey Kong (Japan).nes");
+    bool rez = cpu.slot_init_new_cartridge(":/games/Super Mario Bros. (World).nes");
 
     int exec = a.exec();
 

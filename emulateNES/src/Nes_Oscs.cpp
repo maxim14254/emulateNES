@@ -122,12 +122,12 @@ void Nes_Square::run( nes_time_t time, nes_time_t end_time )
 	}
 	else
 	{
-		// handle duty select
 		int duty_select = (regs [0] >> 6) & 3;
 		int duty = 1 << duty_select; // 1, 2, 4, 2
 		int amp = 0;
-		if ( duty_select == 3 ) {
-			duty = 2; // negated 25%
+        if ( duty_select == 3 )
+        {
+            duty = 2;
 			amp = volume;
 		}
 		if ( phase < duty )

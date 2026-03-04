@@ -161,6 +161,8 @@ void PPU::run(int cycles)
         {
             if (cycle >= 1 && cycle <= 256)
             {
+                shifts_calculation();
+
                 uint8_t x = cycle - 1;
                 uint8_t y = scanline;
 
@@ -185,9 +187,9 @@ void PPU::run(int cycles)
 
                     if (sprite_from_sprite0)
                     {
-                        if ((PPUMASK & 0x08) & (PPUMASK & 0x10))
+                        if ((PPUMASK & 0x08) && (PPUMASK & 0x10))
                         {
-                            if (~((PPUMASK & 0x02) | (PPUMASK & 0x04)))
+                            if ((PPUMASK & 0x02) != 0 && (PPUMASK & 0x04) != 0)
                             {
                                 if (cycle >= 9)
                                     PPUSTATUS |= 0x40;
@@ -497,18 +499,20 @@ void PPU::get_current_sprites()
     for (uint8_t i = 0; i < 8; ++i)
     {
         shif_sprite_lsb[i] = 0;
-        shif_sprite_lsb[i] = 0;
+        shif_sprite_msb[i] = 0;
     }
 
-    for(size_t i = 0; i < oam.size(); i+=4)
-    {
-        int16_t diff = scanline - oam[i];
+    int16_t target_scanline = scanline + 1;
 
-        if(diff >= 0 && diff < sprite_height)
+    for (size_t i = 0; i < oam.size(); i += 4)
+    {
+        int16_t diff = target_scanline - oam[i];
+
+        if (diff >= 0 && diff < sprite_height)
         {
             sprites_current_scanline.push_back(Sprite{oam[i], oam[i + 1], oam[i + 2], oam[i + 3], i / 4});
 
-            if(sprites_current_scanline.size() == 8)
+            if (sprites_current_scanline.size() == 8)
             {
                 PPUSTATUS |= 0x20;
                 break;
@@ -611,7 +615,7 @@ void PPU::download_asm_buffer(std::map<uint16_t, std::string> &assembler_buf)
 
 uint8_t PPU::get_sprite(uint8_t& priority)
 {
-    if(!(PPUMASK & 0x10) || (!(PPUMASK & 0x04)))
+    if(!(PPUMASK & 0x10) || (!(PPUMASK & 0x04) && cycle <= 8))
         return 0;
 
     uint8_t colorByte = 0;
@@ -631,7 +635,7 @@ uint8_t PPU::get_sprite(uint8_t& priority)
 
             if (color != 0)
             {
-                if (i == 0)
+                if (sprites_current_scanline[i].index == 0)
                     sprite_from_sprite0  = true;
 
                 if (color == 0)
@@ -666,7 +670,7 @@ uint8_t PPU::get_sprite(uint8_t& priority)
 
 uint8_t PPU::get_background()
 {   
-    if(!(PPUMASK & 0x08) || (!(PPUMASK & 0x02)))
+    if(!(PPUMASK & 0x08) || (!(PPUMASK & 0x02) && cycle <= 8))
         return 0;
 
     uint16_t bit_mux = 0x8000 >> numb_pixelX;
@@ -693,8 +697,6 @@ uint8_t PPU::get_background()
 
     shift_attrib_lsb <<= 1;
     shift_attrib_msb <<= 1;
-
-    shifts_calculation();
 
     return colorByte & 0x3F;
 }
@@ -794,6 +796,8 @@ void PPU::shifts_calculation()
 
 void PPU::get_sprites_on_next_scanline()
 {
+    int16_t target_scanline = scanline + 1;
+
     for(int i = 0; i < sprites_current_scanline.size(); ++i)
     {
         uint16_t sprite_lsb = 0;
@@ -803,9 +807,9 @@ void PPU::get_sprites_on_next_scanline()
             uint16_t patternBase = (PPUCTRL & 0x8) ? 0x1000 : 0x0000;
 
             if(!(sprites_current_scanline[i].attr & 0x80)) // нормальная ориентация
-                sprite_lsb = patternBase + sprites_current_scanline[i].tile * 16 + (scanline - sprites_current_scanline[i].y);
+                sprite_lsb = patternBase + sprites_current_scanline[i].tile * 16 + (target_scanline - sprites_current_scanline[i].y);
             else // зеркальная ориентация по вертикали
-                sprite_lsb = patternBase + sprites_current_scanline[i].tile * 16 + (7 - (scanline - sprites_current_scanline[i].y));
+                sprite_lsb = patternBase + sprites_current_scanline[i].tile * 16 + (7 - (target_scanline - sprites_current_scanline[i].y));
         }
         else // 8x16
         {
@@ -813,17 +817,17 @@ void PPU::get_sprites_on_next_scanline()
 
             if(!(sprites_current_scanline[i].attr & 0x80)) // нормальная ориентация
             {
-                if (scanline - sprites_current_scanline[i].y < 8)
+                if (target_scanline - sprites_current_scanline[i].y < 8)
                     sprite_lsb = patternBase + (sprites_current_scanline[i].tile & 0xFE) * 16 + ((scanline - sprites_current_scanline[i].y) & 0x07);
                 else
-                    sprite_lsb = patternBase + ((sprites_current_scanline[i].tile & 0xFE) + 1) * 16 + ((scanline - sprites_current_scanline[i].y) & 0x07);
+                    sprite_lsb = patternBase + ((sprites_current_scanline[i].tile & 0xFE) + 1) * 16 + ((target_scanline - sprites_current_scanline[i].y) & 0x07);
             }
             else // зеркальная ориентация по вертикали
             {
-                if (scanline - sprites_current_scanline[i].y < 8)
-                    sprite_lsb = patternBase + (sprites_current_scanline[i].tile & 0xFE) * 16 + (7 - (scanline - sprites_current_scanline[i].y) & 0x07);
+                if (target_scanline - sprites_current_scanline[i].y < 8)
+                    sprite_lsb = patternBase + (sprites_current_scanline[i].tile & 0xFE) * 16 + (7 - (target_scanline - sprites_current_scanline[i].y) & 0x07);
                 else
-                    sprite_lsb = patternBase + ((sprites_current_scanline[i].tile & 0xFE) + 1) * 16 + (7 - (scanline - sprites_current_scanline[i].y) & 0x07);
+                    sprite_lsb = patternBase + ((sprites_current_scanline[i].tile & 0xFE) + 1) * 16 + (7 - (target_scanline - sprites_current_scanline[i].y) & 0x07);
             }
         }
 

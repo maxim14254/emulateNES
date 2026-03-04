@@ -50,11 +50,11 @@ public:
     void enable_nonlinear( double v );
     void run_(uint64_t cycles);
     nes_time_t next_dmc_read_cycles() const;
-    void end_frame(uint64_t cycles);
+    void end_frame(uint64_t cycles, uint64_t old_cycles);
 
 
     static const unsigned int no_irq = INT_MAX / 2 + 1;
-    uint64_t last_dmc_cycles = 0;
+    int last_dmc_cycles = 0;
     int osc_enables = 0;
 
 private:
@@ -64,7 +64,7 @@ private:
     qint16 last = 0;
     uint8_t status;
 
-    uint64_t last_cycles = 0;
+    int last_cycles = 0;
     uint64_t next_irq = 0;
     uint64_t earliest_irq_;
     uint32_t frame_delay = 1;
@@ -79,6 +79,7 @@ private:
     Nes_Triangle triangle;
     Nes_Dmc dmc;
     Nes_Square::Synth square_synth;
+    Blip_Buffer blip;
 
     Bus* bus;
     QAudioOutput* sink;
@@ -103,7 +104,7 @@ private:
     QVector<qint16> temp;
 
     double mix_nes(double p1, double p2, double t, double n);
-    void pumpAudio();
+    void pump_audio();
     void volume(double v);
     void reset(bool pal_mode = false, int initial_dmc_dac = 0);
     void treble_eq( const blip_eq_t& eq );
@@ -118,10 +119,10 @@ private:
         12,16,24,18,48,20,96,22,192,24,72,26,16,28,32,30
     };
 
-    inline void osc_output( int osc, Blip_Buffer* buf )
+    inline void osc_output(int osc, Blip_Buffer* buf)
     {
-        assert( (unsigned) osc < 5 );
-        oscs [osc]->output = buf;
+        assert((unsigned) osc < 5);
+        oscs[osc]->output = buf;
     }
 
 };
