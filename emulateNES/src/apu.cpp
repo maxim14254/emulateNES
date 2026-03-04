@@ -466,8 +466,7 @@ bool RingBufferSPSC::write(qint16 val, size_t n)
     size_t next = (h + 1 == cap) ? 0 : h + 1;
 
     if (next == t)
-        return false;          // буфер полон — дропаем
-
+        return false;
     buf[h] = val;
     head.store(next, std::memory_order_release);
     return true;

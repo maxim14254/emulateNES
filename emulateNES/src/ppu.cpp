@@ -502,11 +502,9 @@ void PPU::get_current_sprites()
         shif_sprite_msb[i] = 0;
     }
 
-    int16_t target_scanline = scanline + 1;
-
     for (size_t i = 0; i < oam.size(); i += 4)
     {
-        int16_t diff = target_scanline - oam[i];
+        int16_t diff = scanline - oam[i];
 
         if (diff >= 0 && diff < sprite_height)
         {
@@ -796,8 +794,6 @@ void PPU::shifts_calculation()
 
 void PPU::get_sprites_on_next_scanline()
 {
-    int16_t target_scanline = scanline + 1;
-
     for(int i = 0; i < sprites_current_scanline.size(); ++i)
     {
         uint16_t sprite_lsb = 0;
@@ -807,9 +803,9 @@ void PPU::get_sprites_on_next_scanline()
             uint16_t patternBase = (PPUCTRL & 0x8) ? 0x1000 : 0x0000;
 
             if(!(sprites_current_scanline[i].attr & 0x80)) // нормальная ориентация
-                sprite_lsb = patternBase + sprites_current_scanline[i].tile * 16 + (target_scanline - sprites_current_scanline[i].y);
+                sprite_lsb = patternBase + sprites_current_scanline[i].tile * 16 + (scanline - sprites_current_scanline[i].y);
             else // зеркальная ориентация по вертикали
-                sprite_lsb = patternBase + sprites_current_scanline[i].tile * 16 + (7 - (target_scanline - sprites_current_scanline[i].y));
+                sprite_lsb = patternBase + sprites_current_scanline[i].tile * 16 + (7 - (scanline - sprites_current_scanline[i].y));
         }
         else // 8x16
         {
@@ -817,17 +813,17 @@ void PPU::get_sprites_on_next_scanline()
 
             if(!(sprites_current_scanline[i].attr & 0x80)) // нормальная ориентация
             {
-                if (target_scanline - sprites_current_scanline[i].y < 8)
+                if (scanline - sprites_current_scanline[i].y < 8)
                     sprite_lsb = patternBase + (sprites_current_scanline[i].tile & 0xFE) * 16 + ((scanline - sprites_current_scanline[i].y) & 0x07);
                 else
-                    sprite_lsb = patternBase + ((sprites_current_scanline[i].tile & 0xFE) + 1) * 16 + ((target_scanline - sprites_current_scanline[i].y) & 0x07);
+                    sprite_lsb = patternBase + ((sprites_current_scanline[i].tile & 0xFE) + 1) * 16 + ((scanline - sprites_current_scanline[i].y) & 0x07);
             }
             else // зеркальная ориентация по вертикали
             {
-                if (target_scanline - sprites_current_scanline[i].y < 8)
-                    sprite_lsb = patternBase + (sprites_current_scanline[i].tile & 0xFE) * 16 + (7 - (target_scanline - sprites_current_scanline[i].y) & 0x07);
+                if (scanline - sprites_current_scanline[i].y < 8)
+                    sprite_lsb = patternBase + (sprites_current_scanline[i].tile & 0xFE) * 16 + (7 - (scanline - sprites_current_scanline[i].y) & 0x07);
                 else
-                    sprite_lsb = patternBase + ((sprites_current_scanline[i].tile & 0xFE) + 1) * 16 + (7 - (target_scanline - sprites_current_scanline[i].y) & 0x07);
+                    sprite_lsb = patternBase + ((sprites_current_scanline[i].tile & 0xFE) + 1) * 16 + (7 - (scanline - sprites_current_scanline[i].y) & 0x07);
             }
         }
 
