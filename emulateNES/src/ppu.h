@@ -67,7 +67,7 @@ private:
     std::vector<uint32_t> outBuffer;
 
     int16_t scanline = 0;
-    uint16_t cycle = 0;
+    int16_t cycle = 0;
     uint64_t frame = 0;
 
     //5бит - X тайла
@@ -98,8 +98,8 @@ private:
 
 
     void ppu_tick();
-    uint8_t get_background();
-    uint8_t get_sprite(uint8_t& priority);
+    uint8_t get_background(uint8_t& color_index);
+    uint8_t get_sprite(bool& priority);
     void increment_VRAM_address();
     uint8_t read_vram_buffered();
     void increment_x();
