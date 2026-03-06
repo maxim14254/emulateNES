@@ -79,8 +79,7 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     }
     else if(addr >= 0x2008 && addr <= 0x3FFF) // зеркало PPU
     {
-        uint16_t reg = 0x2000 + (addr & 0x0007);
-        ppu->set_register(reg, data);
+        ppu->set_register(addr, data);
     }
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода DMA
     {
@@ -269,7 +268,7 @@ void Bus::write_ppu(uint16_t addr, uint8_t data)
         else if (palette_addr == 0x1C)
             palette_addr = 0x0C;
 
-        palette[palette_addr] = data;
+        palette[palette_addr] = data & 0x3F;
     }
 }
 

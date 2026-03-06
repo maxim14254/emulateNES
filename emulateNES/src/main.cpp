@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/Popeye (World) (Rev 1).nes");
+    bool rez = cpu.slot_init_new_cartridge(":/games/ppu_vbl_nmi.nes");
 
     int exec = a.exec();
 

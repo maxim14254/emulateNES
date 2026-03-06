@@ -32,3 +32,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RESOURCES += \
     res.qrc
 
+DISTFILES += \
+    games/ppu_open_bus.nes
+

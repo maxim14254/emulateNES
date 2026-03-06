@@ -285,54 +285,16 @@ void APU::write_registers(uint16_t addr, uint8_t data)
 
         irq_changed();
 
-
-
-
-
-
-
-
-//        frame_mode_5step = (data & 0x80) != 0;   // bit 7: 0 = 4-step, 1 = 5-step
-//        frame_irq_inhibit = (data & 0x40) != 0;  // bit 6: запретить IRQ
-
-//        if (frame_irq_inhibit)
-//            frame_irq_flag = false;               // сброс флага при установке inhibit
-
-//        frame_counter = 0;
-
-//        // В 5-step режиме сразу тактируем quarter+half
-//        if (frame_mode_5step)
-//        {
-//            // немедленный clock quarter + half
-//            pulse1.envelope.clock();
-//            pulse2.envelope.clock();
-//            noise.envelope.clock();
-//            triangle.clock_linear();
-
-//            pulse1.clock_counter(pulse1_enable, pulse1.envelope.bLoop);
-//            pulse2.clock_counter(pulse2_enable, pulse2.envelope.bLoop);
-//            noise.clock_counter(noise_enable, noise.envelope.bLoop);
-//            triangle.clock_counter(triangle_enable, triangle.control_flag);
-
-//            pulse1.sweep.clock(pulse1.sequencer.reload, 0);
-//            pulse2.sweep.clock(pulse2.sequencer.reload, 1);
-//        }
     }
 }
 
 uint8_t APU::read_status()
 {
-    uint64_t cyclse = CPU::cycles;
-
-    //run( cyclse - 1 );
-
     uint8_t result = (dmc.irq_flag << 7) | (irq_flag << 6);
 
     for ( int i = 0; i < 5; i++ )
         if ( oscs [i]->length_counter )
             result |= 1 << i;
-
-    //run( cyclse );
 
     if ( irq_flag )
     {

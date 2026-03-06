@@ -25,6 +25,7 @@ PPU::~PPU()
 uint8_t PPU::get_register(uint16_t addr, bool onlyRead)
 {
     uint8_t result = 0;
+    addr = 0x2000 + (addr & 0x0007);
 
     if(onlyRead)
     {
@@ -33,17 +34,17 @@ uint8_t PPU::get_register(uint16_t addr, bool onlyRead)
         else if(addr == 0x2001)
             result = PPUMASK;
         else if(addr == 0x2002)
-            result = PPUSTATUS;
+            result = (PPUSTATUS & 0xE0) | (openBus & 0x1F);
         else if(addr == 0x2003)
             result = OAMADDR;
         else if(addr == 0x2004)
             result = oam[OAMADDR];
-//        else if(addr == 0x2005)
-//            result = openBus;
-//        else if(addr == 0x2006)
-//            result = openBus;
-//        else if(addr == 0x2007)
-//            result = read_vram_buffered();
+        else if(addr == 0x2005)
+            result = openBus;
+        else if(addr == 0x2006)
+            result = openBus;
+        else if(addr == 0x2007)
+            result = ppu_data_buffer;
         else
             result = 0;
     }
@@ -55,11 +56,14 @@ uint8_t PPU::get_register(uint16_t addr, bool onlyRead)
             openBus = result = PPUMASK;
         else if(addr == 0x2002)
         {
+            //qDebug() << "Start Read 2002 VBlank = " << PPUSTATUS;
             uint8_t data = (PPUSTATUS & 0xE0) | (openBus & 0x1F);
             PPUSTATUS &= ~0x80;
             w = false;
 
             openBus = result = data;
+
+            //qDebug() << "Finish Read 2002 VBlank = " << PPUSTATUS;
         }
         else if(addr == 0x2003)
             openBus = result = OAMADDR;
@@ -87,10 +91,22 @@ void PPU::set_register(uint16_t addr, uint8_t data)
 {
     openBus = data;
 
+    addr = 0x2000 + (addr & 0x0007);
+
     if(addr == 0x2000)
     {
+        bool old_Nmi = (PPUCTRL & 0x80) != 0;
+        bool new_Nmi = (data & 0x80) != 0;
+
         PPUCTRL = data;
         temp_VRAM = (temp_VRAM & 0xF3FF) | ((data & 0x03) << 10);
+
+        if (!old_Nmi && new_Nmi && (PPUSTATUS & 0x80))
+            bus->cpu_request_nmi();
+
+        qDebug() << "Write 0x2000 old=" << Qt::hex << int(PPUCTRL)
+                 << " new=" << Qt::hex << int(data);
+
     }
     else if(addr == 0x2001)
         PPUMASK = data;
@@ -237,6 +253,8 @@ void PPU::run(int cycles)
                 PPUSTATUS &= ~0x40;
                 PPUSTATUS &= ~0x20;
                 PPUSTATUS &= ~0x80;
+
+                qDebug() << "Run scanline = 261 && cycle == 1 VBlank = " << PPUSTATUS;
             }
             else if(cycle >= 280 && cycle <= 304)
             {
@@ -255,10 +273,10 @@ void PPU::run(int cycles)
 
         if (scanline == 241 && cycle == 1)
         {
-            {
-                std::unique_lock<std::mutex> update_frame(update_frame_mutex);
-                cv.wait(update_frame, [&]{ return _update; });
-            }
+//            {
+//                std::unique_lock<std::mutex> update_frame(update_frame_mutex);
+//                cv.wait(update_frame, [&]{ return _update; });
+//            }
 
             {
                 std::lock_guard lock(mutex_lock_frame_buffer);
@@ -284,6 +302,8 @@ void PPU::run(int cycles)
 #endif
 
             PPUSTATUS |= 0x80;
+
+            qDebug() << "Run scanline = 241 && cycle == 1 VBlank = " << PPUSTATUS;
 
             //render_VRAM = current_VRAM;
 
@@ -499,12 +519,13 @@ void PPU::get_current_sprites()
 {
     uint8_t sprite_height = (PPUCTRL & 0x20) > 0 ? 16 : 8;
 
-    sprites_current_scanline.clear();
-
     for (uint8_t i = 0; i < 8; ++i)
     {
         shif_sprite_lsb[i] = 0;
         shif_sprite_msb[i] = 0;
+
+        if(sprites_current_scanline.size() > 0)
+            sprites_current_scanline.pop_back();
     }
 
     for (size_t i = 0; i < oam.size(); i += 4)
@@ -672,8 +693,18 @@ uint8_t PPU::get_sprite(bool& priority)
 
 uint8_t PPU::get_background(uint8_t& color_index)
 {
+    if (!(PPUMASK & 0x08))
+    {
+        shift_tile_lsb <<= 1;
+        shift_tile_msb <<= 1;
+        shift_attrib_lsb <<= 1;
+        shift_attrib_msb <<= 1;
 
-    if(!(PPUMASK & 0x08) || (!(PPUMASK & 0x02) && cycle <= 8))
+        color_index = 0;
+        return 0;
+    }
+
+    if((!(PPUMASK & 0x02) && cycle <= 8))
         return 0;
 
     uint16_t bit_mux = 0x8000 >> numb_pixelX;
@@ -778,13 +809,13 @@ void PPU::shifts_calculation()
     {
         uint16_t patternBase = (PPUCTRL & 0x10) ? 0x1000 : 0x0000;
         uint16_t numb_pixelY =  (render_VRAM >> 12) & 0x07;
-        tile_lsb = bus->read_ppu(patternBase + tileByte * 16 + numb_pixelY + 0x0000);
+        tile_lsb = bus->read_ppu(patternBase + tileByte * 16 + numb_pixelY);
     }
     else if(x == 6)
     {
         uint16_t patternBase = (PPUCTRL & 0x10) ? 0x1000 : 0x0000;
         uint16_t numb_pixelY =  (render_VRAM >> 12) & 0x07;
-        tile_msb = bus->read_ppu(patternBase + tileByte * 16 + numb_pixelY + 0x0008);
+        tile_msb = bus->read_ppu(patternBase + tileByte * 16 + numb_pixelY + 8);
     }
     else if(x == 7)
     {
@@ -872,7 +903,7 @@ uint8_t PPU::read_vram_buffered()
 
     if (current_VRAM >= 0x3F00 && current_VRAM <= 0x3FFF)
     {
-        ret = value;
+        ret = (value ) | (openBus & 0xC0);;
         ppu_data_buffer = bus->read_ppu(current_VRAM - 0x1000);
     }
     else

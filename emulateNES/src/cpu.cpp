@@ -347,6 +347,8 @@ void CPU::handle_nmi()
     set_flag(StatusFlags::I, true);
 
     PC = bus->get_NMI();
+
+    cycles += 7;
 }
 
 void CPU::handle_irq()
@@ -454,9 +456,30 @@ void CPU::slot_release_key(int key)
 
 void CPU::run()
 {
+    bool last_vblank = false;
+
     while (start.load())
     {
         std::lock_guard<std::mutex> lock(mutex_stop);
+
+        if (nmi_pending)
+        {
+            qDebug() << "Run nmi_pending";
+            uint64_t old_cycles2 = cycles;
+            nmi_pending = false;
+            handle_nmi();
+
+            bus->run_steps_ppu(cycles - old_cycles2);
+            continue;
+        }
+        else if (IRQ > 0 && !get_flag(StatusFlags::I))
+        {
+            uint64_t old_cycles2 = cycles;
+            handle_irq();
+
+            bus->run_steps_ppu(cycles - old_cycles2);
+        }
+
 
         uint8_t val = bus->read_cpu(PC, false);
         uint64_t old_cycles = cycles;
@@ -466,32 +489,18 @@ void CPU::run()
 
         bus->run_steps_ppu(cycles - old_cycles);
 
-        // Вызываем end_frame_apu один раз за кадр при переходе VBlank
-        static bool last_vblank = false;
         bool current_vblank = (bus->get_ppu_status() & 0x80) > 0;
         if(current_vblank && !last_vblank)
-        {
             bus->end_frame_apu(cycles);
-        }
         last_vblank = current_vblank;
-
-        if (nmi_pending)
-        {
-            nmi_pending = false;
-            handle_nmi();
-        }
-        else if (IRQ > 0 && !get_flag(StatusFlags::I))
-        {
-            handle_irq();
-        }
     }
 }
 
 void CPU::reset()
 {
-    NMI = bus->get_NMI();
+    //NMI = bus->get_NMI();
     RESET = bus->get_RESET();
-    IRQ = bus->get_IRQ();
+    //IRQ = bus->get_IRQ();
 
     A  = 0x00;
     X  = 0x00;
@@ -501,6 +510,7 @@ void CPU::reset()
 
     SP = 0xFD;
     status = 0x20;
+    set_flag(StatusFlags::I, true);
 
     cycles = 8;
 

@@ -25,7 +25,7 @@ public:
         uint8_t y;
         uint8_t tile;
         uint8_t attr;
-        uint8_t x;
+        uint16_t x;
         size_t index;
     };
 
@@ -41,6 +41,7 @@ public:
     void run_watch_palettes();
     void reset();
     uint8_t getppustatus(){return PPUSTATUS;}
+
 
 private:
     uint8_t PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA; // регистры

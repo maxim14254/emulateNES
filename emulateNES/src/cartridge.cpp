@@ -1,7 +1,7 @@
 #include "cartridge.h"
 #include <QFile>
 #include <QMessageBox>
-
+#include <QDebug>
 
 
 Cartridge::Cartridge(const QString& path, bool* status)
@@ -140,7 +140,10 @@ uint16_t Cartridge::map_nametable_addr(uint16_t addr)
 uint16_t Cartridge::get_NMI()
 {
     if(prg_rom.size() > 0)
+    {
+        qDebug() << "Run mapper_read_prg(0xFFFA) | mapper_read_prg(0xFFFB) << 8";
         return mapper_read_prg(0xFFFA) | mapper_read_prg(0xFFFB) << 8;
+    }
     else
         return 0;
 }
