@@ -2,22 +2,10 @@
 #define CARTRIDGE_H
 
 #include <QString>
-#include <vector>
 #include <cstdint>
+#include <memory>
+#include "mapper.h"
 
-
-typedef struct
-{
-    uint8_t magic[4];          // "NESx1A"
-    uint8_t prg_rom;           // байты PRG ROM
-    uint8_t chr_rom;           // байты CHR ROM
-    uint8_t flags6;
-    uint8_t flags7;
-    uint8_t prg_ram;           // 0 = 1*8КБ по умолчанию
-    uint8_t tv_system1;        // устаревшее
-    uint8_t tv_system2;        // устаревшее/доп. флаги
-    uint8_t unused[5];         // 0 в iNES, расширено в NES 2.0
-} NESHeader;
 
 
 class Cartridge
@@ -39,23 +27,11 @@ public:
     uint16_t get_NMI();
     uint16_t get_RESET();
     uint16_t get_IRQ();
-
-    enum MIRROR
-    {
-        HORIZONTAL,
-        VERTICAL,
-        ONESCREEN_LO,
-        ONESCREEN_HI,
-    } Orintation = HORIZONTAL;
+    int get_orintation();
 
 
 private:
-    NESHeader header;               // Заголовок
-    std::vector<uint8_t> chr_ram;   // ОЗУ картриджа
-    std::vector<uint8_t> prg_ram;   // ОЗУ картриджа
-
-    std::vector<uint8_t> prg_rom;   // код
-    std::vector<uint8_t> chr_rom;   // (графика), мапперы
+    std::unique_ptr<Mapper> mapper;
 
 };
 

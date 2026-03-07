@@ -2,6 +2,8 @@
 #include <QFile>
 #include <QMessageBox>
 #include <QDebug>
+#include "mapper_0.h"
+#include "mapper_1.h"
 
 
 Cartridge::Cartridge(const QString& path, bool* status)
@@ -10,42 +12,26 @@ Cartridge::Cartridge(const QString& path, bool* status)
 
     if (file.open(QIODevice::ReadOnly))
     {
+        NESHeader header;
         file.read(reinterpret_cast<char*>(&header), 16);
 
         if(header.magic[0] == 'N' && header.magic[1] == 'E' && header.magic[2] == 'S' && header.magic[3] == 0x1A)
         {
-            prg_rom.resize(header.prg_rom * 0x4000);
-
-            if(header.chr_rom > 0)
-                chr_rom.resize(header.chr_rom * 0x2000);
-            else
-                chr_ram.resize(0x2000);
-
-            if(header.prg_ram > 0)
-                prg_ram.resize(header.prg_ram * 0x2000);
-            else
-                prg_ram.resize(0x2000);
-
-            bool has_trainer = (header.flags6 & 0x04) != 0;
-            if (has_trainer)
-                file.seek(16 + 512);
-
-            file.read(reinterpret_cast<char*>(prg_rom.data()), prg_rom.size());
-            file.read(reinterpret_cast<char*>(chr_rom.data()), chr_rom.size());
-
             uint8_t map_lo = (header.flags6 >> 4) & 0x0F;
             uint8_t map_hi = (header.flags7 >> 4) & 0x0F;;
 
-            uint8_t mapper = (map_hi << 4) | map_lo;
-
-            Orintation = header.flags6 & 0x01 ? VERTICAL : HORIZONTAL;
+            uint8_t map = (map_hi << 4) | map_lo;
 
 
-            if(mapper == 0)
+            if(map == 0)
             {
-                // NROM
+                mapper.reset(new Mapper_0(file, header));
             }
-            else if(mapper == 2)
+            else if(map == 1)
+            {
+                mapper.reset(new Mapper_1(file, header));
+            }
+            else if(map == 2)
             {
                 // UNROM
             }
@@ -76,90 +62,76 @@ Cartridge::~Cartridge()
 
 uint8_t Cartridge::mapper_read_prg(uint16_t addr)
 {
-    if (addr < 0x8000)
+    if(mapper)
+        return mapper->mapper_read_prg(addr);
+    else
         return 0;
-
-    uint32_t prgSize = prg_rom.size();
-
-    if (prgSize == 0)
-        return 0;
-
-    uint32_t offset = addr - 0x8000;
-
-    if (prgSize == 0x4000)
-        offset &= 0x3FFF;
-
-    offset %= prgSize;
-
-    return prg_rom[offset];
 }
 
 uint8_t Cartridge::mapper_read_chr(uint16_t addr)
 {
-    if(chr_rom.size() > 0)
-        return chr_rom[addr];
+    if(mapper)
+        return mapper->mapper_read_chr(addr);
     else
-        return chr_ram[addr];
+        return 0;
 }
 
 uint8_t Cartridge::read_prg_ram(uint16_t addr)
 {
-    return prg_ram[addr - 0x6000];
+    if(mapper)
+        return mapper->read_prg_ram(addr);
+    else
+        return 0;
 }
 
 void Cartridge::write_prg_ram(uint16_t addr, uint8_t data)
 {
-    prg_ram[addr - 0x6000] = data;
+    if(mapper)
+        mapper->write_prg_ram(addr, data);
 }
 
 void Cartridge::write_chr_ram(uint16_t addr, uint8_t data)
 {
-    if(chr_ram.size() > 0)
-        chr_ram[addr] = data;
+    if(mapper)
+        mapper->write_chr_ram(addr, data);
 }
 
 uint16_t Cartridge::map_nametable_addr(uint16_t addr)
 {
-    addr &= 0x0FFF;
-
-    switch (Orintation)
-    {
-        case VERTICAL:
-            return addr & 0x07FF;
-        case HORIZONTAL:
-            return ((addr & 0x0800) >> 1) | (addr & 0x03FF);
-        case ONESCREEN_LO:
-            return addr & 0x03FF;
-        case ONESCREEN_HI:
-            return 0x0400 | (addr & 0x03FF);
-    }
-
-    return addr & 0x07FF;
+    if(mapper)
+        return mapper->map_nametable_addr(addr);
+    else
+        return 0;
 }
 
 uint16_t Cartridge::get_NMI()
 {
-    if(prg_rom.size() > 0)
-    {
-        qDebug() << "Run mapper_read_prg(0xFFFA) | mapper_read_prg(0xFFFB) << 8";
-        return mapper_read_prg(0xFFFA) | mapper_read_prg(0xFFFB) << 8;
-    }
+    if(mapper)
+        return mapper->get_NMI();
     else
         return 0;
 }
 
 uint16_t Cartridge::get_RESET()
 {
-    if(prg_rom.size() > 0)
-        return mapper_read_prg(0xFFFC) | mapper_read_prg(0xFFFD) << 8;
+    if(mapper)
+        return mapper->get_RESET();
     else
         return 0;
 }
 
 uint16_t Cartridge::get_IRQ()
 {
-    if(prg_rom.size() > 0)
-        return mapper_read_prg(0xFFFE) | mapper_read_prg(0xFFFF) << 8;
+    if(mapper)
+        return mapper->get_IRQ();
+    else
+        return 0;
+}
+
+int Cartridge::get_orintation()
+{
+    if(mapper)
+        return mapper->Orintation;
     else
         return 0;
 }

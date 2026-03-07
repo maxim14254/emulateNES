@@ -7,6 +7,7 @@
 #include "cpu.h"
 #include "global.h"
 #include "apu.h"
+#include "mapper.h"
 
 
 Bus::Bus()
@@ -119,7 +120,7 @@ uint8_t Bus::read_ppu(uint16_t addr)
         uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x2000) & 0x0FFF);
         uint8_t data = 0;
 
-        if (cartridge->Orintation == Cartridge::MIRROR::VERTICAL)
+        if (cartridge->get_orintation() == Mapper::MIRROR::VERTICAL)
         {
             if (nt_index >= 0x0000 && nt_index <= 0x03FF)
                 data = vram[nt_index & 0x03FF];
@@ -130,7 +131,7 @@ uint8_t Bus::read_ppu(uint16_t addr)
             if (nt_index >= 0x0C00 && nt_index <= 0x0FFF)
                 data = vram[0x0400 + (nt_index & 0x03FF)];
         }
-        else if (cartridge->Orintation == Cartridge::MIRROR::HORIZONTAL)
+        else if (cartridge->get_orintation() == Mapper::MIRROR::HORIZONTAL)
         {
             if (nt_index >= 0x0000 && nt_index <= 0x03FF)
                 data = vram[nt_index & 0x03FF];
@@ -149,7 +150,7 @@ uint8_t Bus::read_ppu(uint16_t addr)
         uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x2000) & 0x0FFF);
         uint8_t data = 0;
 
-        if (cartridge->Orintation == Cartridge::MIRROR::VERTICAL)
+        if (cartridge->get_orintation() == Mapper::MIRROR::VERTICAL)
         {
             if (nt_index >= 0x0000 && nt_index <= 0x03FF)
                 data = vram[nt_index & 0x03FF];
@@ -160,7 +161,7 @@ uint8_t Bus::read_ppu(uint16_t addr)
             if (nt_index >= 0x0C00 && nt_index <= 0x0FFF)
                 data = vram[0x0400 + (nt_index & 0x03FF)];
         }
-        else if (cartridge->Orintation == Cartridge::MIRROR::HORIZONTAL)
+        else if (cartridge->get_orintation() == Mapper::MIRROR::HORIZONTAL)
         {
             if (nt_index >= 0x0000 && nt_index <= 0x03FF)
                 data = vram[nt_index & 0x03FF];
@@ -205,7 +206,7 @@ void Bus::write_ppu(uint16_t addr, uint8_t data)
     {
         uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x2000) & 0x0FFF);
 
-        if (cartridge->Orintation == Cartridge::MIRROR::VERTICAL)
+        if (cartridge->get_orintation() == Mapper::MIRROR::VERTICAL)
         {
             if (nt_index >= 0x0000 && nt_index <= 0x03FF)
                 vram[nt_index & 0x03FF] = data;
@@ -216,7 +217,7 @@ void Bus::write_ppu(uint16_t addr, uint8_t data)
             if (nt_index >= 0x0C00 && nt_index <= 0x0FFF)
                 vram[0x0400 + (nt_index & 0x03FF)] = data;
         }
-        else if (cartridge->Orintation == Cartridge::MIRROR::HORIZONTAL)
+        else if (cartridge->get_orintation() == Mapper::MIRROR::HORIZONTAL)
         {
             if (nt_index >= 0x0000 && nt_index <= 0x03FF)
                 vram[nt_index & 0x03FF] = data;
@@ -232,7 +233,7 @@ void Bus::write_ppu(uint16_t addr, uint8_t data)
     {
         uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x2000) & 0x0FFF);
 
-        if (cartridge->Orintation == Cartridge::MIRROR::VERTICAL)
+        if (cartridge->get_orintation() == Mapper::MIRROR::VERTICAL)
         {
             if (nt_index >= 0x0000 && nt_index <= 0x03FF)
                 vram[nt_index & 0x03FF] = data;
@@ -243,7 +244,7 @@ void Bus::write_ppu(uint16_t addr, uint8_t data)
             if (nt_index >= 0x0C00 && nt_index <= 0x0FFF)
                 vram[0x0400 + (nt_index & 0x03FF)] = data;
         }
-        else if (cartridge->Orintation == Cartridge::MIRROR::HORIZONTAL)
+        else if (cartridge->get_orintation() == Mapper::MIRROR::HORIZONTAL)
         {
             if (nt_index >= 0x0000 && nt_index <= 0x03FF)
                 vram[nt_index & 0x03FF] = data;

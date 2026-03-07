@@ -273,10 +273,10 @@ void PPU::run(int cycles)
 
         if (scanline == 241 && cycle == 1)
         {
-//            {
-//                std::unique_lock<std::mutex> update_frame(update_frame_mutex);
-//                cv.wait(update_frame, [&]{ return _update; });
-//            }
+           {
+               std::unique_lock<std::mutex> update_frame(update_frame_mutex);
+               cv.wait(update_frame, [&]{ return _update; });
+           }
 
             {
                 std::lock_guard lock(mutex_lock_frame_buffer);
@@ -416,6 +416,8 @@ void PPU::run_watch_cpu_instr(uint16_t PC)
             }
         }
     }
+    else
+        return;
 
     if(++it_a != assembler_buf.end())
     {
