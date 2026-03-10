@@ -87,7 +87,7 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
         apu->write_registers(addr, data); // APU
 
         if(addr == 0x4014) // DMA
-            ppu->set_oam(&ram[data << 8]);
+            ppu->set_oam(&data);
         else if(addr == 0x4016 || addr == 0x4017) // джойстики
         {
             controller[addr & 0x0001] = cpu->get_gamepad(addr & 0x0001);
@@ -103,7 +103,7 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     }
     else // область картриджа
     {
-        // cartridge->mapper_write_prg(addr, data); TO DO
+        cartridge->mapper_write(addr, data);
     }
 }
 
@@ -188,7 +188,7 @@ uint8_t Bus::read_ppu(uint16_t addr)
         else if (palette_addr == 0x1C)
             palette_addr = 0x0C;
 
-        return palette[palette_addr] & (ppu->get_register(0x2001, true) & 0x01 ? 0x30 : 0x3F);
+        return palette[palette_addr]; //& (ppu->get_register(0x2001, true) & 0x01 ? 0x30 : 0x3F);
     }
     else
         return 0;

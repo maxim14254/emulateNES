@@ -4,6 +4,7 @@
 #include <QDebug>
 #include "mapper_0.h"
 #include "mapper_1.h"
+#include "mapper_3.h"
 
 
 Cartridge::Cartridge(const QString& path, bool* status)
@@ -22,7 +23,6 @@ Cartridge::Cartridge(const QString& path, bool* status)
 
             uint8_t map = (map_hi << 4) | map_lo;
 
-
             if(map == 0)
             {
                 mapper.reset(new Mapper_0(file, header));
@@ -34,6 +34,10 @@ Cartridge::Cartridge(const QString& path, bool* status)
             else if(map == 2)
             {
                 // UNROM
+            }
+            else if(map == 3)
+            {
+                mapper.reset(new Mapper_3(file, header));
             }
 
             *status = true;
@@ -94,6 +98,12 @@ void Cartridge::write_chr_ram(uint16_t addr, uint8_t data)
 {
     if(mapper)
         mapper->write_chr_ram(addr, data);
+}
+
+void Cartridge::mapper_write(uint16_t addr, uint8_t data)
+{
+    if(mapper)
+        mapper->mapper_write(addr, data);
 }
 
 uint16_t Cartridge::map_nametable_addr(uint16_t addr)

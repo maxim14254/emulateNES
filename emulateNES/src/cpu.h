@@ -36,7 +36,6 @@ public:
 
     void request_nmi();
 
-    uint16_t get_PC(){ return PC; }
     uint8_t get_SP(){ return SP; }
     uint8_t get_statusCPU(){ return status; }
     uint8_t get_A(){ return A; }
@@ -48,6 +47,9 @@ public:
     void request_irq();
 
     static inline uint64_t cycles;     // счетчик циклов
+
+    static uint64_t get_cycles(){ return cycles; }
+    static uint64_t get_PC(){ return PC; }
 
 public slots:
     bool slot_init_new_cartridge(const QString& path);
@@ -62,7 +64,7 @@ signals:
 private:
     uint8_t  A, X, Y;           // регистры
     uint8_t  SP;                // стек
-    uint16_t PC;                // счетчик команд
+    static inline uint16_t PC;                // счетчик команд
     uint8_t  status;            // флаги
     Bus* bus;                   // шина
 

@@ -1,14 +1,16 @@
-#ifndef MAPPER___H
-#define MAPPER___H
+#ifndef MAPPER_3_H
+#define MAPPER_3_H
 
 #include "mapper.h"
 #include <QFile>
 
-class Mapper_0 : public Mapper
+
+
+class Mapper_3 : public Mapper
 {
 public:
-    Mapper_0(QFile& file, NESHeader header);
-    ~Mapper_0();
+    Mapper_3(QFile& file, NESHeader _header);
+    ~Mapper_3();
 
     uint8_t mapper_read_prg(uint16_t addr) override;
     uint8_t mapper_read_chr(uint16_t addr) override;
@@ -25,6 +27,9 @@ public:
     uint16_t get_RESET() override;
     uint16_t get_IRQ() override;
 
+private:
+    uint8_t chr_bank = 0;
+    uint8_t chr_bank_mask = 0;
 };
 
-#endif // MAPPER___H
+#endif // MAPPER_3_H

@@ -5,7 +5,7 @@
 #include <QObject>
 #include "global.h"
 #include <map>
-
+#include "cpu.h"
 
 PPU::PPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 {
@@ -39,12 +39,12 @@ uint8_t PPU::get_register(uint16_t addr, bool onlyRead)
             result = OAMADDR;
         else if(addr == 0x2004)
             result = oam[OAMADDR];
-        else if(addr == 0x2005)
-            result = openBus;
-        else if(addr == 0x2006)
-            result = openBus;
-        else if(addr == 0x2007)
-            result = ppu_data_buffer;
+//        else if(addr == 0x2005)
+//            result = openBus;
+//        else if(addr == 0x2006)
+//            result = openBus;
+//        else if(addr == 0x2007)
+//            result = ppu_data_buffer;
         else
             result = 0;
     }
@@ -63,7 +63,7 @@ uint8_t PPU::get_register(uint16_t addr, bool onlyRead)
 
             openBus = result = data;
 
-            //qDebug() << "Finish Read 2002 VBlank = " << PPUSTATUS;
+            //qDebug() << "Finish Read 2002 VBlank = " << PPUSTATUS << " openBus = " << openBus << " scanline = " << scanline << " cycles = " << cycle << " CPU = " << CPU::get_cycles() << " PC = " << CPU::get_PC();
         }
         else if(addr == 0x2003)
             openBus = result = OAMADDR;
@@ -98,14 +98,14 @@ void PPU::set_register(uint16_t addr, uint8_t data)
         bool old_Nmi = (PPUCTRL & 0x80) != 0;
         bool new_Nmi = (data & 0x80) != 0;
 
+//        qDebug() << "Write 0x2000 old=" << Qt::hex << int(PPUCTRL)
+//                 << " new=" << Qt::hex << int(data);
+
         PPUCTRL = data;
         temp_VRAM = (temp_VRAM & 0xF3FF) | ((data & 0x03) << 10);
 
         if (!old_Nmi && new_Nmi && (PPUSTATUS & 0x80))
             bus->cpu_request_nmi();
-
-        qDebug() << "Write 0x2000 old=" << Qt::hex << int(PPUCTRL)
-                 << " new=" << Qt::hex << int(data);
 
     }
     else if(addr == 0x2001)
@@ -151,12 +151,13 @@ void PPU::set_register(uint16_t addr, uint8_t data)
     }
 }
 
-void PPU::set_oam(const uint8_t* _oam)
+void PPU::set_oam(uint8_t* _oam)
 {
     int j = 0;
     for(int i = 0; i < 256; ++i)
     {
-        oam[i] = _oam[i];
+        uint8_t val = bus->read_cpu((*_oam << 8) | i, true);
+        oam[i] = val;
     }
 
 #ifdef DEBUG_ON
@@ -175,6 +176,12 @@ void PPU::run(int cycles)
     for(int i = 0; i < count && start.load(); ++i)
     {
         ppu_tick();
+
+//        if(scanline == 241 && (cycle >= 0 && cycle <= 3))
+//            qDebug() << "Run scanline = " << scanline << "&& cycle == " << cycle << " VBlank = " << PPUSTATUS;
+
+//        if(scanline == 261 && (cycle >= 0 && cycle <= 3))
+//            qDebug() << "Run scanline = " << scanline << "&& cycle == " << cycle << " VBlank = " << PPUSTATUS;
 
         if (scanline < 240)
         {
@@ -254,7 +261,7 @@ void PPU::run(int cycles)
                 PPUSTATUS &= ~0x20;
                 PPUSTATUS &= ~0x80;
 
-                qDebug() << "Run scanline = 261 && cycle == 1 VBlank = " << PPUSTATUS;
+                //qDebug() << "Run scanline = 261 && cycle == 1 VBlank = " << PPUSTATUS;
             }
             else if(cycle >= 280 && cycle <= 304)
             {
@@ -273,10 +280,16 @@ void PPU::run(int cycles)
 
         if (scanline == 241 && cycle == 1)
         {
-           {
-               std::unique_lock<std::mutex> update_frame(update_frame_mutex);
-               cv.wait(update_frame, [&]{ return _update; });
-           }
+            PPUSTATUS |= 0x80;
+
+
+            if (PPUCTRL & 0x80)
+                bus->cpu_request_nmi();
+
+//            {
+//                std::unique_lock<std::mutex> update_frame(update_frame_mutex);
+//                cv.wait(update_frame, [&]{ return _update; });
+//            }
 
             {
                 std::lock_guard lock(mutex_lock_frame_buffer);
@@ -300,15 +313,6 @@ void PPU::run(int cycles)
                 pause = true;
             }
 #endif
-
-            PPUSTATUS |= 0x80;
-
-            qDebug() << "Run scanline = 241 && cycle == 1 VBlank = " << PPUSTATUS;
-
-            //render_VRAM = current_VRAM;
-
-            if (PPUCTRL & 0x80)
-                bus->cpu_request_nmi();
         }
     }
 }
@@ -905,8 +909,8 @@ uint8_t PPU::read_vram_buffered()
 
     if (current_VRAM >= 0x3F00 && current_VRAM <= 0x3FFF)
     {
-        ret = (value ) | (openBus & 0xC0);;
-        ppu_data_buffer = bus->read_ppu(current_VRAM - 0x1000);
+        ret = (value & 0x3F) | (openBus & 0xC0);;
+        ppu_data_buffer = bus->read_ppu((current_VRAM - 0x1000) & 0x3FFF);
     }
     else
     {

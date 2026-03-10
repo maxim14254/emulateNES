@@ -78,6 +78,11 @@ void Mapper_0::write_chr_ram(uint16_t addr, uint8_t data)
         chr_ram[addr] = data;
 }
 
+void Mapper_0::mapper_write(uint16_t addr, uint8_t data)
+{
+
+}
+
 uint16_t Mapper_0::map_nametable_addr(uint16_t addr)
 {
     addr &= 0x0FFF;

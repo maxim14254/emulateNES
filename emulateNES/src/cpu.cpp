@@ -460,11 +460,11 @@ void CPU::run()
 
     while (start.load())
     {
-        std::lock_guard<std::mutex> lock(mutex_stop);
+        //std::lock_guard<std::mutex> lock(mutex_stop);
 
         if (nmi_pending)
         {
-            qDebug() << "Run nmi_pending";
+            //qDebug() << "Run nmi_pending";
             uint64_t old_cycles2 = cycles;
             nmi_pending = false;
             handle_nmi();
@@ -498,7 +498,7 @@ void CPU::run()
 
 void CPU::reset()
 {
-    //NMI = bus->get_NMI();
+    NMI = bus->get_NMI();
     RESET = bus->get_RESET();
     //IRQ = bus->get_IRQ();
 
@@ -541,7 +541,7 @@ uint8_t CPU::immediate(uint16_t* addr, bool onlyRead)
 
 uint8_t CPU::zero_page(uint16_t* addr, bool onlyRead)
 {
-    uint8_t a1 = immediate();
+    uint8_t a1 = immediate(nullptr, onlyRead);
 
     ++cycles;
 
@@ -553,7 +553,7 @@ uint8_t CPU::zero_page(uint16_t* addr, bool onlyRead)
 
 uint8_t CPU::zero_pageX(uint16_t* addr, bool onlyRead)
 {
-    uint8_t a1 = immediate();
+    uint8_t a1 = immediate(nullptr, onlyRead);
 
     cycles += 2;
 
@@ -565,7 +565,7 @@ uint8_t CPU::zero_pageX(uint16_t* addr, bool onlyRead)
 
 uint8_t CPU::zero_pageY(uint16_t* addr, bool onlyRead)
 {
-    uint8_t a1 = immediate();
+    uint8_t a1 = immediate(nullptr, onlyRead);
 
     cycles += 2;
 
@@ -582,8 +582,8 @@ uint8_t CPU::accumulator()
 
 uint8_t CPU::absolute(uint16_t* addr, bool onlyRead)
 {
-    uint8_t a1 = immediate();
-    uint8_t a2 = immediate();
+    uint8_t a1 = immediate(nullptr, onlyRead);
+    uint8_t a2 = immediate(nullptr, onlyRead);
     uint16_t addr2 = (a2 << 8) | a1;
 
     ++cycles;
@@ -597,8 +597,8 @@ uint8_t CPU::absolute(uint16_t* addr, bool onlyRead)
 
 uint8_t CPU::absoluteX(uint16_t* addr, bool onlyRead)
 {
-    uint8_t a1 = immediate();
-    uint8_t a2 = immediate();
+    uint8_t a1 = immediate(nullptr, onlyRead);
+    uint8_t a2 = immediate(nullptr, onlyRead);
     uint16_t base = (a2 << 8) | a1;
     uint16_t addr2 = base + X;
 
@@ -615,8 +615,8 @@ uint8_t CPU::absoluteX(uint16_t* addr, bool onlyRead)
 
 uint8_t CPU::absoluteY(uint16_t* addr, bool onlyRead)
 {
-    uint8_t a1 = immediate();
-    uint8_t a2 = immediate();
+    uint8_t a1 = immediate(nullptr, onlyRead);
+    uint8_t a2 = immediate(nullptr, onlyRead);
     uint16_t base = (a2 << 8) | a1;
     uint16_t addr2 = base + Y;
 
@@ -633,8 +633,8 @@ uint8_t CPU::absoluteY(uint16_t* addr, bool onlyRead)
 
 uint16_t CPU::indirect(uint16_t* addr, bool onlyRead)
 {
-    uint8_t a1 = immediate();
-    uint8_t a2 = immediate();
+    uint8_t a1 = immediate(nullptr, onlyRead);
+    uint8_t a2 = immediate(nullptr, onlyRead);
     uint16_t base = (a2 << 8) | a1;
 
     if(addr)
@@ -654,7 +654,7 @@ uint16_t CPU::indirect(uint16_t* addr, bool onlyRead)
 
 uint8_t CPU::indexed_inderectX(uint16_t* addr, bool onlyRead)
 {
-    uint8_t a1 = immediate();
+    uint8_t a1 = immediate(nullptr, onlyRead);
 
     uint8_t al = bus->read_cpu((a1 + X) & 0xFF, onlyRead);
     uint8_t ah = bus->read_cpu((a1 + X + 1) & 0xFF, onlyRead);
@@ -670,7 +670,7 @@ uint8_t CPU::indexed_inderectX(uint16_t* addr, bool onlyRead)
 
 uint8_t CPU::indexed_inderectY(uint16_t* addr, bool onlyRead)
 {
-    uint8_t a1 = immediate();
+    uint8_t a1 = immediate(nullptr, onlyRead);
 
     uint8_t al = bus->read_cpu(a1, onlyRead);
     uint8_t ah = bus->read_cpu((a1 + 1) & 0xFF, onlyRead);

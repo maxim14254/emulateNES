@@ -93,6 +93,42 @@ void Mapper_1::write_chr_ram(uint16_t addr, uint8_t data)
     chr_ram[mapped] = data;
 }
 
+void Mapper_1::mapper_write(uint16_t addr, uint8_t data)
+{
+    if (addr < 0x8000)
+        return;
+
+    if (data & 0x80)
+    {
+        shift_reg = 0x10;
+        reg_control |= 0x0C;
+        up_orintation();
+        return;
+    }
+
+    bool complete = (shift_reg & 0x01) != 0;
+    shift_reg = (shift_reg >> 1) | ((data & 1) << 4);
+
+    if (!complete)
+        return;
+
+    uint8_t value = shift_reg & 0x1F;
+    shift_reg = 0x10;
+
+    if(addr >= 0x8000 && addr <= 0x9FFF)
+    {
+        reg_control = value;
+        up_orintation();
+    }
+    else if(addr >= 0xA000 && addr <= 0xBFFF)
+        reg_chr0 = value;
+    else if(addr >= 0xC000 && addr <= 0xDFFF)
+        reg_chr1 = value;
+    else
+        reg_prg = value;
+
+}
+
 uint8_t Mapper_1::mapper_read_chr(uint16_t addr)
 {
     addr &= 0x1FFF;
@@ -166,7 +202,6 @@ uint32_t Mapper_1::map_prg_addr(uint16_t addr)
 
     switch (prgMode)
     {
-    case 0:
     case 1:
     {
         uint32_t bank32 = ((uint32_t)(reg_prg & 0x0F)) >> 1;
@@ -246,9 +281,7 @@ uint16_t Mapper_1::read_vector(uint16_t addr)
 uint16_t Mapper_1::get_NMI()
 {
     if(prg_rom.size() > 0)
-    {
         return mapper_read_prg(0xFFFA) | mapper_read_prg(0xFFFB) << 8;
-    }
     else
         return 0;
 }
