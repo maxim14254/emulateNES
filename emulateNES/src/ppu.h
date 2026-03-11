@@ -25,7 +25,7 @@ public:
         uint8_t y;
         uint8_t tile;
         uint8_t attr;
-        uint16_t x;
+        int16_t x;
         size_t index;
     };
 

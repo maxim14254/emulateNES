@@ -39,12 +39,12 @@ uint8_t PPU::get_register(uint16_t addr, bool onlyRead)
             result = OAMADDR;
         else if(addr == 0x2004)
             result = oam[OAMADDR];
-//        else if(addr == 0x2005)
-//            result = openBus;
-//        else if(addr == 0x2006)
-//            result = openBus;
-//        else if(addr == 0x2007)
-//            result = ppu_data_buffer;
+        //        else if(addr == 0x2005)
+        //            result = openBus;
+        //        else if(addr == 0x2006)
+        //            result = openBus;
+        //        else if(addr == 0x2007)
+        //            result = ppu_data_buffer;
         else
             result = 0;
     }
@@ -98,8 +98,8 @@ void PPU::set_register(uint16_t addr, uint8_t data)
         bool old_Nmi = (PPUCTRL & 0x80) != 0;
         bool new_Nmi = (data & 0x80) != 0;
 
-//        qDebug() << "Write 0x2000 old=" << Qt::hex << int(PPUCTRL)
-//                 << " new=" << Qt::hex << int(data);
+        //        qDebug() << "Write 0x2000 old=" << Qt::hex << int(PPUCTRL)
+        //                 << " new=" << Qt::hex << int(data);
 
         PPUCTRL = data;
         temp_VRAM = (temp_VRAM & 0xF3FF) | ((data & 0x03) << 10);
@@ -162,10 +162,10 @@ void PPU::set_oam(uint8_t* _oam)
 
 #ifdef DEBUG_ON
     QMetaObject::invokeMethod(window, [&]()
-    {
-        window->render_sprites_debug(oam);
-    },
-    Qt::QueuedConnection);
+                              {
+                                  window->render_sprites_debug(oam);
+                              },
+                              Qt::QueuedConnection);
 #endif
 }
 
@@ -176,12 +176,6 @@ void PPU::run(int cycles)
     for(int i = 0; i < count && start.load(); ++i)
     {
         ppu_tick();
-
-//        if(scanline == 241 && (cycle >= 0 && cycle <= 3))
-//            qDebug() << "Run scanline = " << scanline << "&& cycle == " << cycle << " VBlank = " << PPUSTATUS;
-
-//        if(scanline == 261 && (cycle >= 0 && cycle <= 3))
-//            qDebug() << "Run scanline = " << scanline << "&& cycle == " << cycle << " VBlank = " << PPUSTATUS;
 
         if (scanline < 240)
         {
@@ -248,6 +242,12 @@ void PPU::run(int cycles)
             else if(cycle >= 321 && cycle <= 336)
             {
                 shifts_calculation();
+
+                shift_tile_lsb <<= 1;
+                shift_tile_msb <<= 1;
+
+                shift_attrib_lsb <<= 1;
+                shift_attrib_msb <<= 1;
             }
             else if(cycle == 340)
                 get_sprites_on_next_scanline();
@@ -260,8 +260,6 @@ void PPU::run(int cycles)
                 PPUSTATUS &= ~0x40;
                 PPUSTATUS &= ~0x20;
                 PPUSTATUS &= ~0x80;
-
-                //qDebug() << "Run scanline = 261 && cycle == 1 VBlank = " << PPUSTATUS;
             }
             else if(cycle >= 280 && cycle <= 304)
             {
@@ -282,14 +280,13 @@ void PPU::run(int cycles)
         {
             PPUSTATUS |= 0x80;
 
-
             if (PPUCTRL & 0x80)
                 bus->cpu_request_nmi();
 
-//            {
-//                std::unique_lock<std::mutex> update_frame(update_frame_mutex);
-//                cv.wait(update_frame, [&]{ return _update; });
-//            }
+            {
+                std::unique_lock<std::mutex> update_frame(update_frame_mutex);
+                cv.wait(update_frame, [&]{ return _update; });
+            }
 
             {
                 std::lock_guard lock(mutex_lock_frame_buffer);
@@ -299,10 +296,10 @@ void PPU::run(int cycles)
             _update = false;
 
             QMetaObject::invokeMethod(window, [&]()
-            {
-                window->render_frame(outBuffer);
-            },
-            Qt::QueuedConnection);
+                                      {
+                                          window->render_frame(outBuffer);
+                                      },
+                                      Qt::QueuedConnection);
 
 #ifdef DEBUG_ON
             if(!run_without_mutex)
@@ -385,10 +382,10 @@ void PPU::run_watch_all_tiles()
     }
 
     QMetaObject::invokeMethod(window, [&]()
-    {
-        window->render_debug_tiles(pColData1, pColData2);
-    },
-    Qt::QueuedConnection);
+                              {
+                                  window->render_debug_tiles(pColData1, pColData2);
+                              },
+                              Qt::QueuedConnection);
 
 }
 
@@ -437,11 +434,11 @@ void PPU::run_watch_cpu_instr(uint16_t PC)
     }
 
     QMetaObject::invokeMethod(window, [&, value]()
-    {
-        window->render_cpu_debug(value, PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA, PPUADDR,
-                                 bus->get_PC(), bus->get_SP(), bus->get_statusCPU(), bus->get_A(), bus->get_X(), bus->get_Y());
-    },
-    Qt::QueuedConnection);
+                              {
+                                  window->render_cpu_debug(value, PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA, PPUADDR,
+                                                           bus->get_PC(), bus->get_SP(), bus->get_statusCPU(), bus->get_A(), bus->get_X(), bus->get_Y());
+                              },
+                              Qt::QueuedConnection);
 }
 
 void PPU::run_watch_palettes()
@@ -470,10 +467,10 @@ void PPU::run_watch_palettes()
     }
 
     QMetaObject::invokeMethod(window, [&]()
-    {
-        window->render_debug_palettes(pColData);
-    },
-    Qt::QueuedConnection);
+                              {
+                                  window->render_debug_palettes(pColData);
+                              },
+                              Qt::QueuedConnection);
 }
 
 void PPU::reset()
@@ -661,7 +658,7 @@ uint8_t PPU::get_sprite(bool& priority)
 
             if (color != 0)
             {
-                if (!(PPUMASK & 0x04) && cycle <= 8)
+                if (!(PPUMASK & 0x04))
                 {
                 }
                 else
