@@ -65,8 +65,8 @@ private:
     uint8_t status;
 
     int last_cycles = 0;
-    uint64_t next_irq = 0;
-    uint64_t earliest_irq_;
+    nes_time_t next_irq = 0;
+    nes_time_t earliest_irq_;
     uint32_t frame_delay = 1;
     int frame_period = 0;
 
@@ -108,10 +108,8 @@ private:
     void volume(double v);
     void reset(bool pal_mode = false, int initial_dmc_dac = 0);
     void treble_eq( const blip_eq_t& eq );
+    void update_irq_line();
     static double nonlinear_tnd_gain() { return 0.75; }
-
-    void (*irq_notifier_)( void* user_data );
-    void* irq_data;
 
     uint8_t LENGTH_TABLE[32] =
     {

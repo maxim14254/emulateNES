@@ -32,12 +32,10 @@ public:
     void run_steps_ppu(int cycles);
     void end_frame_apu(int cycles);
     void run_apu(int cycles);
+    void set_apu_irq(bool level);
 
     void cpu_request_nmi();
     void reset_ppu();
-
-    void release_irq();
-    void request_irq();
 
     void run_watch_all_tiles();
     void run_watch_cpu_instr(uint16_t PC);
@@ -68,6 +66,8 @@ private:
     uint16_t scanline;
     uint16_t frame;
     uint8_t controller[2];
+
+    bool apu_irq_level = false;
 
     uint8_t LENGTH_TABLE[32] =
     {

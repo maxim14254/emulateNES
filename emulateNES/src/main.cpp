@@ -46,9 +46,6 @@ int main(int argc, char *argv[])
 
         APU* apu = new APU(format.sampleRate(), &bus, sink);
 
-
-        //QIODevice* audioDev = sink->start();
-
         bus.init_APU(apu);
     }
     else
@@ -67,7 +64,7 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/Super Mario Bros. (World).nes");
+    bool rez = cpu.slot_init_new_cartridge(":/games/240pee-bnrom.nes");
 
     int exec = a.exec();
 

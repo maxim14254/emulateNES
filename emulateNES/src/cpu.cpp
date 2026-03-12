@@ -313,7 +313,8 @@ void CPU::request_nmi()
 
 void CPU::release_irq()
 {
-    --IRQ;
+    if (IRQ > 0)
+        --IRQ;
 }
 
 void CPU::request_irq()
@@ -460,16 +461,22 @@ void CPU::run()
 
     while (start.load())
     {
-        //std::lock_guard<std::mutex> lock(mutex_stop);
+        std::lock_guard<std::mutex> lock(mutex_stop);
 
         if (nmi_pending)
         {
-            //qDebug() << "Run nmi_pending";
             uint64_t old_cycles2 = cycles;
+
             nmi_pending = false;
             handle_nmi();
 
             bus->run_steps_ppu(cycles - old_cycles2);
+
+            bool current_vblank = (bus->get_ppu_status() & 0x80) > 0;
+            if(current_vblank && !last_vblank)
+                bus->end_frame_apu(cycles);
+            last_vblank = current_vblank;
+
             continue;
         }
         else if (IRQ > 0 && !get_flag(StatusFlags::I))
@@ -478,8 +485,14 @@ void CPU::run()
             handle_irq();
 
             bus->run_steps_ppu(cycles - old_cycles2);
-        }
 
+            bool current_vblank = (bus->get_ppu_status() & 0x80) > 0;
+            if(current_vblank && !last_vblank)
+                bus->end_frame_apu(cycles);
+            last_vblank = current_vblank;
+
+            continue;
+        }
 
         uint8_t val = bus->read_cpu(PC, false);
         uint64_t old_cycles = cycles;
@@ -498,7 +511,7 @@ void CPU::run()
 
 void CPU::reset()
 {
-    NMI = bus->get_NMI();
+    //NMI = bus->get_NMI();
     RESET = bus->get_RESET();
     //IRQ = bus->get_IRQ();
 

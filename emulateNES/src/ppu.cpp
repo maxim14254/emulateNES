@@ -95,8 +95,8 @@ void PPU::set_register(uint16_t addr, uint8_t data)
 
     if(addr == 0x2000)
     {
-        bool old_Nmi = (PPUCTRL & 0x80) != 0;
-        bool new_Nmi = (data & 0x80) != 0;
+//        bool old_Nmi = (PPUCTRL & 0x80) != 0;
+//        bool new_Nmi = (data & 0x80) != 0;
 
         //        qDebug() << "Write 0x2000 old=" << Qt::hex << int(PPUCTRL)
         //                 << " new=" << Qt::hex << int(data);
@@ -104,7 +104,7 @@ void PPU::set_register(uint16_t addr, uint8_t data)
         PPUCTRL = data;
         temp_VRAM = (temp_VRAM & 0xF3FF) | ((data & 0x03) << 10);
 
-        if (!old_Nmi && new_Nmi && (PPUSTATUS & 0x80))
+        if ((PPUCTRL & 0x80) && (PPUSTATUS & 0x80))
             bus->cpu_request_nmi();
 
     }
@@ -181,7 +181,6 @@ void PPU::run(int cycles)
         {
             if (cycle >= 1 && cycle <= 256)
             {
-                shifts_calculation();
 
                 uint8_t x = cycle - 1;
                 uint8_t y = scanline;
@@ -192,6 +191,14 @@ void PPU::run(int cycles)
 
                 bool priority = false;
                 uint8_t color_sprite = get_sprite(priority);
+
+                shift_tile_lsb <<= 1;
+                shift_tile_msb <<= 1;
+
+                shift_attrib_lsb <<= 1;
+                shift_attrib_msb <<= 1;
+
+                shifts_calculation();
 
                 if (color_back == 0 && color_sprite == 0)
                     color_pixel = 0;
@@ -223,6 +230,9 @@ void PPU::run(int cycles)
                     }
                 }
 
+                if (color_pixel == 0)
+                    color_pixel = bus->read_ppu(0x3F00);
+
                 PPU::Color color = nesPalette[color_pixel];
 
                 uint32_t pixel = (color.r) | (color.g << 8) | (color.b << 16 | 0xFF << 24);
@@ -230,7 +240,9 @@ void PPU::run(int cycles)
                 frame_buffer[y * 256 + x] = pixel;
 
                 if(cycle == 256)
+                {
                     increment_y();
+                }
             }
             else if(cycle == 257)
             {
@@ -241,13 +253,13 @@ void PPU::run(int cycles)
             }
             else if(cycle >= 321 && cycle <= 336)
             {
-                shifts_calculation();
-
                 shift_tile_lsb <<= 1;
                 shift_tile_msb <<= 1;
 
                 shift_attrib_lsb <<= 1;
                 shift_attrib_msb <<= 1;
+
+                shifts_calculation();
             }
             else if(cycle == 340)
                 get_sprites_on_next_scanline();
@@ -273,6 +285,16 @@ void PPU::run(int cycles)
             {
                 render_VRAM = (render_VRAM & 0xFBFF) | (temp_VRAM & 0x400);
                 render_VRAM = (render_VRAM & 0xFFE0) | (temp_VRAM & 0x1F);
+            }
+            else if(cycle >= 321 && cycle <= 336)
+            {
+                shift_tile_lsb <<= 1;
+                shift_tile_msb <<= 1;
+
+                shift_attrib_lsb <<= 1;
+                shift_attrib_msb <<= 1;
+
+                shifts_calculation();
             }
         }
 
@@ -658,7 +680,7 @@ uint8_t PPU::get_sprite(bool& priority)
 
             if (color != 0)
             {
-                if (!(PPUMASK & 0x04))
+                if (!(PPUMASK & 0x04) && cycle <= 8)
                 {
                 }
                 else
@@ -696,12 +718,12 @@ uint8_t PPU::get_sprite(bool& priority)
 
 uint8_t PPU::get_background(uint8_t& color_index)
 {
-    if (!(PPUMASK & 0x08))
+    if (!(PPUMASK & 0x08) )
     {
-        shift_tile_lsb <<= 1;
-        shift_tile_msb <<= 1;
-        shift_attrib_lsb <<= 1;
-        shift_attrib_msb <<= 1;
+//        shift_tile_lsb <<= 1;
+//        shift_tile_msb <<= 1;
+//        shift_attrib_lsb <<= 1;
+//        shift_attrib_msb <<= 1;
 
         color_index = 0;
         return 0;
@@ -729,12 +751,6 @@ uint8_t PPU::get_background(uint8_t& color_index)
         uint16_t addr = 0x3F00 + palette * 4 + color;
         colorByte = bus->read_ppu(addr);
     }
-
-    shift_tile_lsb <<= 1;
-    shift_tile_msb <<= 1;
-
-    shift_attrib_lsb <<= 1;
-    shift_attrib_msb <<= 1;
 
     return colorByte & 0x3F;
 }

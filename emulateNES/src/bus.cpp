@@ -80,7 +80,8 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     }
     else if(addr >= 0x2008 && addr <= 0x3FFF) // зеркало PPU
     {
-        ppu->set_register(addr, data);
+        uint16_t reg = 0x2000 + (addr & 0x0007);
+        ppu->set_register(reg, data);
     }
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода DMA
     {
@@ -95,7 +96,7 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     }
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
     {
-         cartridge->write_chr_ram(addr, data);
+        cartridge->mapper_write(addr, data);
     }
     else if(addr >= 0x6000 && addr <= 0x7FFF) // ОЗУ картриджа
     {
@@ -118,62 +119,12 @@ uint8_t Bus::read_ppu(uint16_t addr)
     else if(addr >= 0x2000 && addr <= 0x2FFF) // VRAM
     {
         uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x2000) & 0x0FFF);
-        uint8_t data = 0;
-
-        if (cartridge->get_orintation() == Mapper::MIRROR::VERTICAL)
-        {
-            if (nt_index >= 0x0000 && nt_index <= 0x03FF)
-                data = vram[nt_index & 0x03FF];
-            if (nt_index >= 0x0400 && nt_index <= 0x07FF)
-                data = vram[0x0400 + (nt_index & 0x03FF)];
-            if (nt_index >= 0x0800 && nt_index <= 0x0BFF)
-                data = vram[nt_index & 0x03FF];
-            if (nt_index >= 0x0C00 && nt_index <= 0x0FFF)
-                data = vram[0x0400 + (nt_index & 0x03FF)];
-        }
-        else if (cartridge->get_orintation() == Mapper::MIRROR::HORIZONTAL)
-        {
-            if (nt_index >= 0x0000 && nt_index <= 0x03FF)
-                data = vram[nt_index & 0x03FF];
-            if (nt_index >= 0x0400 && nt_index <= 0x07FF)
-                data = vram[nt_index & 0x03FF];
-            if (nt_index >= 0x0800 && nt_index <= 0x0BFF)
-                data = vram[0x0400 + (nt_index & 0x03FF)];
-            if (nt_index >= 0x0C00 && nt_index <= 0x0FFF)
-                data = vram[0x0400 + (nt_index & 0x03FF)];
-        }
-
-        return data;
+        return vram[nt_index];
     }
     else if(addr >= 0x3000 && addr <= 0x3EFF) // зеркало VRAM
     {
-        uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x2000) & 0x0FFF);
-        uint8_t data = 0;
-
-        if (cartridge->get_orintation() == Mapper::MIRROR::VERTICAL)
-        {
-            if (nt_index >= 0x0000 && nt_index <= 0x03FF)
-                data = vram[nt_index & 0x03FF];
-            if (nt_index >= 0x0400 && nt_index <= 0x07FF)
-                data = vram[0x0400 + (nt_index & 0x03FF)];
-            if (nt_index >= 0x0800 && nt_index <= 0x0BFF)
-                data = vram[nt_index & 0x03FF];
-            if (nt_index >= 0x0C00 && nt_index <= 0x0FFF)
-                data = vram[0x0400 + (nt_index & 0x03FF)];
-        }
-        else if (cartridge->get_orintation() == Mapper::MIRROR::HORIZONTAL)
-        {
-            if (nt_index >= 0x0000 && nt_index <= 0x03FF)
-                data = vram[nt_index & 0x03FF];
-            if (nt_index >= 0x0400 && nt_index <= 0x07FF)
-                data = vram[nt_index & 0x03FF];
-            if (nt_index >= 0x0800 && nt_index <= 0x0BFF)
-                data = vram[0x0400 + (nt_index & 0x03FF)];
-            if (nt_index >= 0x0C00 && nt_index <= 0x0FFF)
-                data = vram[0x0400 + (nt_index & 0x03FF)];
-        }
-
-        return data;
+        uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x3000) & 0x0FFF);
+        return vram[nt_index];
     }
     else if(addr >= 0x3F00 && addr <= 0x3FFF) // палитра
     {
@@ -206,55 +157,13 @@ void Bus::write_ppu(uint16_t addr, uint8_t data)
     {
         uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x2000) & 0x0FFF);
 
-        if (cartridge->get_orintation() == Mapper::MIRROR::VERTICAL)
-        {
-            if (nt_index >= 0x0000 && nt_index <= 0x03FF)
-                vram[nt_index & 0x03FF] = data;
-            if (nt_index >= 0x0400 && nt_index <= 0x07FF)
-                vram[0x0400 + (nt_index & 0x03FF)] = data;
-            if (nt_index >= 0x0800 && nt_index <= 0x0BFF)
-                vram[nt_index & 0x03FF] = data;
-            if (nt_index >= 0x0C00 && nt_index <= 0x0FFF)
-                vram[0x0400 + (nt_index & 0x03FF)] = data;
-        }
-        else if (cartridge->get_orintation() == Mapper::MIRROR::HORIZONTAL)
-        {
-            if (nt_index >= 0x0000 && nt_index <= 0x03FF)
-                vram[nt_index & 0x03FF] = data;
-            if (nt_index >= 0x0400 && nt_index <= 0x07FF)
-                vram[nt_index & 0x03FF] = data;
-            if (nt_index >= 0x0800 && nt_index <= 0x0BFF)
-                vram[0x0400 + (nt_index & 0x03FF)] = data;
-            if (nt_index >= 0x0C00 && nt_index <= 0x0FFF)
-                vram[0x0400 + (nt_index & 0x03FF)] = data;
-        }
+        vram[nt_index] = data;
     }
     else if(addr >= 0x3000 && addr <= 0x3EFF) // зеркало VRAM
     {
-        uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x2000) & 0x0FFF);
+        uint16_t nt_index = cartridge->map_nametable_addr((addr - 0x3000) & 0x0FFF);
 
-        if (cartridge->get_orintation() == Mapper::MIRROR::VERTICAL)
-        {
-            if (nt_index >= 0x0000 && nt_index <= 0x03FF)
-                vram[nt_index & 0x03FF] = data;
-            if (nt_index >= 0x0400 && nt_index <= 0x07FF)
-                vram[0x0400 + (nt_index & 0x03FF)] = data;
-            if (nt_index >= 0x0800 && nt_index <= 0x0BFF)
-                vram[nt_index & 0x03FF] = data;
-            if (nt_index >= 0x0C00 && nt_index <= 0x0FFF)
-                vram[0x0400 + (nt_index & 0x03FF)] = data;
-        }
-        else if (cartridge->get_orintation() == Mapper::MIRROR::HORIZONTAL)
-        {
-            if (nt_index >= 0x0000 && nt_index <= 0x03FF)
-                vram[nt_index & 0x03FF] = data;
-            if (nt_index >= 0x0400 && nt_index <= 0x07FF)
-                vram[nt_index & 0x03FF] = data;
-            if (nt_index >= 0x0800 && nt_index <= 0x0BFF)
-                vram[0x0400 + (nt_index & 0x03FF)] = data;
-            if (nt_index >= 0x0C00 && nt_index <= 0x0FFF)
-                vram[0x0400 + (nt_index & 0x03FF)] = data;
-        }
+        vram[nt_index] = data;
     }
     else if(addr >= 0x3F00 && addr <= 0x3FFF) // палитра
     {
@@ -277,7 +186,7 @@ void Bus::init_new_cartridge(const QString& path, bool* status)
 {
     cartridge.reset(new Cartridge(path, status));
 
-    if(!status)
+    if(!(*status))
         return;
 
     std::fill(ram.begin(), ram.end(), 0);
@@ -319,6 +228,19 @@ void Bus::run_apu(int cycles)
     old_cycles1 = cycles;
 }
 
+void Bus::set_apu_irq(bool level)
+{
+    if (apu_irq_level == level)
+        return;
+
+    apu_irq_level = level;
+
+    if (level)
+        cpu->request_irq();
+    else
+        cpu->release_irq();
+}
+
 void Bus::cpu_request_nmi()
 {
     cpu->request_nmi();
@@ -327,16 +249,6 @@ void Bus::cpu_request_nmi()
 void Bus::reset_ppu()
 {
     ppu->reset();
-}
-
-void Bus::release_irq()
-{
-    cpu->release_irq();
-}
-
-void Bus::request_irq()
-{
-    cpu->request_irq();
 }
 
 void Bus::run_watch_all_tiles()

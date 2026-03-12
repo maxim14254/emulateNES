@@ -15,5 +15,7 @@
         <file>games/03-vbl_clear_time.nes</file>
         <file>games/04-nmi_control.nes</file>
         <file>games/color_test.nes</file>
+        <file>games/240pee-bnrom.nes</file>
+        <file>games/Contra Force (USA).nes</file>
     </qresource>
 </RCC>

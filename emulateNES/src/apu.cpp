@@ -8,6 +8,13 @@
 
 
 int samplesToWrite = 0;
+
+int prg_reader(void* _prg_reader_data, nes_addr_t addr)
+{
+    Bus* bus = static_cast<Bus*>(_prg_reader_data);
+    return bus->read_cpu(addr, false);
+}
+
 APU::APU(double sampleRate, Bus* _bus, QAudioOutput* _sink)
     : m_sampleRate(sampleRate),
       bus(_bus),
@@ -17,8 +24,8 @@ APU::APU(double sampleRate, Bus* _bus, QAudioOutput* _sink)
 {
     tempo_ = 1.0;
     dmc.apu = this;
-    dmc.prg_reader = NULL;
-    irq_notifier_ = NULL;
+    dmc.prg_reader = prg_reader;
+    dmc.prg_reader_data = bus;
 
     oscs [0] = &square1;
     oscs [1] = &square2;
@@ -148,6 +155,7 @@ void APU::run(uint64_t cycles)
                 {
                     next_irq = time + frame_period * 4 + 2;
                     irq_flag = true;
+                    update_irq_line();
                 }
             case 2:
                 square1.clock_length(0x20);
@@ -187,6 +195,12 @@ void APU::treble_eq( const blip_eq_t& eq )
     triangle.synth.treble_eq(eq);
     noise.synth.treble_eq(eq);
     dmc.synth.treble_eq(eq);
+}
+
+void APU::update_irq_line()
+{
+    bool level = irq_flag || dmc.irq_flag;
+    bus->set_apu_irq(level);
 }
 
 void APU::enable_nonlinear( double v )
@@ -261,7 +275,7 @@ void APU::write_registers(uint16_t addr, uint8_t data)
         }
 
         if ( recalc_irq )
-            irq_changed();
+            update_irq_line();
     }
     else if (addr == 0x4017)
     {
@@ -283,7 +297,7 @@ void APU::write_registers(uint16_t addr, uint8_t data)
                 next_irq = cycles + frame_delay + frame_period * 3 + 1;
         }
 
-        irq_changed();
+        update_irq_line();;
 
     }
 }
@@ -300,7 +314,7 @@ uint8_t APU::read_status()
     {
         result |= 0x40;
         irq_flag = false;
-        irq_changed();
+        update_irq_line();
     }
 
     return result;
@@ -355,20 +369,17 @@ void APU::pump_audio()
 
 void APU::irq_changed()
 {
-    uint64_t new_irq = dmc.next_irq;
+    nes_time_t new_irq = dmc.next_irq;
 
-    if (dmc.irq_flag | irq_flag)
+    if (dmc.irq_flag || irq_flag)
         new_irq = 0;
-
-    else if (new_irq > next_irq)
+    else if (next_irq < new_irq)
         new_irq = next_irq;
-
 
     if (new_irq != earliest_irq_)
     {
         earliest_irq_ = new_irq;
-        if (irq_notifier_)
-            irq_notifier_(irq_data);
+        update_irq_line();
     }
 }
 
