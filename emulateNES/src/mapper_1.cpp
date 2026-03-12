@@ -57,7 +57,6 @@ uint8_t Mapper_1::mapper_read_prg(uint16_t addr)
 
 uint16_t Mapper_1::map_nametable_addr(uint16_t addr)
 {
-    addr &= 0x0FFF;
     uint16_t table = (addr >> 10) & 0x3;
     uint16_t off   = addr & 0x03FF;
 

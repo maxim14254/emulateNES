@@ -116,9 +116,8 @@ void Mapper_34::mapper_write(uint16_t addr, uint8_t data)
 
 uint16_t Mapper_34::map_nametable_addr(uint16_t addr)
 {
-    uint16_t vram_addr = (addr - 0x2000) & 0x0FFF;
-    uint16_t table = vram_addr / 0x0400;
-    uint16_t offset = vram_addr & 0x03FF;
+    uint16_t table = addr / 0x0400;
+    uint16_t offset = addr & 0x03FF;
 
     switch (Orintation)
     {
