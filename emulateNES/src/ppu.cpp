@@ -433,25 +433,27 @@ void PPU::run_watch_cpu_instr(uint16_t PC)
 
         for(int i = 0; i < 9; ++i)
         {
-            if (++it_a != assembler_buf.end())
-            {
-                value += QString("     %1\n").arg(it_a->second.c_str());
-            }
+            ++it_a;
+            if (it_a == assembler_buf.end())
+                break;
+
+            value += QString("     %1\n").arg(it_a->second.c_str());
         }
     }
     else
         return;
 
     if(++it_a != assembler_buf.end())
-    {
+    {                
         value += QString("=>%1\n").arg(it_a->second.c_str());
 
         for(int i = 0; i < 10; ++i)
         {
-            if (++it_a != assembler_buf.end())
-            {
-                value += QString("     %1\n").arg(it_a->second.c_str());
-            }
+            ++it_a;
+            if (it_a == assembler_buf.end())
+                break;
+
+            value += QString("     %1\n").arg(it_a->second.c_str());
         }
     }
 

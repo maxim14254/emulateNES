@@ -26,7 +26,7 @@ Mapper_4::Mapper_4(QFile& file, NESHeader _header)
     if (!chr_rom.empty())
         chr_bank_count_1k = (chr_rom.size() / 0x0400);
     else
-        chr_bank_count_1k = (chr_ram.size() / 0x0400);
+        chr_bank_count_1k = 0;
 
     bank_registers[6] = 0;
     bank_registers[7] = 1;

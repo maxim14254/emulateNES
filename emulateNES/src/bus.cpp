@@ -139,7 +139,7 @@ uint8_t Bus::read_ppu(uint16_t addr)
         else if (palette_addr == 0x1C)
             palette_addr = 0x0C;
 
-        return palette[palette_addr]; //& (ppu->get_register(0x2001, true) & 0x01 ? 0x30 : 0x3F);
+        return palette[palette_addr] & (ppu->get_register(0x2001, true) & 0x01 ? 0x30 : 0x3F);
     }
     else
         return 0;
