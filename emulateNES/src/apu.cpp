@@ -151,7 +151,7 @@ void APU::run(uint64_t cycles)
         switch ( ++frame_counter )
         {
             case 0:
-                if (!(frame_mode_5step & 0xC0))
+                if ((frame_mode_5step & 0xC0) == 0)
                 {
                     next_irq = time + frame_period * 4 + 2;
                     irq_flag = true;

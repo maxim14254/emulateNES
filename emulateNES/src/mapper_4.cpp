@@ -1,6 +1,9 @@
 #include "mapper_4.h"
+#include "bus.h"
 
-Mapper_4::Mapper_4(QFile& file, NESHeader _header)
+
+
+Mapper_4::Mapper_4(QFile& file, NESHeader _header, Bus* _bus) : bus(_bus)
 {
     header = _header;
 
@@ -78,9 +81,9 @@ void Mapper_4::update_banks()
     if (!chr_mode)
     {
         chr_bank_map[0] = r0;
-        chr_bank_map[1] = (r0 + 1) % chr_bank_count_1k;
+        chr_bank_map[1] = (r0 + 1);
         chr_bank_map[2] = r1;
-        chr_bank_map[3] = (r1 + 1) % chr_bank_count_1k;
+        chr_bank_map[3] = (r1 + 1);
         chr_bank_map[4] = r2;
         chr_bank_map[5] = r3;
         chr_bank_map[6] = r4;
@@ -93,9 +96,9 @@ void Mapper_4::update_banks()
         chr_bank_map[2] = r4;
         chr_bank_map[3] = r5;
         chr_bank_map[4] = r0;
-        chr_bank_map[5] = (r0 + 1) % chr_bank_count_1k;
+        chr_bank_map[5] = (r0 + 1);
         chr_bank_map[6] = r1;
-        chr_bank_map[7] = (r1 + 1) % chr_bank_count_1k;
+        chr_bank_map[7] = (r1 + 1);
     }
 }
 
@@ -122,7 +125,7 @@ void Mapper_4::clock_irq_on_a12(uint16_t addr)
 
     if (!a12)
     {
-        a12_low_cycles++;
+        ++a12_low_cycles;
     }
     else
     {
@@ -134,12 +137,13 @@ void Mapper_4::clock_irq_on_a12(uint16_t addr)
                 irq_reload = false;
             }
             else
-            {
                 irq_counter--;
-            }
 
             if (irq_counter == 0 && irq_enabled)
+            {
                 irq_pending = true;
+                bus->set_mapper_irq(irq_pending);
+            }
         }
 
         a12_low_cycles = 0;
@@ -151,6 +155,9 @@ void Mapper_4::clock_irq_on_a12(uint16_t addr)
 uint8_t Mapper_4::mapper_read_chr(uint16_t addr)
 {
     if (addr >= 0x2000)
+        return 0;
+
+    if (chr_bank_count_1k == 0)
         return 0;
 
     clock_irq_on_a12(addr);
@@ -202,6 +209,9 @@ void Mapper_4::write_chr_ram(uint16_t addr, uint8_t data)
     if (addr >= 0x2000 || !chr_rom.empty() || chr_ram.empty())
         return;
 
+    if (chr_bank_count_1k == 0)
+        return;
+
     uint16_t slot = addr / 0x0400;
     uint16_t offset = addr % 0x0400;
 
@@ -235,10 +245,7 @@ void Mapper_4::mapper_write(uint16_t addr, uint8_t data)
         }
         case 0xA000:
         {
-            if ((header.flags6 & 0x08) == 0)
-            {
-                Orintation = (data & 0x01) ? HORIZONTAL : VERTICAL;
-            }
+            Orintation = (data & 0x01) ? HORIZONTAL : VERTICAL;
             break;
         }
         case 0xA001:
@@ -261,6 +268,7 @@ void Mapper_4::mapper_write(uint16_t addr, uint8_t data)
         {
             irq_enabled = false;
             irq_pending = false;
+            bus->set_mapper_irq(irq_pending);
             break;
         }
         case 0xE001:
@@ -268,8 +276,6 @@ void Mapper_4::mapper_write(uint16_t addr, uint8_t data)
             irq_enabled = true;
             break;
         }
-        default:
-            break;
     }
 }
 

@@ -9,7 +9,7 @@
 #include "mapper_4.h"
 
 
-Cartridge::Cartridge(const QString& path, bool* status)
+Cartridge::Cartridge(const QString& path, bool* status, Bus* bus)
 {
     QFile file(path);
 
@@ -23,7 +23,7 @@ Cartridge::Cartridge(const QString& path, bool* status)
             uint8_t map_lo = (header.flags6 >> 4) & 0x0F;
             uint8_t map_hi = (header.flags7 >> 4) & 0x0F;;
 
-            uint8_t map = (map_hi << 4) | map_lo;
+            map = (map_hi << 4) | map_lo;
 
             if(map == 0)
             {
@@ -43,7 +43,7 @@ Cartridge::Cartridge(const QString& path, bool* status)
             }
             else if(map == 4)
             {
-                mapper.reset(new Mapper_4(file, header));
+                mapper.reset(new Mapper_4(file, header, bus));
             }
             else if(map == 34)
             {
@@ -155,3 +155,4 @@ int Cartridge::get_orintation()
     else
         return 0;
 }
+

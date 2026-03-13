@@ -33,6 +33,7 @@ public:
     void end_frame_apu(int cycles);
     void run_apu(int cycles);
     void set_apu_irq(bool level);
+    void set_mapper_irq(bool level);
 
     void cpu_request_nmi();
     void reset_ppu();
@@ -68,6 +69,7 @@ private:
     uint8_t controller[2];
 
     bool apu_irq_level = false;
+    bool apu_mapper_level = false;
 
     uint8_t LENGTH_TABLE[32] =
     {

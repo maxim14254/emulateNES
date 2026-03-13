@@ -88,7 +88,7 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
         apu->write_registers(addr, data); // APU
 
         if(addr == 0x4014) // DMA
-            ppu->set_oam(&data);
+            ppu->set_oam(data);
         else if(addr == 0x4016 || addr == 0x4017) // джойстики
         {
             controller[addr & 0x0001] = cpu->get_gamepad(addr & 0x0001);
@@ -184,7 +184,7 @@ void Bus::write_ppu(uint16_t addr, uint8_t data)
 
 void Bus::init_new_cartridge(const QString& path, bool* status)
 {
-    cartridge.reset(new Cartridge(path, status));
+    cartridge.reset(new Cartridge(path, status, this));
 
     if(!(*status))
         return;
@@ -234,6 +234,19 @@ void Bus::set_apu_irq(bool level)
         return;
 
     apu_irq_level = level;
+
+    if (level)
+        cpu->request_irq();
+    else
+        cpu->release_irq();
+}
+
+void Bus::set_mapper_irq(bool level)
+{
+    if (apu_mapper_level == level)
+        return;
+
+    apu_mapper_level = level;
 
     if (level)
         cpu->request_irq();

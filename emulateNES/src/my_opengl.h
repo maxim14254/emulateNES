@@ -9,6 +9,7 @@
 
 class MyOpenGL : public QOpenGLWidget, protected QOpenGLFunctions
 {
+    Q_OBJECT
 
 public:
     explicit MyOpenGL(GLsizei _width, GLsizei _height, QWidget* parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
@@ -20,6 +21,8 @@ protected:
     void initializeGL() override;
     void resizeGL(int w, int h) override;
     void paintGL() override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void paintEvent(QPaintEvent *event) override;
 
 private:
     GLuint textureId;
@@ -30,6 +33,9 @@ private:
     qreal m_dpr = 1.0;
 
     MainWindow* window;
+
+    int imgY;
+    int imgX;
 
 };
 

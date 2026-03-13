@@ -97,7 +97,7 @@ private:
     bool pulse2_enable = false;
     bool noise_enable = false;
     bool triangle_enable = false;
-    bool frame_mode_5step = false;
+    uint8_t frame_mode_5step = false;
     bool irq_flag = false;
     bool frame_irq_flag = false;
 

@@ -4,11 +4,12 @@
 #include "mapper.h"
 #include <QFile>
 
+class Bus;
 
 class Mapper_4 : public Mapper
 {
 public:
-    Mapper_4(QFile& file, NESHeader _header);
+    Mapper_4(QFile& file, NESHeader _header, Bus* _bus);
     ~Mapper_4();
 
     uint8_t mapper_read_prg(uint16_t addr) override;
@@ -56,6 +57,8 @@ private:
     bool last_a12 = false;
 
     int a12_low_cycles = 0;
+
+    Bus* bus;
 };
 
 #endif // MAPPER_4_H

@@ -11,6 +11,8 @@ MyOpenGL::MyOpenGL(GLsizei _width, GLsizei _height, QWidget* parent, Qt::WindowF
     textureId = 0;
     nesFrame.resize(256 * 240);
 
+    setMouseTracking(true);
+
     width1 = _width;
     height1 = _height;
 
@@ -164,5 +166,41 @@ void MyOpenGL::paintGL()
 
         cv.notify_one();
     }
+}
+
+void MyOpenGL::mouseMoveEvent(QMouseEvent *event)
+{
+    int mouseX = event->pos().x();
+    int mouseY = event->pos().y();
+
+    int imageWidth = 256;
+    int imageHeight = 240;
+
+    imgX = mouseX * imageWidth / width();
+    imgY = mouseY * imageHeight / height();
+}
+
+void MyOpenGL::paintEvent(QPaintEvent *event)
+{
+    QOpenGLWidget::paintEvent(event);
+
+#ifdef DEBUG_ON
+    if(width1 == 256 && height1 == 240) // условие для отсевания дебажных экранов от главного
+    {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+
+        QFont font("Arial", 18);
+
+        QPainterPath path;
+        path.addText(10, 30, font, QString("x=%1 y=%2").arg(imgX).arg(imgY));
+
+        painter.setPen(QPen(Qt::black, 1));
+        painter.setBrush(Qt::white);
+        painter.drawPath(path);
+
+        painter.end();
+    }
+#endif
 }
 

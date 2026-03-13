@@ -22,7 +22,7 @@ public:
 
     struct Sprite
     {
-        uint8_t y;
+        int16_t y;
         uint8_t tile;
         uint8_t attr;
         int16_t x;
@@ -34,7 +34,7 @@ public:
 
     uint8_t get_register(uint16_t addr, bool onlyRead);
     void set_register(uint16_t addr, uint8_t data);
-    void set_oam(uint8_t* _oam);
+    void set_oam(uint8_t _oam);
     void run(int cycles);
     void run_watch_all_tiles();
     void run_watch_cpu_instr(uint16_t PC);
@@ -100,7 +100,7 @@ private:
 
     void ppu_tick();
     uint8_t get_background(uint8_t& color_index);
-    uint8_t get_sprite(bool& priority);
+    uint8_t get_sprite(bool& priority, uint8_t& color_index);
     void increment_VRAM_address();
     uint8_t read_vram_buffered();
     void increment_x();

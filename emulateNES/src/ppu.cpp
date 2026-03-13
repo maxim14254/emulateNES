@@ -151,12 +151,11 @@ void PPU::set_register(uint16_t addr, uint8_t data)
     }
 }
 
-void PPU::set_oam(uint8_t* _oam)
+void PPU::set_oam(uint8_t _oam)
 {
-    int j = 0;
     for(int i = 0; i < 256; ++i)
     {
-        uint8_t val = bus->read_cpu((*_oam << 8) | i, true);
+        uint8_t val = bus->read_cpu((_oam << 8) | i, true);
         oam[i] = val;
     }
 
@@ -181,16 +180,16 @@ void PPU::run(int cycles)
         {
             if (cycle >= 1 && cycle <= 256)
             {
-
                 uint8_t x = cycle - 1;
                 uint8_t y = scanline;
 
                 uint8_t color_pixel = 0;
-                uint8_t color_index = 0;
-                uint8_t color_back = get_background(color_index);
+                uint8_t color_index1 = 0;
+                uint8_t color_back = get_background(color_index1);
 
                 bool priority = false;
-                uint8_t color_sprite = get_sprite(priority);
+                uint8_t color_index2 = 0;
+                uint8_t color_sprite = get_sprite(priority, color_index2);
 
                 shift_tile_lsb <<= 1;
                 shift_tile_msb <<= 1;
@@ -200,15 +199,15 @@ void PPU::run(int cycles)
 
                 shifts_calculation();
 
-                if (color_back == 0 && color_sprite == 0)
-                    color_pixel = 0;
-                else if (color_back == 0 && color_sprite > 0)
+                if (color_index1 == 0 && color_index2 == 0)
+                    color_pixel = bus->read_ppu(0x3F00);
+                else if (color_index1 == 0 && color_index2 > 0)
                     color_pixel = color_sprite;
-                else if (color_back > 0 && color_sprite == 0)
+                else if (color_index1 > 0 && color_index2 == 0)
                     color_pixel = color_back;
-                else if (color_back > 0 && color_sprite > 0)
+                else if (color_index1 > 0 && color_index2 > 0)
                 {
-                    if (!priority || (color_index == 0 && priority))
+                    if (!priority)
                         color_pixel = color_sprite;
                     else
                         color_pixel = color_back;
@@ -230,8 +229,6 @@ void PPU::run(int cycles)
                     }
                 }
 
-                if (color_pixel == 0)
-                    color_pixel = bus->read_ppu(0x3F00);
 
                 PPU::Color color = nesPalette[color_pixel];
 
@@ -664,7 +661,7 @@ void PPU::download_asm_buffer(std::map<uint16_t, std::string> &assembler_buf)
     }
 }
 
-uint8_t PPU::get_sprite(bool& priority)
+uint8_t PPU::get_sprite(bool& priority, uint8_t& color_index)
 {
     if (!(PPUMASK & 0x10))
         return 0;
@@ -679,6 +676,7 @@ uint8_t PPU::get_sprite(bool& priority)
             bool pixel_lo = (shif_sprite_lsb[i] & 0x80) > 0;
             bool pixel_hi = (shif_sprite_msb[i] & 0x80) > 0;
             uint8_t color = (pixel_hi << 1) | pixel_lo;
+            color_index = color;
 
             if (color != 0)
             {

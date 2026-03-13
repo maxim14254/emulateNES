@@ -17,5 +17,8 @@
         <file>games/color_test.nes</file>
         <file>games/240pee-bnrom.nes</file>
         <file>games/Contra Force (USA).nes</file>
+        <file>games/5-MMC3.nes</file>
+        <file>games/1-clocking.nes</file>
+        <file>games/3.A12_clocking.nes</file>
     </qresource>
 </RCC>

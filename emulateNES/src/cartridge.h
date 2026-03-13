@@ -6,12 +6,12 @@
 #include <memory>
 #include "mapper.h"
 
-
+class Bus;
 
 class Cartridge
 {
 public:
-    Cartridge(const QString& path, bool* status);
+    Cartridge(const QString& path, bool* status, Bus* bus);
     ~Cartridge();
 
     uint8_t mapper_read_prg(uint16_t addr);
@@ -33,7 +33,7 @@ public:
 
 private:
     std::unique_ptr<Mapper> mapper;
-
+    uint8_t map = 0;
 };
 
 #endif // CARTRIDGE_H
