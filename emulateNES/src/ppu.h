@@ -81,7 +81,7 @@ private:
     uint8_t numb_pixelX = 0; // сдвиг по X у пикселя внутри тайла
 
     uint8_t ppu_data_buffer = 0;
-    bool w;
+    bool w = false;
     uint8_t openBus = 0;
 
     uint16_t shift_tile_lsb = 0;

@@ -1,6 +1,6 @@
 #include "mapper_4.h"
 #include "bus.h"
-
+#include <QDebug>
 
 
 Mapper_4::Mapper_4(QFile& file, NESHeader _header, Bus* _bus) : bus(_bus)
@@ -31,10 +31,15 @@ Mapper_4::Mapper_4(QFile& file, NESHeader _header, Bus* _bus) : bus(_bus)
     else
         chr_bank_count_1k = 0;
 
-    bank_registers[6] = 0;
-    bank_registers[7] = 1;
+//    bank_registers[6] = 0;
+//    bank_registers[7] = 1;
 
-    update_banks();
+    prg_bank_map[0] = 0;
+    prg_bank_map[1] = 1;
+    prg_bank_map[2] = (prg_bank_count_8k - 2);
+    prg_bank_map[3] = (prg_bank_count_8k - 1);
+
+    //update_banks();
 }
 
 Mapper_4::~Mapper_4()
@@ -50,55 +55,66 @@ void Mapper_4::update_banks()
     uint16_t last = (prg_bank_count_8k - 1);
     uint16_t second_last = (prg_bank_count_8k - 2);
 
-    uint16_t r6 = bank_registers[6] % prg_bank_count_8k;
-    uint16_t r7 = bank_registers[7] % prg_bank_count_8k;
+    uint16_t r6 = bank_registers[6];
+    uint16_t r7 = bank_registers[7];
 
-    if (!prg_mode)
+//    if (!prg_mode)
+//    {
+//        prg_bank_map[0] = r6;
+//        prg_bank_map[1] = r7;
+//        prg_bank_map[2] = second_last;
+//        prg_bank_map[3] = last;
+//    }
+//    else
+//    {
+//        prg_bank_map[0] = second_last;
+//        prg_bank_map[1] = r7;
+//        prg_bank_map[2] = r6;
+//        prg_bank_map[3] = last;
+//    }
+
+    if (prg_mode)
+    {
+        prg_bank_map[2] = r6;
+        prg_bank_map[0] = second_last;
+    }
+    else
     {
         prg_bank_map[0] = r6;
-        prg_bank_map[1] = r7;
-        prg_bank_map[2] = second_last;
-        prg_bank_map[3] = last;
-    }
-    else
-    {
-        prg_bank_map[0] = second_last;
-        prg_bank_map[1] = r7;
-        prg_bank_map[2] = r6;
-        prg_bank_map[3] = last;
+        prg_bank_map[2] = second_last;;
     }
 
-    if (chr_bank_count_1k == 0)
-        return;
+    prg_bank_map[1] = r7;
+    prg_bank_map[3] = last;
 
-    uint16_t r0 = (bank_registers[0] & 0xFE) % chr_bank_count_1k;
-    uint16_t r1 = (bank_registers[1] & 0xFE) % chr_bank_count_1k;
-    uint16_t r2 = bank_registers[2] % chr_bank_count_1k;
-    uint16_t r3 = bank_registers[3] % chr_bank_count_1k;
-    uint16_t r4 = bank_registers[4] % chr_bank_count_1k;
-    uint16_t r5 = bank_registers[5] % chr_bank_count_1k;
+    uint16_t r0 = bank_registers[0];
+    uint16_t r1 = bank_registers[1];
+    uint16_t r2 = bank_registers[2];
+    uint16_t r3 = bank_registers[3];
+    uint16_t r4 = bank_registers[4];
+    uint16_t r5 = bank_registers[5];
 
-    if (!chr_mode)
-    {
-        chr_bank_map[0] = r0;
-        chr_bank_map[1] = (r0 + 1);
-        chr_bank_map[2] = r1;
-        chr_bank_map[3] = (r1 + 1);
-        chr_bank_map[4] = r2;
-        chr_bank_map[5] = r3;
-        chr_bank_map[6] = r4;
-        chr_bank_map[7] = r5;
-    }
-    else
-    {
+    if (chr_mode)
+    {        
         chr_bank_map[0] = r2;
         chr_bank_map[1] = r3;
         chr_bank_map[2] = r4;
         chr_bank_map[3] = r5;
-        chr_bank_map[4] = r0;
-        chr_bank_map[5] = (r0 + 1);
-        chr_bank_map[6] = r1;
-        chr_bank_map[7] = (r1 + 1);
+        chr_bank_map[4] = r0 & 0xFE;
+        chr_bank_map[5] = r0 + 1;
+        chr_bank_map[6] = r1 & 0xFE;
+        chr_bank_map[7] = r1 + 1;
+    }
+    else
+    {
+        chr_bank_map[0] = r0 & 0xFE;
+        chr_bank_map[1] = r0 + 1;
+        chr_bank_map[2] = r1 & 0xFE;
+        chr_bank_map[3] = r1 + 1;
+        chr_bank_map[4] = r2;
+        chr_bank_map[5] = r3;
+        chr_bank_map[6] = r4;
+        chr_bank_map[7] = r5;
     }
 }
 
@@ -108,9 +124,9 @@ uint8_t Mapper_4::mapper_read_prg(uint16_t addr)
         return 0;
 
     uint16_t slot = (addr - 0x8000) / 0x2000;
-    uint16_t offset = (addr - 0x8000) % 0x2000;
+    uint16_t offset = (addr - 0x8000) & 0x1FFF;
 
-    uint32_t bank = prg_bank_map[slot] % prg_bank_count_8k;
+    uint32_t bank = prg_bank_map[slot];
     uint32_t index = bank * 0x2000 + offset;
 
     if (index < prg_rom.size())
@@ -121,52 +137,58 @@ uint8_t Mapper_4::mapper_read_prg(uint16_t addr)
 
 void Mapper_4::clock_irq_on_a12(uint16_t addr)
 {
-    bool a12 = (addr & 0x1000) != 0;
+    //    bool a12 = (addr & 0x1000) != 0;
 
-    if (!a12)
+    //    if (!a12)
+    //    {
+    //        ++a12_low_cycles;
+    //    }
+    //    else
+    //    {
+    //        if (!last_a12 && a12_low_cycles >= 8)
+    //        {
+    //            if (irq_counter == 0 || irq_reload)
+    //            {
+    //                irq_counter = irq_latch;
+    //                irq_reload = false;
+    //            }
+    //            else
+    //                irq_counter--;
+
+    //            if (irq_counter == 0 && irq_enabled)
+    //            {
+    //                irq_pending = true;
+    //                bus->set_mapper_irq(irq_pending);
+    //            }
+    //        }
+
+    //        a12_low_cycles = 0;
+    //    }
+
+    //    last_a12 = a12;
+
+    if (irq_counter == 0)
     {
-        ++a12_low_cycles;
+        irq_counter = irq_latch;
     }
     else
+        irq_counter--;
+
+    if (irq_counter == 0 && irq_enabled)
     {
-        if (!last_a12 && a12_low_cycles >= 8)
-        {
-            if (irq_counter == 0 || irq_reload)
-            {
-                irq_counter = irq_latch;
-                irq_reload = false;
-            }
-            else
-                irq_counter--;
-
-            if (irq_counter == 0 && irq_enabled)
-            {
-                irq_pending = true;
-                bus->set_mapper_irq(irq_pending);
-            }
-        }
-
-        a12_low_cycles = 0;
+        irq_pending = true;
+        bus->set_mapper_irq(irq_pending);
     }
-
-    last_a12 = a12;
 }
 
 uint8_t Mapper_4::mapper_read_chr(uint16_t addr)
 {
-    if (addr >= 0x2000)
-        return 0;
-
-    if (chr_bank_count_1k == 0)
-        return 0;
-
-    clock_irq_on_a12(addr);
+    //clock_irq_on_a12(addr);
 
     uint16_t slot = addr / 0x0400;
-    uint16_t offset = addr % 0x0400;
 
-    uint32_t bank = chr_bank_map[slot] % chr_bank_count_1k;
-    uint32_t index = bank * 0x0400 + offset;
+    uint32_t bank = chr_bank_map[slot] * 0x0400;
+    uint32_t index = bank + (addr & 0x03FF);
 
     if (!chr_rom.empty())
     {
@@ -184,13 +206,10 @@ uint8_t Mapper_4::mapper_read_chr(uint16_t addr)
 
 uint8_t Mapper_4::read_prg_ram(uint16_t addr)
 {
-    if (addr < 0x6000 || addr > 0x7FFF || prg_ram.empty())
-        return 0;
-
     if (!prg_ram_enable)
         return 0;
 
-    return prg_ram[(addr - 0x6000) % prg_ram.size()];
+    return prg_ram[(addr - 0x6000)];
 }
 
 void Mapper_4::write_prg_ram(uint16_t addr, uint8_t data)
@@ -201,7 +220,7 @@ void Mapper_4::write_prg_ram(uint16_t addr, uint8_t data)
     if (!prg_ram_enable || prg_ram_write_protect)
         return;
 
-    prg_ram[(addr - 0x6000) % prg_ram.size()] = data;
+    prg_ram[(addr - 0x6000)] = data;
 }
 
 void Mapper_4::write_chr_ram(uint16_t addr, uint8_t data)
@@ -213,9 +232,9 @@ void Mapper_4::write_chr_ram(uint16_t addr, uint8_t data)
         return;
 
     uint16_t slot = addr / 0x0400;
-    uint16_t offset = addr % 0x0400;
+    uint16_t offset = addr & 0x03FF;
 
-    uint32_t bank = chr_bank_map[slot] % chr_bank_count_1k;
+    uint32_t bank = chr_bank_map[slot];
     uint32_t index = bank * 0x0400 + offset;
 
     if (index < chr_ram.size())
@@ -232,9 +251,9 @@ void Mapper_4::mapper_write(uint16_t addr, uint8_t data)
         case 0x8000:
         {
             bank_select = data & 0x07;
-            prg_mode = (data & 0x40) != 0;
-            chr_mode = (data & 0x80) != 0;
-            update_banks();
+            prg_mode = (data & 0x40);
+            chr_mode = (data & 0x80);
+            //update_banks();
             break;
         }
         case 0x8001:
@@ -261,7 +280,7 @@ void Mapper_4::mapper_write(uint16_t addr, uint8_t data)
         }
         case 0xC001:
         {
-            irq_reload = true;
+            irq_reload = false;
             break;
         }
         case 0xE000:
@@ -282,7 +301,7 @@ void Mapper_4::mapper_write(uint16_t addr, uint8_t data)
 uint16_t Mapper_4::map_nametable_addr(uint16_t addr)
 {
     uint16_t table = addr / 0x0400;
-    uint16_t offset = addr % 0x0400;
+    uint16_t offset = addr & 0x03FF;
 
     switch (Orintation)
     {

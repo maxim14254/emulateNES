@@ -340,16 +340,15 @@ void CPU::handle_nmi()
     write(0x0100 + SP--, (PC >> 8) & 0xFF);
     write(0x0100 + SP--, (PC & 0xFF));
 
-    uint8_t p_to_push = status;
-    p_to_push &= ~0x10;
-    p_to_push |= 0x20;
-    write(0x0100 + SP--, p_to_push);
+    set_flag(B, false);
+    set_flag(U, true);
+    set_flag(I, true);
 
-    set_flag(StatusFlags::I, true);
+    write(0x0100 + SP--, status);
 
     PC = bus->get_NMI();
 
-    cycles += 7;
+    cycles += 8;
 }
 
 void CPU::handle_irq()
@@ -357,12 +356,11 @@ void CPU::handle_irq()
     write(0x0100 + SP--, (PC >> 8) & 0xFF);
     write(0x0100 + SP--, PC & 0xFF);
 
-    uint8_t p_to_push = status;
-    p_to_push &= ~0x10;
-    p_to_push |= 0x20;
-    write(0x0100 + SP--, p_to_push);
+    set_flag(B, false);
+    set_flag(U, true);
+    set_flag(I, true);
 
-    set_flag(StatusFlags::I, true);
+    write(0x0100 + SP--, status);
 
     PC = bus->get_IRQ();
 
@@ -481,6 +479,7 @@ void CPU::run()
         }
         else if (IRQ > 0 && !get_flag(StatusFlags::I))
         {
+            IRQ = 0;
             uint64_t old_cycles2 = cycles;
             handle_irq();
 
@@ -2378,6 +2377,7 @@ void CPU::CLI_impl()
     set_flag(StatusFlags::I, false);
 
     cycles += 2;
+
 }
 
 void CPU::RTS_impl()

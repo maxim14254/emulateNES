@@ -156,3 +156,12 @@ int Cartridge::get_orintation()
         return 0;
 }
 
+void Cartridge::scanline()
+{
+    if(map == 4)
+    {
+        Mapper_4* mapper4 = dynamic_cast<Mapper_4*>(mapper.get());
+        mapper4->clock_irq_on_a12(0);
+    }
+}
+

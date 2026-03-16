@@ -27,9 +27,11 @@ public:
     uint16_t get_RESET() override;
     uint16_t get_IRQ() override;
 
+    void clock_irq_on_a12(uint16_t addr);
+
 private:
     void update_banks();
-    void clock_irq_on_a12(uint16_t addr);
+    //void clock_irq_on_a12(uint16_t addr);
 
 private:
     uint8_t bank_select = 0;
@@ -41,7 +43,7 @@ private:
     bool prg_ram_enable = true;
     bool prg_ram_write_protect = false;
 
-    uint8_t prg_bank_map[4] = {0};
+    uint16_t prg_bank_map[4] = {0};
     uint16_t chr_bank_map[8] = {0};
 
     uint32_t prg_bank_count_8k = 0;

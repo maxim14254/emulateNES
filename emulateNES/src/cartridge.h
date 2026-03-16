@@ -30,6 +30,8 @@ public:
     uint16_t get_IRQ();
     int get_orintation();
 
+    void scanline();
+
 
 private:
     std::unique_ptr<Mapper> mapper;

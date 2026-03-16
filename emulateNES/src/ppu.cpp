@@ -6,6 +6,8 @@
 #include "global.h"
 #include <map>
 #include "cpu.h"
+#include "mapper_4.h"
+
 
 PPU::PPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 {
@@ -62,8 +64,6 @@ uint8_t PPU::get_register(uint16_t addr, bool onlyRead)
             w = false;
 
             openBus = result = data;
-
-            //qDebug() << "Finish Read 2002 VBlank = " << PPUSTATUS << " openBus = " << openBus << " scanline = " << scanline << " cycles = " << cycle << " CPU = " << CPU::get_cycles() << " PC = " << CPU::get_PC();
         }
         else if(addr == 0x2003)
             openBus = result = OAMADDR;
@@ -95,17 +95,13 @@ void PPU::set_register(uint16_t addr, uint8_t data)
 
     if(addr == 0x2000)
     {
-//        bool old_Nmi = (PPUCTRL & 0x80) != 0;
-//        bool new_Nmi = (data & 0x80) != 0;
-
-        //        qDebug() << "Write 0x2000 old=" << Qt::hex << int(PPUCTRL)
-        //                 << " new=" << Qt::hex << int(data);
-
         PPUCTRL = data;
         temp_VRAM = (temp_VRAM & 0xF3FF) | ((data & 0x03) << 10);
 
         if ((PPUCTRL & 0x80) && (PPUSTATUS & 0x80))
+        {
             bus->cpu_request_nmi();
+        }
 
     }
     else if(addr == 0x2001)
@@ -248,6 +244,13 @@ void PPU::run(int cycles)
 
                 get_current_sprites();
             }
+            else if(cycle == 260)
+            {
+                if ((PPUMASK & 0x08) || (PPUMASK & 0x10))
+                {
+                    bus->scanline1();
+                }
+            }
             else if(cycle >= 321 && cycle <= 336)
             {
                 shift_tile_lsb <<= 1;
@@ -300,7 +303,9 @@ void PPU::run(int cycles)
             PPUSTATUS |= 0x80;
 
             if (PPUCTRL & 0x80)
+            {
                 bus->cpu_request_nmi();
+            }
 
             {
                 std::unique_lock<std::mutex> update_frame(update_frame_mutex);

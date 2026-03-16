@@ -46,7 +46,7 @@ public:
     void release_irq();
     void request_irq();
 
-    static inline uint64_t cycles;     // счетчик циклов
+    static inline uint64_t cycles = 0;     // счетчик циклов
 
     static uint64_t get_cycles(){ return cycles; }
     static uint64_t get_PC(){ return PC; }
@@ -63,14 +63,14 @@ signals:
 
 private:
     uint8_t  A, X, Y;           // регистры
-    uint8_t  SP;                // стек
-    static inline uint16_t PC;                // счетчик команд
-    uint8_t  status;            // флаги
+    uint8_t  SP = 0;                // стек
+    static inline uint16_t PC = 0;                // счетчик команд
+    uint8_t status = 0;            // флаги
     Bus* bus;                   // шина
 
-    uint16_t NMI;
-    uint16_t RESET;
-    int IRQ;
+    uint16_t NMI = 0;
+    uint16_t RESET = 0;
+    int IRQ = 0;
 
     std::mutex mutex_stop;
     std::once_flag start_once_flag;

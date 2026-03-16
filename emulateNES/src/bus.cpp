@@ -96,7 +96,8 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     }
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
     {
-        cartridge->mapper_write(addr, data);
+        //return 0;
+        //cartridge->write_chr_ram(addr, data);
     }
     else if(addr >= 0x6000 && addr <= 0x7FFF) // ОЗУ картриджа
     {
@@ -322,4 +323,9 @@ uint8_t Bus::get_X()
 uint8_t Bus::get_Y()
 {
     return cpu->get_Y();
+}
+
+void Bus::scanline1()
+{
+    cartridge->scanline();
 }

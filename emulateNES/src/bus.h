@@ -54,6 +54,8 @@ public:
     uint8_t get_X();
     uint8_t get_Y();
 
+    void scanline1();
+
 private:
     std::vector<uint8_t> ram;               //ОЗУ
     std::vector<uint8_t> vram;              //видеопамять
