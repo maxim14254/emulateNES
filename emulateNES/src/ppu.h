@@ -41,10 +41,12 @@ public:
     void run_watch_palettes();
     void reset();
     uint8_t getppustatus(){return PPUSTATUS;}
+    uint8_t static inline PPUMASK;
 
 
 private:
-    uint8_t PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA; // регистры
+    uint8_t PPUCTRL, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA; // регистры
+
     // PPUSTATUS 0x80 VBlank
     // PPUSTATUS 0x40 попадание по спрайту 0
     // PPUSTATUS 0x20 переполнение спрайтов не более 8
@@ -67,8 +69,6 @@ private:
     std::vector<Sprite> sprites_current_scanline;       // спрайты для текущей линии
     std::vector<uint32_t> outBuffer;
 
-    int16_t scanline = 0;
-    int16_t cycle = 0;
     uint64_t frame = 0;
 
     //5бит - X тайла
@@ -83,6 +83,9 @@ private:
     uint8_t ppu_data_buffer = 0;
     bool w = false;
     uint8_t openBus = 0;
+
+    int16_t scanline = 0;
+    int16_t cycle = 0;
 
     uint16_t shift_tile_lsb = 0;
     uint16_t shift_tile_msb = 0;
@@ -106,7 +109,7 @@ private:
     void increment_x();
     void increment_y();
     void shifts_calculation();
-    void get_sprites_on_next_scanline();
+    void get_sprites_on_next_scanline(int i, bool a = true);
     void get_current_sprites();
     void download_asm_buffer(std::map<uint16_t, std::string>& assembler_buf);
 

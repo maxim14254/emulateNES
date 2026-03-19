@@ -40,6 +40,7 @@ public:
 
     void run_watch_all_tiles();
     void run_watch_cpu_instr(uint16_t PC);
+    void fff();
 
     uint16_t get_NMI();
     uint16_t get_RESET();
@@ -53,8 +54,6 @@ public:
     uint8_t get_A();
     uint8_t get_X();
     uint8_t get_Y();
-
-    void scanline1();
 
 private:
     std::vector<uint8_t> ram;               //ОЗУ

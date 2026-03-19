@@ -433,6 +433,7 @@ void CPU::slot_release_key(int key)
         gamepad[0] &= ~0x40;
         break;
     case Qt::Key::Key_Alt:
+        sssss = true;
         gamepad[0] &= ~0x20;
         break;
     case Qt::Key::Key_Control:
@@ -479,7 +480,6 @@ void CPU::run()
         }
         else if (IRQ > 0 && !get_flag(StatusFlags::I))
         {
-            IRQ = 0;
             uint64_t old_cycles2 = cycles;
             handle_irq();
 

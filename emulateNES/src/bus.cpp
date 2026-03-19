@@ -275,6 +275,11 @@ void Bus::run_watch_cpu_instr(uint16_t PC)
     ppu->run_watch_cpu_instr(PC);
 }
 
+void Bus::fff()
+{
+    cartridge->fff();
+}
+
 uint16_t Bus::get_NMI()
 {
     return cartridge->get_NMI();
@@ -323,9 +328,4 @@ uint8_t Bus::get_X()
 uint8_t Bus::get_Y()
 {
     return cpu->get_Y();
-}
-
-void Bus::scanline1()
-{
-    cartridge->scanline();
 }

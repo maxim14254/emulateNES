@@ -3,7 +3,7 @@
 #include <QDir>
 #include "QFile"
 #include "ppu.h"
-
+#include "global.h"
 
 QFile log_file;
 PPU* ppu;
@@ -23,7 +23,10 @@ void LOG::Init(PPU* _ppu)
 
 void LOG::Write(uint16_t PC, const int16_t operands[3], const QString &instruction, uint8_t A, uint8_t X, uint8_t Y, uint8_t P, uint8_t SP, uint32_t cycles)
 {
-    if (log_file.open(QIODevice::Append | QIODevice::Text))
+    if(!log_file.isOpen())
+        log_file.open(QIODevice::Append | QIODevice::Text);
+
+    if (sssss)
     {
         std::string rez(100, ' ');
 
@@ -66,7 +69,8 @@ void LOG::Write(uint16_t PC, const int16_t operands[3], const QString &instructi
         rez[n + s + 76] = '\0';
 
         log_file.write(rez.data());
+        log_file.close();
     }
 
-    log_file.close();
+    //log_file.close();
 }

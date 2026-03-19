@@ -7,7 +7,12 @@
 #include <map>
 #include "cpu.h"
 #include "mapper_4.h"
+#include <QProcess>
 
+
+uint8_t dddd[30][32];
+uint16_t dddd1[30][32];
+uint16_t dddd2[30][32];
 
 PPU::PPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 {
@@ -163,7 +168,7 @@ void PPU::set_oam(uint8_t _oam)
                               Qt::QueuedConnection);
 #endif
 }
-
+static int d = 0;
 void PPU::run(int cycles)
 {
     int count = cycles * 3;
@@ -237,22 +242,82 @@ void PPU::run(int cycles)
                     increment_y();
                 }
             }
-            else if(cycle == 257)
+            else if(cycle >= 257 && cycle <= 320)
             {
-                render_VRAM = (render_VRAM & 0xFBFF) | (temp_VRAM & 0x400);
-                render_VRAM = (render_VRAM & 0xFFE0) | (temp_VRAM & 0x1F);
-
-                get_current_sprites();
-            }
-            else if(cycle == 260)
-            {
-                if ((PPUMASK & 0x08) || (PPUMASK & 0x10))
+                static int j = 0;
+                if(cycle == 257)
                 {
-                    bus->scanline1();
+                    render_VRAM = (render_VRAM & 0xFBFF) | (temp_VRAM & 0x400);
+                    render_VRAM = (render_VRAM & 0xFFE0) | (temp_VRAM & 0x1F);
+
+                    get_current_sprites();
+                    j = 0;
+                }
+
+                uint16_t dummy_addr = (PPUCTRL & 0x08) ? 0x1000 : 0x0000;
+
+                size_t i = (cycle - 257) % 8;
+                if(i == 0)
+                {
+                    if(j < sprites_current_scanline.size())
+                    {
+                        d+=2;
+
+                        get_sprites_on_next_scanline(j++);
+                    }
+                    else
+                    {
+//                        if (!(PPUMASK & 0x10))
+//                            continue;
+                        //if(d < 80)
+                        {
+                            d+=2;
+                            //                            uint16_t base = (j % 2) ? 0x1000 : 0x0000; // j увеличивается только для пустых
+                            //                            bus->read_ppu(base);
+                            //                            bus->read_ppu(base + 8);
+                            //get_sprites_on_next_scanline(0, false);
+
+                            Sprite dd = Sprite{oam[0], oam[0 + 1], oam[0 + 2], oam[0 + 3], 0 / 4};
+
+                            uint16_t sprite_lsb = 0;
+
+                            if(!(PPUCTRL & 0x20)) // 8x8
+                            {
+                                uint16_t patternBase = (PPUCTRL & 0x8) ? 0x1000 : 0x0000;
+
+                                if(!(dd.attr & 0x80)) // нормальная ориентация
+                                    sprite_lsb = patternBase + dd.tile * 16 + (scanline - dd.y);
+                                else // зеркальная ориентация по вертикали
+                                    sprite_lsb = patternBase + dd.tile * 16 + (7 - (scanline - dd.y));
+                            }
+                            else // 8x16
+                            {
+                                int row = scanline - dd.y;
+
+                                if (dd.attr & 0x80)
+                                    row = 15 - row;
+
+                                uint16_t patternBase = (dd.tile & 0x01) ? 0x1000 : 0x0000;
+                                uint16_t tile_half;
+
+                                if (row < 8)
+                                    tile_half = dd.tile & 0xFE;
+                                else
+                                    tile_half = (dd.tile & 0xFE) + 1;
+
+                                int offset = row & 0x07;
+                                sprite_lsb = patternBase + tile_half * 16 + offset;
+                            }
+
+                            bus->read_ppu(sprite_lsb);
+                            bus->read_ppu(sprite_lsb + 8);
+                        }
+                    }
                 }
             }
             else if(cycle >= 321 && cycle <= 336)
             {
+
                 shift_tile_lsb <<= 1;
                 shift_tile_msb <<= 1;
 
@@ -261,8 +326,6 @@ void PPU::run(int cycles)
 
                 shifts_calculation();
             }
-            else if(cycle == 340)
-                get_sprites_on_next_scanline();
         }
 
         if (scanline == 261)
@@ -317,6 +380,24 @@ void PPU::run(int cycles)
                 outBuffer.swap(frame_buffer);
             }
 
+//            for(int i = 0; i < 30; ++i)
+//            {
+//                QString ssss;
+//                QString ssss1;
+//                QString ssss2;
+
+//                for(int j = 0; j < 32; ++j)
+//                {
+//                    ssss += QString("%1   ").arg(dddd[i][j], 2, 16, QChar('0')).toUpper();
+//                    ssss1 += QString("%1 ").arg(dddd1[i][j], 2, 16, QChar('0')).toUpper();
+//                    ssss2 += QString("%1 ").arg(dddd2[i][j], 2, 16, QChar('0')).toUpper();
+//                }
+
+//                qDebug() << ssss;
+//                qDebug() << ssss1;
+//                qDebug() << ssss2;
+//            }
+
             _update = false;
 
             QMetaObject::invokeMethod(window, [&]()
@@ -354,8 +435,8 @@ void PPU::run_watch_all_tiles()
 
             for (uint16_t row = 0; row < 8; ++row)
             {
-                uint8_t tile_lsb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0000);
-                uint8_t tile_msb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0008);
+                uint8_t tile_lsb = bus->read_ppu(numb_table * 0x0400 + nOffset + row + 0x0000);
+                uint8_t tile_msb = bus->read_ppu(numb_table * 0x0400 + nOffset + row + 0x0008);
 
                 for (uint16_t col = 0; col < 8; ++col)
                 {
@@ -384,8 +465,8 @@ void PPU::run_watch_all_tiles()
 
             for (uint16_t row = 0; row < 8; ++row)
             {
-                uint8_t tile_lsb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0000);
-                uint8_t tile_msb = bus->read_ppu(numb_table * 0x1000 + nOffset + row + 0x0008);
+                uint8_t tile_lsb = bus->read_ppu(numb_table * 0x0400 + nOffset + row + 0x0000);
+                uint8_t tile_msb = bus->read_ppu(numb_table * 0x0400 + nOffset + row + 0x0008);
 
                 for (uint16_t col = 0; col < 8; ++col)
                 {
@@ -525,7 +606,7 @@ void PPU::ppu_tick()
             ++frame;
 
 #if DEBUG_ON
-            run_watch_all_tiles();
+            //run_watch_all_tiles();
             run_watch_cpu_instr(bus->get_PC());
             run_watch_palettes();
 #endif
@@ -537,7 +618,7 @@ void PPU::ppu_tick()
         ++frame;
 
 #if DEBUG_ON
-        run_watch_all_tiles();
+        //run_watch_all_tiles();
         run_watch_cpu_instr(bus->get_PC());
         run_watch_palettes();
 #endif
@@ -723,13 +804,8 @@ uint8_t PPU::get_sprite(bool& priority, uint8_t& color_index)
 
 uint8_t PPU::get_background(uint8_t& color_index)
 {
-    if (!(PPUMASK & 0x08) )
+    if (!(PPUMASK & 0x08))
     {
-//        shift_tile_lsb <<= 1;
-//        shift_tile_msb <<= 1;
-//        shift_attrib_lsb <<= 1;
-//        shift_attrib_msb <<= 1;
-
         color_index = 0;
         return 0;
     }
@@ -806,6 +882,8 @@ void PPU::shifts_calculation()
     if(x == 0)
     {
         tileByte = bus->read_ppu(0x2000 | (render_VRAM & 0x0FFF));
+        dddd[scanline / 8][cycle / 8] = tileByte;
+        dddd1[scanline / 8][cycle / 8] = 0x2000 | (render_VRAM & 0x0FFF);
     }
     else if(x == 2)
     {
@@ -833,12 +911,15 @@ void PPU::shifts_calculation()
     {
         uint16_t patternBase = (PPUCTRL & 0x10) ? 0x1000 : 0x0000;
         uint16_t numb_pixelY =  (render_VRAM >> 12) & 0x07;
+        ++d;
         tile_lsb = bus->read_ppu(patternBase + tileByte * 16 + numb_pixelY);
+        //dddd2[scanline / 8][cycle / 8] = bank;
     }
     else if(x == 6)
     {
         uint16_t patternBase = (PPUCTRL & 0x10) ? 0x1000 : 0x0000;
         uint16_t numb_pixelY =  (render_VRAM >> 12) & 0x07;
+        ++d;
         tile_msb = bus->read_ppu(patternBase + tileByte * 16 + numb_pixelY + 8);
     }
     else if(x == 7)
@@ -853,9 +934,9 @@ void PPU::shifts_calculation()
     }
 }
 
-void PPU::get_sprites_on_next_scanline()
+void PPU::get_sprites_on_next_scanline(int i, bool a)
 {
-    for(int i = 0; i < sprites_current_scanline.size(); ++i)
+    //for(int i = 0; i < sprites_current_scanline.size(); ++i)
     {
         uint16_t sprite_lsb = 0;
 
@@ -870,43 +951,45 @@ void PPU::get_sprites_on_next_scanline()
         }
         else // 8x16
         {
-            uint16_t patternBase = (sprites_current_scanline[i].tile & 0x01) ? 0x1000 : 0x0000;
+            int row = scanline - sprites_current_scanline[i].y;
 
-            if(!(sprites_current_scanline[i].attr & 0x80)) // нормальная ориентация
-            {
-                if (scanline - sprites_current_scanline[i].y < 8)
-                    sprite_lsb = patternBase + (sprites_current_scanline[i].tile & 0xFE) * 16 + ((scanline - sprites_current_scanline[i].y) & 0x07);
-                else
-                    sprite_lsb = patternBase + ((sprites_current_scanline[i].tile & 0xFE) + 1) * 16 + ((scanline - sprites_current_scanline[i].y) & 0x07);
-            }
-            else // зеркальная ориентация по вертикали
-            {
-                if (scanline - sprites_current_scanline[i].y < 8)
-                    sprite_lsb = patternBase + (sprites_current_scanline[i].tile & 0xFE) * 16 + (7 - (scanline - sprites_current_scanline[i].y) & 0x07);
-                else
-                    sprite_lsb = patternBase + ((sprites_current_scanline[i].tile & 0xFE) + 1) * 16 + (7 - (scanline - sprites_current_scanline[i].y) & 0x07);
-            }
+            if (sprites_current_scanline[i].attr & 0x80)
+                row = 15 - row;
+
+            uint16_t patternBase = (sprites_current_scanline[i].tile & 0x01) ? 0x1000 : 0x0000;
+            uint16_t tile_half;
+
+            if (row < 8)
+                tile_half = sprites_current_scanline[i].tile & 0xFE;
+            else
+                tile_half = (sprites_current_scanline[i].tile & 0xFE) + 1;
+
+            int offset = row & 0x07;
+            sprite_lsb = patternBase + tile_half * 16 + offset;
         }
 
         uint8_t sprite_bits_lo = bus->read_ppu(sprite_lsb);
         uint8_t sprite_bits_hi = bus->read_ppu(sprite_lsb + 8);
 
-        if((sprites_current_scanline[i].attr & 0x40)) // зеркальная ориентация по горизонтали
+        if(a)
         {
-            auto flipbyte = [](uint8_t b)
+            if((sprites_current_scanline[i].attr & 0x40)) // зеркальная ориентация по горизонтали
             {
-                b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
-                b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
-                b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
-                return b;
-            };
+                auto flipbyte = [](uint8_t b)
+                {
+                    b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+                    b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+                    b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+                    return b;
+                };
 
-            sprite_bits_lo = flipbyte(sprite_bits_lo);
-            sprite_bits_hi = flipbyte(sprite_bits_hi);
+                sprite_bits_lo = flipbyte(sprite_bits_lo);
+                sprite_bits_hi = flipbyte(sprite_bits_hi);
+            }
+
+            shif_sprite_lsb[i] = sprite_bits_lo;
+            shif_sprite_msb[i] = sprite_bits_hi;
         }
-
-        shif_sprite_lsb[i] = sprite_bits_lo;
-        shif_sprite_msb[i] = sprite_bits_hi;
     }
 }
 

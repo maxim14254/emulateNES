@@ -31,6 +31,11 @@ inline bool _update = true;
 inline std::mutex mutex_lock_frame_buffer;
 
 inline std::condition_variable cv;
+inline bool sssss = false;
+
+//inline int16_t scanline = 0;
+//inline int16_t cycle = 0;
+
 
 #ifdef DEBUG_ON
 inline std::mutex step_by_step_mutex;

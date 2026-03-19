@@ -22,6 +22,7 @@ public:
     void write_prg_ram(uint16_t addr, uint8_t data);
     void write_chr_ram(uint16_t addr, uint8_t data);
     void mapper_write(uint16_t addr, uint8_t data);
+    void fff();
 
     uint16_t map_nametable_addr(uint16_t addr);
 
@@ -29,9 +30,6 @@ public:
     uint16_t get_RESET();
     uint16_t get_IRQ();
     int get_orintation();
-
-    void scanline();
-
 
 private:
     std::unique_ptr<Mapper> mapper;

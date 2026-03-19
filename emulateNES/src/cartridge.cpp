@@ -116,6 +116,15 @@ void Cartridge::mapper_write(uint16_t addr, uint8_t data)
         mapper->mapper_write(addr, data);
 }
 
+void Cartridge::fff()
+{
+    if(map == 4)
+    {
+        Mapper_4* aaa = dynamic_cast<Mapper_4*>(mapper.get());
+        aaa->clock_irq_on_a12(0);
+    }
+}
+
 uint16_t Cartridge::map_nametable_addr(uint16_t addr)
 {
     if(mapper)
@@ -154,14 +163,5 @@ int Cartridge::get_orintation()
         return mapper->Orintation;
     else
         return 0;
-}
-
-void Cartridge::scanline()
-{
-    if(map == 4)
-    {
-        Mapper_4* mapper4 = dynamic_cast<Mapper_4*>(mapper.get());
-        mapper4->clock_irq_on_a12(0);
-    }
 }
 

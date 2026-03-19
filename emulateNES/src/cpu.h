@@ -46,9 +46,9 @@ public:
     void release_irq();
     void request_irq();
 
-    static inline uint64_t cycles = 0;     // счетчик циклов
+    uint64_t cycles = 0;     // счетчик циклов
 
-    static uint64_t get_cycles(){ return cycles; }
+    //static uint64_t get_cycles(){ return cycles; }
     static uint64_t get_PC(){ return PC; }
 
 public slots:

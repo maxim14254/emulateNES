@@ -225,7 +225,7 @@ void APU::write_registers(uint16_t addr, uint8_t data)
     require( addr > 0x20 );
     require( (unsigned) data <= 0xFF );
 
-    uint64_t cycles = CPU::cycles;
+    uint64_t cycles = 0;
     //run(cycles);
 
     if ( addr < 0x4014 )

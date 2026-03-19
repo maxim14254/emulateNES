@@ -1,6 +1,8 @@
 #include "mapper_4.h"
 #include "bus.h"
 #include <QDebug>
+#include "global.h"
+#include "ppu.h"
 
 
 Mapper_4::Mapper_4(QFile& file, NESHeader _header, Bus* _bus) : bus(_bus)
@@ -137,53 +139,43 @@ uint8_t Mapper_4::mapper_read_prg(uint16_t addr)
 
 void Mapper_4::clock_irq_on_a12(uint16_t addr)
 {
-    //    bool a12 = (addr & 0x1000) != 0;
+//    if(!(PPU::PPUMASK & 0x08) || !(PPU::PPUMASK & 0x10))
+//        return;
 
-    //    if (!a12)
-    //    {
-    //        ++a12_low_cycles;
-    //    }
-    //    else
-    //    {
-    //        if (!last_a12 && a12_low_cycles >= 8)
-    //        {
-    //            if (irq_counter == 0 || irq_reload)
-    //            {
-    //                irq_counter = irq_latch;
-    //                irq_reload = false;
-    //            }
-    //            else
-    //                irq_counter--;
+    bool a12 = (addr & 0x1000);
 
-    //            if (irq_counter == 0 && irq_enabled)
-    //            {
-    //                irq_pending = true;
-    //                bus->set_mapper_irq(irq_pending);
-    //            }
-    //        }
-
-    //        a12_low_cycles = 0;
-    //    }
-
-    //    last_a12 = a12;
-
-    if (irq_counter == 0)
+    if (a12 && !last_a12)
     {
-        irq_counter = irq_latch;
-    }
-    else
-        irq_counter--;
+        // Фронт
+        if (irq_counter > 0)
+            irq_counter--;
 
-    if (irq_counter == 0 && irq_enabled)
-    {
-        irq_pending = true;
-        bus->set_mapper_irq(irq_pending);
+        if (irq_counter == 0 && irq_enabled && !irq_pending)
+        {
+            irq_pending = true;
+            bus->set_mapper_irq(true);
+        }
     }
+
+    last_a12 = a12;
+
+//    if (irq_counter == 0)
+//    {
+//        irq_counter = irq_latch;
+//    }
+//    else
+//        irq_counter--;
+
+//    if (irq_counter == 0 && irq_enabled)
+//    {
+//        irq_pending = true;
+//        bus->set_mapper_irq(irq_pending);
+//    }
 }
 
 uint8_t Mapper_4::mapper_read_chr(uint16_t addr)
 {
-    //clock_irq_on_a12(addr);
+    clock_irq_on_a12(addr);
 
     uint16_t slot = addr / 0x0400;
 
@@ -280,7 +272,9 @@ void Mapper_4::mapper_write(uint16_t addr, uint8_t data)
         }
         case 0xC001:
         {
-            irq_reload = false;
+            irq_pending = false;
+            irq_counter = irq_latch;
+            bus->set_mapper_irq(irq_pending);
             break;
         }
         case 0xE000:
