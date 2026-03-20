@@ -144,32 +144,41 @@ void Mapper_4::clock_irq_on_a12(uint16_t addr)
 
     bool a12 = (addr & 0x1000);
 
+    if(!a12)
+        ++a12_low_cycles;
+
     if (a12 && !last_a12)
     {
         // Фронт
-        if (irq_counter > 0)
-            irq_counter--;
-
-        if (irq_counter == 0 && irq_enabled && !irq_pending)
+        if(a12_low_cycles >= 8)
         {
-            irq_pending = true;
-            bus->set_mapper_irq(true);
+            if (irq_counter > 0)
+                irq_counter--;
+
+            if (irq_counter == 0 && irq_enabled && !irq_pending)
+            {
+                irq_pending = true;
+                bus->set_mapper_irq(true);
+            }
         }
     }
 
     last_a12 = a12;
 
-//    if (irq_counter == 0)
-//    {
-//        irq_counter = irq_latch;
-//    }
-//    else
-//        irq_counter--;
+    if(a12)
+        a12_low_cycles = 0;
 
-//    if (irq_counter == 0 && irq_enabled)
-//    {
-//        irq_pending = true;
-//        bus->set_mapper_irq(irq_pending);
+    //    if (irq_counter == 0)
+    //    {
+    //        irq_counter = irq_latch;
+    //    }
+    //    else
+    //        irq_counter--;
+
+    //    if (irq_counter == 0 && irq_enabled)
+    //    {
+    //        irq_pending = true;
+    //        bus->set_mapper_irq(irq_pending);
 //    }
 }
 
