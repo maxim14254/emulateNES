@@ -53,12 +53,9 @@ private:
     uint8_t irq_counter = 0;
     bool irq_reload = false;
     bool irq_enabled = false;
-    bool irq_pending = false;
 
     // A12 edge detect
     bool last_a12 = false;
-
-    int a12_low_cycles = 0;
 
     Bus* bus;
 };

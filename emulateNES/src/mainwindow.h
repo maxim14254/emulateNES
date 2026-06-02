@@ -27,7 +27,7 @@ public:
     void render_debug_tiles(std::vector<uint32_t>& frame1, std::vector<uint32_t>& frame2);
     void render_debug_palettes(std::vector<uint32_t>& frame);
     void render_cpu_debug(const QString& text, uint8_t PPUCTRL, uint8_t PPUMASK, uint8_t PPUSTATUS, uint8_t OAMADDR, uint8_t OAMDATA, uint8_t PPUSCROLL, uint8_t PPUDATA, uint16_t PPUADDR,
-                          uint16_t PC, uint8_t SP, uint8_t status, uint8_t A, uint8_t X, uint8_t Y);
+                          uint16_t PC, uint8_t SP, uint8_t status, uint8_t A, uint8_t X, uint8_t Y, int16_t scanline);
     void render_sprites_debug(std::vector<uint8_t>& oam);
 
     void clear_cpu_debug();
@@ -55,6 +55,9 @@ signals:
     void signal_press_key(int);
     void signal_release_key(int);
 
+private slots:
+    void on_toolButton_clicked();
+    void on_toolButton_2_clicked();
 };
 
 #endif // MAINWINDOW_H

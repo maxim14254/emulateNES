@@ -26,7 +26,7 @@ MyOpenGL::MyOpenGL(GLsizei _width, GLsizei _height, QWidget* parent, Qt::WindowF
         update();
     });
 
-    timerFPS->start(1000.0 / 60.0988);
+    timerFPS->start(1000.0 / 61.0988);
 }
 
 MyOpenGL::~MyOpenGL()

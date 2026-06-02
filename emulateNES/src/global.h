@@ -31,16 +31,22 @@ inline bool _update = true;
 inline std::mutex mutex_lock_frame_buffer;
 
 inline std::condition_variable cv;
-inline bool sssss = false;
-
-//inline int16_t scanline = 0;
-//inline int16_t cycle = 0;
+inline std::atomic<int> numb_table_for_debug = 0;
 
 
 #ifdef DEBUG_ON
-inline std::mutex step_by_step_mutex;
-inline std::atomic<bool> run_without_mutex = true;
-inline bool pause = false;
+inline std::mutex step_by_step_ppu_mutex;
+inline std::mutex step_by_step_cpu_mutex;
+inline std::mutex step_by_step_scanline_mutex;
+
+inline std::atomic<bool> run_without_ppu_mutex = true;
+inline std::atomic<bool> run_without_cpu_mutex = true;
+inline std::atomic<bool> run_without_scanline_mutex = true;
+inline std::atomic<int> go_scanline = -1;
+
+inline bool pause_ppu = false;
+inline bool pause_cpu = false;
+inline bool pause_scanline = false;
 #endif
 
 #endif // GLOBAL_H

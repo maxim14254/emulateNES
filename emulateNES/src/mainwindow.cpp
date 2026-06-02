@@ -82,7 +82,7 @@ void MainWindow::render_debug_palettes(std::vector<uint32_t> &frame)
 }
 
 void MainWindow::render_cpu_debug(const QString& text,uint8_t PPUCTRL, uint8_t PPUMASK, uint8_t PPUSTATUS, uint8_t OAMADDR, uint8_t OAMDATA, uint8_t PPUSCROLL, uint8_t PPUDATA, uint16_t PPUADDR,
-                                  uint16_t PC, uint8_t SP, uint8_t status, uint8_t A, uint8_t X, uint8_t Y)
+                                  uint16_t PC, uint8_t SP, uint8_t status, uint8_t A, uint8_t X, uint8_t Y, int16_t scanline)
 {
 #ifdef DEBUG_ON
     ui->cpu_debuger->setText(text);
@@ -102,6 +102,8 @@ void MainWindow::render_cpu_debug(const QString& text,uint8_t PPUCTRL, uint8_t P
     ui->label_ppuscroll->setText(QString("%1").arg(PPUSCROLL, 2, 16, QChar('0')).toUpper());
     ui->label_ppudata->setText(QString("%1").arg(PPUDATA, 2, 16, QChar('0')).toUpper());
     ui->label_ppuadr->setText(QString("%1").arg(PPUADDR, 4, 16, QChar('0')).toUpper());
+
+    ui->toolButton_2->setText(QString("%1  %2").arg(">>").arg(scanline));
 #endif
 }
 
@@ -150,22 +152,60 @@ void MainWindow::keyPressEvent(QKeyEvent *e)
     if(e->key() == Qt::Key_Space)
     {
         {
-            run_without_mutex = false;
-            std::lock_guard<std::mutex> lg(step_by_step_mutex);
-            pause = false;
+            run_without_ppu_mutex = false;
+            std::lock_guard<std::mutex> lg(step_by_step_ppu_mutex);
+            pause_ppu = false;
+
+            if(!run_without_cpu_mutex)
+            {
+                std::lock_guard<std::mutex> lg(step_by_step_cpu_mutex);
+                pause_cpu = false;
+                run_without_cpu_mutex = !run_without_cpu_mutex;
+
+            }
+
+            if(!run_without_scanline_mutex)
+            {
+                std::lock_guard<std::mutex> lg(step_by_step_scanline_mutex);
+                pause_scanline = false;
+                run_without_scanline_mutex = !run_without_scanline_mutex;
+            }
         }
 
         cv.notify_one();
     }
     else if(e->key() == Qt::Key_Shift)
     {
+        if(!run_without_cpu_mutex)
         {
-            std::lock_guard<std::mutex> lg(step_by_step_mutex);
-            pause = false;
-            run_without_mutex = !run_without_mutex;
+            std::lock_guard<std::mutex> lg(step_by_step_cpu_mutex);
+            pause_cpu = false;
+            run_without_cpu_mutex = !run_without_cpu_mutex;
+        }
+
+        if(!run_without_scanline_mutex)
+        {
+            std::lock_guard<std::mutex> lg(step_by_step_scanline_mutex);
+            pause_scanline = false;
+            run_without_scanline_mutex = !run_without_scanline_mutex;
+        }
+
+        //if(!run_without_ppu_mutex)
+        {
+            std::lock_guard<std::mutex> lg(step_by_step_ppu_mutex);
+            pause_ppu = false;
+            run_without_ppu_mutex = !run_without_ppu_mutex;
         }
 
         cv.notify_one();
+    }
+    else if(e->key() == Qt::Key_Plus)
+    {
+        ++numb_table_for_debug;
+    }
+    else if(e->key() == Qt::Key_Minus)
+    {
+        --numb_table_for_debug;
     }
 
 #endif
@@ -187,8 +227,14 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 #ifdef DEBUG_ON
     {
-        std::lock_guard<std::mutex> lg(step_by_step_mutex);
-        pause = false;
+        std::lock_guard<std::mutex> lg(step_by_step_ppu_mutex);
+        pause_ppu = false;
+
+        std::lock_guard<std::mutex> lg1(step_by_step_scanline_mutex);
+        pause_scanline = false;
+
+        std::lock_guard<std::mutex> lg2(step_by_step_cpu_mutex);
+        pause_cpu = false;
     }
 
     cv.notify_one();
@@ -204,3 +250,67 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     QMainWindow::closeEvent(event);
 }
+
+void MainWindow::on_toolButton_clicked()
+{
+#ifdef DEBUG_ON
+    if(!run_without_ppu_mutex)
+    {
+        std::lock_guard<std::mutex> lg(step_by_step_ppu_mutex);
+        pause_ppu = false;
+        run_without_ppu_mutex = !run_without_ppu_mutex;
+    }
+
+    if(!run_without_scanline_mutex)
+    {
+        std::lock_guard<std::mutex> lg(step_by_step_scanline_mutex);
+        pause_scanline = false;
+        run_without_scanline_mutex = !run_without_scanline_mutex;
+    }
+
+    {
+        run_without_cpu_mutex = false;
+        std::lock_guard<std::mutex> lg(step_by_step_cpu_mutex);
+        pause_cpu = false;
+    }
+
+    cv.notify_one();
+#endif
+}
+
+
+void MainWindow::on_toolButton_2_clicked()
+{
+#ifdef DEBUG_ON
+    if(!run_without_ppu_mutex)
+    {
+        std::lock_guard<std::mutex> lg(step_by_step_ppu_mutex);
+        pause_ppu = false;
+        run_without_ppu_mutex = !run_without_ppu_mutex;
+    }
+
+    if(!run_without_cpu_mutex)
+    {
+        std::lock_guard<std::mutex> lg(step_by_step_cpu_mutex);
+        pause_cpu = false;
+        run_without_cpu_mutex = !run_without_cpu_mutex;
+    }
+
+    {
+        run_without_scanline_mutex = false;
+        std::lock_guard<std::mutex> lg(step_by_step_scanline_mutex);
+        pause_scanline = false;
+    }
+
+    if(!ui->lineEdit->text().isEmpty())
+    {
+        go_scanline = ui->lineEdit->text().toInt();
+        ui->lineEdit->setText(QString("%1").arg(go_scanline + 1));
+    }
+    else
+        go_scanline = -1;
+
+    cv.notify_one();
+#endif
+}
+

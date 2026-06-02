@@ -142,44 +142,25 @@ void Mapper_4::clock_irq_on_a12(uint16_t addr)
 //    if(!(PPU::PPUMASK & 0x08) || !(PPU::PPUMASK & 0x10))
 //        return;
 
-    bool a12 = (addr & 0x1000);
-
-    if(!a12)
-        ++a12_low_cycles;
+    bool a12 = addr & 0x1000;
 
     if (a12 && !last_a12)
     {
         // Фронт
-        if(a12_low_cycles >= 8)
+        if (irq_reload || irq_counter == 0)
         {
-            if (irq_counter > 0)
-                irq_counter--;
-
-            if (irq_counter == 0 && irq_enabled && !irq_pending)
-            {
-                irq_pending = true;
-                bus->set_mapper_irq(true);
-            }
+            irq_counter = irq_latch;
+            irq_reload = false;
         }
+        else
+            --irq_counter;
+
+
+        if (irq_counter == 0 && irq_enabled)
+            bus->set_mapper_irq(true);
     }
 
     last_a12 = a12;
-
-    if(a12)
-        a12_low_cycles = 0;
-
-    //    if (irq_counter == 0)
-    //    {
-    //        irq_counter = irq_latch;
-    //    }
-    //    else
-    //        irq_counter--;
-
-    //    if (irq_counter == 0 && irq_enabled)
-    //    {
-    //        irq_pending = true;
-    //        bus->set_mapper_irq(irq_pending);
-//    }
 }
 
 uint8_t Mapper_4::mapper_read_chr(uint16_t addr)
@@ -254,7 +235,6 @@ void Mapper_4::mapper_write(uint16_t addr, uint8_t data)
             bank_select = data & 0x07;
             prg_mode = (data & 0x40);
             chr_mode = (data & 0x80);
-            //update_banks();
             break;
         }
         case 0x8001:
@@ -281,16 +261,13 @@ void Mapper_4::mapper_write(uint16_t addr, uint8_t data)
         }
         case 0xC001:
         {
-            irq_pending = false;
-            irq_counter = irq_latch;
-            bus->set_mapper_irq(irq_pending);
+            irq_reload = true;
             break;
         }
         case 0xE000:
         {
             irq_enabled = false;
-            irq_pending = false;
-            bus->set_mapper_irq(irq_pending);
+            bus->set_mapper_irq(false);
             break;
         }
         case 0xE001:

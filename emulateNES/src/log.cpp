@@ -26,7 +26,7 @@ void LOG::Write(uint16_t PC, const int16_t operands[3], const QString &instructi
     if(!log_file.isOpen())
         log_file.open(QIODevice::Append | QIODevice::Text);
 
-    if (sssss)
+    //if (sssss)
     {
         std::string rez(100, ' ');
 

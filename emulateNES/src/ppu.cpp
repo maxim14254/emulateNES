@@ -244,7 +244,7 @@ void PPU::run(int cycles)
             }
             else if(cycle >= 257 && cycle <= 320)
             {
-                static int j = 0;
+                static size_t j = 0;
                 if(cycle == 257)
                 {
                     render_VRAM = (render_VRAM & 0xFBFF) | (temp_VRAM & 0x400);
@@ -253,8 +253,6 @@ void PPU::run(int cycles)
                     get_current_sprites();
                     j = 0;
                 }
-
-                uint16_t dummy_addr = (PPUCTRL & 0x08) ? 0x1000 : 0x0000;
 
                 size_t i = (cycle - 257) % 8;
                 if(i == 0)
@@ -361,7 +359,7 @@ void PPU::run(int cycles)
             }
         }
 
-        if (scanline == 241 && cycle == 1)
+        if (scanline == 240 && cycle == 1)
         {
             PPUSTATUS |= 0x80;
 
@@ -380,24 +378,6 @@ void PPU::run(int cycles)
                 outBuffer.swap(frame_buffer);
             }
 
-//            for(int i = 0; i < 30; ++i)
-//            {
-//                QString ssss;
-//                QString ssss1;
-//                QString ssss2;
-
-//                for(int j = 0; j < 32; ++j)
-//                {
-//                    ssss += QString("%1   ").arg(dddd[i][j], 2, 16, QChar('0')).toUpper();
-//                    ssss1 += QString("%1 ").arg(dddd1[i][j], 2, 16, QChar('0')).toUpper();
-//                    ssss2 += QString("%1 ").arg(dddd2[i][j], 2, 16, QChar('0')).toUpper();
-//                }
-
-//                qDebug() << ssss;
-//                qDebug() << ssss1;
-//                qDebug() << ssss2;
-//            }
-
             _update = false;
 
             QMetaObject::invokeMethod(window, [&]()
@@ -405,23 +385,12 @@ void PPU::run(int cycles)
                                           window->render_frame(outBuffer);
                                       },
                                       Qt::QueuedConnection);
-
-#ifdef DEBUG_ON
-            if(!run_without_mutex)
-            {
-                std::unique_lock<std::mutex> step_by_step(step_by_step_mutex);
-                cv.wait(step_by_step, []{ return !pause; });
-
-                pause = true;
-            }
-#endif
         }
     }
 }
 
 void PPU::run_watch_all_tiles()
 {
-    int numb_table = 0;
     int palette = 0;
 
     static std::vector<uint32_t> pColData1(128 * 128);
@@ -435,8 +404,8 @@ void PPU::run_watch_all_tiles()
 
             for (uint16_t row = 0; row < 8; ++row)
             {
-                uint8_t tile_lsb = bus->read_ppu(numb_table * 0x0400 + nOffset + row + 0x0000);
-                uint8_t tile_msb = bus->read_ppu(numb_table * 0x0400 + nOffset + row + 0x0008);
+                uint8_t tile_lsb = bus->read_ppu(numb_table_for_debug * 0x0400 + nOffset + row + 0x0000);
+                uint8_t tile_msb = bus->read_ppu(numb_table_for_debug * 0x0400 + nOffset + row + 0x0008);
 
                 for (uint16_t col = 0; col < 8; ++col)
                 {
@@ -456,7 +425,6 @@ void PPU::run_watch_all_tiles()
         }
     }
 
-    numb_table = 1;
     for (uint16_t nTileY = 0; nTileY < 16; ++nTileY)
     {
         for (uint16_t nTileX = 0; nTileX < 16; ++nTileX)
@@ -465,8 +433,8 @@ void PPU::run_watch_all_tiles()
 
             for (uint16_t row = 0; row < 8; ++row)
             {
-                uint8_t tile_lsb = bus->read_ppu(numb_table * 0x0400 + nOffset + row + 0x0000);
-                uint8_t tile_msb = bus->read_ppu(numb_table * 0x0400 + nOffset + row + 0x0008);
+                uint8_t tile_lsb = bus->read_ppu((numb_table_for_debug + 1) * 0x0400 + nOffset + row + 0x0000);
+                uint8_t tile_msb = bus->read_ppu((numb_table_for_debug + 1) * 0x0400 + nOffset + row + 0x0008);
 
                 for (uint16_t col = 0; col < 8; ++col)
                 {
@@ -543,7 +511,7 @@ void PPU::run_watch_cpu_instr(uint16_t PC)
     QMetaObject::invokeMethod(window, [&, value]()
                               {
                                   window->render_cpu_debug(value, PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA, PPUADDR,
-                                                           bus->get_PC(), bus->get_SP(), bus->get_statusCPU(), bus->get_A(), bus->get_X(), bus->get_Y());
+                                                           bus->get_PC(), bus->get_SP(), bus->get_statusCPU(), bus->get_A(), bus->get_X(), bus->get_Y(), scanline);
                               },
                               Qt::QueuedConnection);
 }
@@ -600,15 +568,35 @@ void PPU::ppu_tick()
         cycle = 0;
         ++scanline;
 
+#if DEBUG_ON
+        if(!run_without_scanline_mutex && (go_scanline < 0 || go_scanline == scanline))
+        {
+            run_watch_cpu_instr(bus->get_PC());
+
+            std::unique_lock<std::mutex> step_by_step(step_by_step_scanline_mutex);
+            cv.wait(step_by_step, []{ return !pause_scanline; });
+
+            pause_scanline = true;
+        }
+#endif
+
         if(scanline > 261)
         {
             scanline = 0;
             ++frame;
 
 #if DEBUG_ON
-            //run_watch_all_tiles();
+            run_watch_all_tiles();
             run_watch_cpu_instr(bus->get_PC());
             run_watch_palettes();
+
+            if(!run_without_ppu_mutex)
+            {
+                std::unique_lock<std::mutex> step_by_step(step_by_step_ppu_mutex);
+                cv.wait(step_by_step, []{ return !pause_ppu; });
+
+                pause_ppu = true;
+            }
 #endif
         }
     }
@@ -618,9 +606,17 @@ void PPU::ppu_tick()
         ++frame;
 
 #if DEBUG_ON
-        //run_watch_all_tiles();
+        run_watch_all_tiles();
         run_watch_cpu_instr(bus->get_PC());
         run_watch_palettes();
+
+        if(!run_without_ppu_mutex)
+        {
+            std::unique_lock<std::mutex> step_by_step(step_by_step_ppu_mutex);
+            cv.wait(step_by_step, []{ return !pause_ppu; });
+
+            pause_ppu = true;
+        }
 #endif
     }
 }
@@ -755,7 +751,7 @@ uint8_t PPU::get_sprite(bool& priority, uint8_t& color_index)
     uint8_t colorByte = 0;
     sprite_from_sprite0 = false;
 
-    for (int i = 0; i < sprites_current_scanline.size(); ++i)
+    for (size_t i = 0; i < sprites_current_scanline.size(); ++i)
     {
         if (sprites_current_scanline[i].x == 0)
         {
@@ -786,7 +782,7 @@ uint8_t PPU::get_sprite(bool& priority, uint8_t& color_index)
         }
     }
 
-    for (int i = 0; i < sprites_current_scanline.size(); ++i)
+    for (size_t i = 0; i < sprites_current_scanline.size(); ++i)
     {
         if (sprites_current_scanline[i].x > 0)
         {

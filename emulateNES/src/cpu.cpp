@@ -342,11 +342,12 @@ void CPU::handle_nmi()
 
     set_flag(B, false);
     set_flag(U, true);
-    set_flag(I, true);
 
     write(0x0100 + SP--, status);
 
     PC = bus->get_NMI();
+
+    set_flag(I, true);
 
     cycles += 8;
 }
@@ -358,11 +359,12 @@ void CPU::handle_irq()
 
     set_flag(B, false);
     set_flag(U, true);
-    set_flag(I, true);
 
     write(0x0100 + SP--, status);
 
     PC = bus->get_IRQ();
+
+    set_flag(I, true);
 
     cycles += 7;
 }
@@ -433,7 +435,6 @@ void CPU::slot_release_key(int key)
         gamepad[0] &= ~0x40;
         break;
     case Qt::Key::Key_Alt:
-        sssss = true;
         gamepad[0] &= ~0x20;
         break;
     case Qt::Key::Key_Control:
@@ -505,14 +506,23 @@ void CPU::run()
         if(current_vblank && !last_vblank)
             bus->end_frame_apu(cycles);
         last_vblank = current_vblank;
+
+#ifdef DEBUG_ON
+            if(!run_without_cpu_mutex)
+            {
+                bus->run_watch_cpu_instr(PC);
+                std::unique_lock<std::mutex> step_by_step(step_by_step_cpu_mutex);
+                cv.wait(step_by_step, []{ return !pause_cpu; });
+
+                pause_cpu = true;
+            }
+#endif
     }
 }
 
 void CPU::reset()
 {
-    //NMI = bus->get_NMI();
     RESET = bus->get_RESET();
-    //IRQ = bus->get_IRQ();
 
     A  = 0x00;
     X  = 0x00;
@@ -724,7 +734,6 @@ void CPU::BRK_impl()
 
     set_flag(StatusFlags::I, true);
     set_flag(StatusFlags::B, false);
-    set_flag(StatusFlags::U, true);
 
     PC = bus->get_IRQ();
 
