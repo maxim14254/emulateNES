@@ -49,7 +49,7 @@ public:
     uint64_t cycles = 0;     // счетчик циклов
 
     //static uint64_t get_cycles(){ return cycles; }
-    static uint64_t get_PC(){ return PC; }
+    uint64_t get_PC(){ return PC; }
 
 public slots:
     bool slot_init_new_cartridge(const QString& path);
@@ -64,7 +64,7 @@ signals:
 private:
     uint8_t  A, X, Y;           // регистры
     uint8_t  SP = 0;                // стек
-    static inline uint16_t PC = 0;                // счетчик команд
+    uint16_t PC = 0;                // счетчик команд
     uint8_t status = 0;            // флаги
     Bus* bus;                   // шина
 

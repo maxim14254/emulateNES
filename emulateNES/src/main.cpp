@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/Contra Force (USA).nes");
+    bool rez = cpu.slot_init_new_cartridge(":/games/Tiny Toon Adventures (USA).nes");
 
     int exec = a.exec();
 

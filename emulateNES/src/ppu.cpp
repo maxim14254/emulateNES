@@ -10,10 +10,6 @@
 #include <QProcess>
 
 
-uint8_t dddd[30][32];
-uint16_t dddd1[30][32];
-uint16_t dddd2[30][32];
-
 PPU::PPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 {
     oam.resize(256);
@@ -46,12 +42,12 @@ uint8_t PPU::get_register(uint16_t addr, bool onlyRead)
             result = OAMADDR;
         else if(addr == 0x2004)
             result = oam[OAMADDR];
-        //        else if(addr == 0x2005)
-        //            result = openBus;
-        //        else if(addr == 0x2006)
-        //            result = openBus;
-        //        else if(addr == 0x2007)
-        //            result = ppu_data_buffer;
+        else if(addr == 0x2005)
+            result = openBus;
+        else if(addr == 0x2006)
+            result = openBus;
+        else if(addr == 0x2007)
+            result = ppu_data_buffer;
         else
             result = 0;
     }
@@ -141,7 +137,7 @@ void PPU::set_register(uint16_t addr, uint8_t data)
         {
             temp_VRAM = (temp_VRAM & 0xFF00) | data;
             temp_VRAM &= 0x3FFF;
-            current_VRAM = temp_VRAM;
+            render_VRAM = current_VRAM = temp_VRAM;
             w = false;
         }
     }
@@ -168,7 +164,7 @@ void PPU::set_oam(uint8_t _oam)
                               Qt::QueuedConnection);
 #endif
 }
-static int d = 0;
+
 void PPU::run(int cycles)
 {
     int count = cycles * 3;
@@ -259,57 +255,48 @@ void PPU::run(int cycles)
                 {
                     if(j < sprites_current_scanline.size())
                     {
-                        d+=2;
-
                         get_sprites_on_next_scanline(j++);
                     }
                     else
                     {
-//                        if (!(PPUMASK & 0x10))
-//                            continue;
-                        //if(d < 80)
+                        if (!(PPUMASK & 0x10))
+                            continue;
+
+                        Sprite dd = Sprite{oam[0], oam[0 + 1], oam[0 + 2], oam[0 + 3], 0 / 4};
+
+                        uint16_t sprite_lsb = 0;
+
+                        if(!(PPUCTRL & 0x20)) // 8x8
                         {
-                            d+=2;
-                            //                            uint16_t base = (j % 2) ? 0x1000 : 0x0000; // j увеличивается только для пустых
-                            //                            bus->read_ppu(base);
-                            //                            bus->read_ppu(base + 8);
-                            //get_sprites_on_next_scanline(0, false);
+                            uint16_t patternBase = (PPUCTRL & 0x8) ? 0x1000 : 0x0000;
 
-                            Sprite dd = Sprite{oam[0], oam[0 + 1], oam[0 + 2], oam[0 + 3], 0 / 4};
-
-                            uint16_t sprite_lsb = 0;
-
-                            if(!(PPUCTRL & 0x20)) // 8x8
-                            {
-                                uint16_t patternBase = (PPUCTRL & 0x8) ? 0x1000 : 0x0000;
-
-                                if(!(dd.attr & 0x80)) // нормальная ориентация
-                                    sprite_lsb = patternBase + dd.tile * 16 + (scanline - dd.y);
-                                else // зеркальная ориентация по вертикали
-                                    sprite_lsb = patternBase + dd.tile * 16 + (7 - (scanline - dd.y));
-                            }
-                            else // 8x16
-                            {
-                                int row = scanline - dd.y;
-
-                                if (dd.attr & 0x80)
-                                    row = 15 - row;
-
-                                uint16_t patternBase = (dd.tile & 0x01) ? 0x1000 : 0x0000;
-                                uint16_t tile_half;
-
-                                if (row < 8)
-                                    tile_half = dd.tile & 0xFE;
-                                else
-                                    tile_half = (dd.tile & 0xFE) + 1;
-
-                                int offset = row & 0x07;
-                                sprite_lsb = patternBase + tile_half * 16 + offset;
-                            }
-
-                            bus->read_ppu(sprite_lsb);
-                            bus->read_ppu(sprite_lsb + 8);
+                            if(!(dd.attr & 0x80)) // нормальная ориентация
+                                sprite_lsb = patternBase + dd.tile * 16 + (scanline - dd.y);
+                            else // зеркальная ориентация по вертикали
+                                sprite_lsb = patternBase + dd.tile * 16 + (7 - (scanline - dd.y));
                         }
+                        else // 8x16
+                        {
+                            int row = scanline - dd.y;
+
+                            if (dd.attr & 0x80)
+                                row = 15 - row;
+
+                            uint16_t patternBase = (dd.tile & 0x01) ? 0x1000 : 0x0000;
+                            uint16_t tile_half;
+
+                            if (row < 8)
+                                tile_half = dd.tile & 0xFE;
+                            else
+                                tile_half = (dd.tile & 0xFE) + 1;
+
+                            int offset = row & 0x07;
+                            sprite_lsb = patternBase + tile_half * 16 + offset;
+                        }
+
+                        bus->read_ppu(sprite_lsb);
+                        bus->read_ppu(sprite_lsb + 8);
+
                     }
                 }
             }
@@ -359,7 +346,7 @@ void PPU::run(int cycles)
             }
         }
 
-        if (scanline == 240 && cycle == 1)
+        if (scanline == 241 && cycle == 1)
         {
             PPUSTATUS |= 0x80;
 
@@ -511,7 +498,7 @@ void PPU::run_watch_cpu_instr(uint16_t PC)
     QMetaObject::invokeMethod(window, [&, value]()
                               {
                                   window->render_cpu_debug(value, PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA, PPUADDR,
-                                                           bus->get_PC(), bus->get_SP(), bus->get_statusCPU(), bus->get_A(), bus->get_X(), bus->get_Y(), scanline);
+                                                           bus->get_PC(), bus->get_SP(), bus->get_statusCPU(), bus->get_A(), bus->get_X(), bus->get_Y(), scanline, cycle);
                               },
                               Qt::QueuedConnection);
 }
@@ -878,8 +865,6 @@ void PPU::shifts_calculation()
     if(x == 0)
     {
         tileByte = bus->read_ppu(0x2000 | (render_VRAM & 0x0FFF));
-        dddd[scanline / 8][cycle / 8] = tileByte;
-        dddd1[scanline / 8][cycle / 8] = 0x2000 | (render_VRAM & 0x0FFF);
     }
     else if(x == 2)
     {
@@ -907,15 +892,12 @@ void PPU::shifts_calculation()
     {
         uint16_t patternBase = (PPUCTRL & 0x10) ? 0x1000 : 0x0000;
         uint16_t numb_pixelY =  (render_VRAM >> 12) & 0x07;
-        ++d;
         tile_lsb = bus->read_ppu(patternBase + tileByte * 16 + numb_pixelY);
-        //dddd2[scanline / 8][cycle / 8] = bank;
     }
     else if(x == 6)
     {
         uint16_t patternBase = (PPUCTRL & 0x10) ? 0x1000 : 0x0000;
         uint16_t numb_pixelY =  (render_VRAM >> 12) & 0x07;
-        ++d;
         tile_msb = bus->read_ppu(patternBase + tileByte * 16 + numb_pixelY + 8);
     }
     else if(x == 7)

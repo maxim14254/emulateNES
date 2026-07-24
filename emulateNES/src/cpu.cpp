@@ -349,7 +349,7 @@ void CPU::handle_nmi()
 
     set_flag(I, true);
 
-    cycles += 8;
+    cycles += 7;
 }
 
 void CPU::handle_irq()
@@ -483,6 +483,11 @@ void CPU::run()
         {
             uint64_t old_cycles2 = cycles;
             handle_irq();
+
+            uint8_t val = bus->read_cpu(PC, false);
+
+            std::function<void(CPU&)> instr_func = table_instructions[val].func;
+            instr_func(*this);
 
             bus->run_steps_ppu(cycles - old_cycles2);
 
@@ -722,6 +727,7 @@ void CPU::BRK_impl()
     LOG::Write(PC, ddd, QString("BRK"), A, X, Y, status, SP, cycles);
 #endif
 
+    bus->read_cpu(PC);
     PC += 2;
 
     write(0x0100 + SP--, (PC >> 8) & 0xFF);
@@ -733,7 +739,6 @@ void CPU::BRK_impl()
     write(0x0100 + SP--, status);
 
     set_flag(StatusFlags::I, true);
-    set_flag(StatusFlags::B, false);
 
     PC = bus->get_IRQ();
 

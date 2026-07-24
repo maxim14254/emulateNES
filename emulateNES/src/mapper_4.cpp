@@ -41,7 +41,7 @@ Mapper_4::Mapper_4(QFile& file, NESHeader _header, Bus* _bus) : bus(_bus)
     prg_bank_map[2] = (prg_bank_count_8k - 2);
     prg_bank_map[3] = (prg_bank_count_8k - 1);
 
-    //update_banks();
+    update_banks();
 }
 
 Mapper_4::~Mapper_4()

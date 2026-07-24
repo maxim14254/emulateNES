@@ -75,6 +75,7 @@ private:
     //5бит - Y тайла
     //2бита - nametable по x, y
     //3бита - сдвиг по Y у пикселя внутри тайла
+    //_ yyy NN YYYYY XXXXX
     uint16_t current_VRAM = 0;
     uint16_t render_VRAM = 0;
     uint16_t temp_VRAM = 0;
