@@ -726,12 +726,13 @@ void CPU::BRK_impl()
     int16_t ddd[] = {0x00, -1, -1};
     LOG::Write(PC, ddd, QString("BRK"), A, X, Y, status, SP, cycles);
 #endif
-
+    ++PC;
     bus->read_cpu(PC);
-    PC += 2;
 
-    write(0x0100 + SP--, (PC >> 8) & 0xFF);
-    write(0x0100 + SP--, PC & 0xFF);
+    uint16_t return_addr = PC + 1;
+
+    write(0x0100 + SP--, (return_addr >> 8) & 0xFF);
+    write(0x0100 + SP--, return_addr & 0xFF);
 
     set_flag(StatusFlags::B, true);
     set_flag(StatusFlags::U, true);
@@ -2401,7 +2402,6 @@ void CPU::RTS_impl()
     int16_t ddd[] = {0x60, -1, -1};
     LOG::Write(PC, ddd, QString("RTS"), A, X, Y, status, SP, cycles);
 #endif
-
 
     uint8_t lo = bus->read_cpu(0x0100 + ++SP);
     uint8_t hi = bus->read_cpu(0x0100 + ++SP);

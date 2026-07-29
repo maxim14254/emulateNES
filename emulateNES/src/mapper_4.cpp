@@ -33,8 +33,8 @@ Mapper_4::Mapper_4(QFile& file, NESHeader _header, Bus* _bus) : bus(_bus)
     else
         chr_bank_count_1k = 0;
 
-//    bank_registers[6] = 0;
-//    bank_registers[7] = 1;
+    bank_registers[6] = prg_bank_count_8k - 2;
+    bank_registers[7] = prg_bank_count_8k - 2;
 
     prg_bank_map[0] = 0;
     prg_bank_map[1] = 1;
@@ -60,20 +60,6 @@ void Mapper_4::update_banks()
     uint16_t r6 = bank_registers[6];
     uint16_t r7 = bank_registers[7];
 
-//    if (!prg_mode)
-//    {
-//        prg_bank_map[0] = r6;
-//        prg_bank_map[1] = r7;
-//        prg_bank_map[2] = second_last;
-//        prg_bank_map[3] = last;
-//    }
-//    else
-//    {
-//        prg_bank_map[0] = second_last;
-//        prg_bank_map[1] = r7;
-//        prg_bank_map[2] = r6;
-//        prg_bank_map[3] = last;
-//    }
 
     if (prg_mode)
     {
@@ -131,6 +117,7 @@ uint8_t Mapper_4::mapper_read_prg(uint16_t addr)
     uint32_t bank = prg_bank_map[slot];
     uint32_t index = bank * 0x2000 + offset;
 
+
     if (index < prg_rom.size())
         return prg_rom[index];
 
@@ -154,7 +141,6 @@ void Mapper_4::clock_irq_on_a12(uint16_t addr)
         }
         else
             --irq_counter;
-
 
         if (irq_counter == 0 && irq_enabled)
             bus->set_mapper_irq(true);
@@ -225,9 +211,6 @@ void Mapper_4::write_chr_ram(uint16_t addr, uint8_t data)
 
 void Mapper_4::mapper_write(uint16_t addr, uint8_t data)
 {
-    if (addr < 0x8000)
-        return;
-
     switch (addr & 0xE001)
     {
         case 0x8000:
@@ -239,7 +222,14 @@ void Mapper_4::mapper_write(uint16_t addr, uint8_t data)
         }
         case 0x8001:
         {
-            bank_registers[bank_select] = data;
+            uint8_t masked_data = data;
+
+            if (bank_select >= 6)
+                masked_data &= (prg_bank_count_8k - 1);
+            else if (!chr_rom.empty())
+                masked_data &= (chr_bank_count_1k - 1);
+
+            bank_registers[bank_select] = masked_data;
             update_banks();
             break;
         }

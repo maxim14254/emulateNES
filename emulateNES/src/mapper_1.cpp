@@ -1,5 +1,5 @@
 #include "mapper_1.h"
-
+#include <QDebug>
 
 Mapper_1::Mapper_1(QFile& file, NESHeader _header)
 {
@@ -64,18 +64,18 @@ uint16_t Mapper_1::map_nametable_addr(uint16_t addr)
 
     switch (Orintation)
     {
-    case HORIZONTAL:
-        physTable = (table < 2) ? 0 : 1;
-        break;
-    case VERTICAL:
-        physTable = (table & 1);
-        break;
-    case ONESCREEN_LO:
-        physTable = 0;
-        break;
-    case ONESCREEN_HI:
-        physTable = 1;
-        break;
+        case HORIZONTAL:
+            physTable = (table < 2) ? 0 : 1;
+            break;
+        case VERTICAL:
+            physTable = (table & 1);
+            break;
+        case ONESCREEN_LO:
+            physTable = 0;
+            break;
+        case ONESCREEN_HI:
+            physTable = 1;
+            break;
     }
 
     return (uint16_t)(physTable * 0x0400 + off);
@@ -175,18 +175,18 @@ void Mapper_1::up_orintation()
 {
     switch (reg_control & 0x03)
     {
-    case 0:
-        Orintation = ONESCREEN_LO;
-        break;
-    case 1:
-        Orintation = ONESCREEN_HI;
-        break;
-    case 2:
-        Orintation = VERTICAL;
-        break;
-    case 3:
-        Orintation = HORIZONTAL;
-        break;
+        case 0:
+            Orintation = ONESCREEN_LO;
+            break;
+        case 1:
+            Orintation = ONESCREEN_HI;
+            break;
+        case 2:
+            Orintation = VERTICAL;
+            break;
+        case 3:
+            Orintation = HORIZONTAL;
+            break;
     }
 }
 
@@ -199,37 +199,38 @@ uint32_t Mapper_1::map_prg_addr(uint16_t addr)
 
     uint16_t off = addr & 0x3FFF;
 
-    switch (prgMode)
+    if (prgMode == 0 || prgMode == 1)
     {
-    case 1:
-    {
-        uint32_t bank32 = ((uint32_t)(reg_prg & 0x0F)) >> 1;
-        uint32_t base = bank32 * (32 * 1024);
-        return base + (addr & 0x7FFF);
+        if (addr < 0xC000)
+        {
+            uint8_t bank = (reg_prg & 0x0E) >> 1;
+            bank %= prgBank16Count;
+            return bank * (16 * 1024) + off;
+        }
+        else
+            return last16 * (16 * 1024) + off;
     }
-    case 2:
+    else if (prgMode == 2)
     {
         if (addr < 0xC000)
             return off;
         else
         {
-            uint32_t bank16 = (uint32_t)(reg_prg & 0x0F);
-            bank16 %= std::max(1u, prgBank16Count);
-            return bank16 * (16 * 1024) + off;
+            uint8_t bank = reg_prg & 0x0F;
+            bank %= prgBank16Count;
+            return bank * (16 * 1024) + off;
         }
     }
-    case 3:
-    default:
+    else
     {
         if (addr < 0xC000)
         {
-            uint32_t bank16 = (uint32_t)(reg_prg & 0x0F);
-            bank16 %= std::max(1u, prgBank16Count);
-            return bank16 * (16 * 1024) + off;
+            uint8_t bank = reg_prg & 0x0F;
+            bank %= prgBank16Count;
+            return bank * (16 * 1024) + off;
         }
         else
             return last16 * (16 * 1024) + off;
-    }
     }
 }
 

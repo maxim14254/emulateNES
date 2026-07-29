@@ -33,5 +33,5 @@ RESOURCES += \
     res.qrc
 
 DISTFILES += \
-    games/ppu_open_bus.nes
+    games/RoboCop 3 (USA).nes
 

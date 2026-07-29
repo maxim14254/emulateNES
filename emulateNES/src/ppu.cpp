@@ -262,40 +262,40 @@ void PPU::run(int cycles)
                         if (!(PPUMASK & 0x10))
                             continue;
 
-                        Sprite dd = Sprite{oam[0], oam[0 + 1], oam[0 + 2], oam[0 + 3], 0 / 4};
+//                        Sprite dd = Sprite{oam[0], oam[0 + 1], oam[0 + 2], oam[0 + 3], 0 / 4};
 
-                        uint16_t sprite_lsb = 0;
+//                        uint16_t sprite_lsb = 0;
 
-                        if(!(PPUCTRL & 0x20)) // 8x8
-                        {
-                            uint16_t patternBase = (PPUCTRL & 0x8) ? 0x1000 : 0x0000;
+//                        if(!(PPUCTRL & 0x20)) // 8x8
+//                        {
+//                            uint16_t patternBase = (PPUCTRL & 0x8) ? 0x1000 : 0x0000;
 
-                            if(!(dd.attr & 0x80)) // нормальная ориентация
-                                sprite_lsb = patternBase + dd.tile * 16 + (scanline - dd.y);
-                            else // зеркальная ориентация по вертикали
-                                sprite_lsb = patternBase + dd.tile * 16 + (7 - (scanline - dd.y));
-                        }
-                        else // 8x16
-                        {
-                            int row = scanline - dd.y;
+//                            if(!(dd.attr & 0x80)) // нормальная ориентация
+//                                sprite_lsb = patternBase + dd.tile * 16 + (scanline - dd.y);
+//                            else // зеркальная ориентация по вертикали
+//                                sprite_lsb = patternBase + dd.tile * 16 + (7 - (scanline - dd.y));
+//                        }
+//                        else // 8x16
+//                        {
+//                            int row = scanline - dd.y;
 
-                            if (dd.attr & 0x80)
-                                row = 15 - row;
+//                            if (dd.attr & 0x80)
+//                                row = 15 - row;
 
-                            uint16_t patternBase = (dd.tile & 0x01) ? 0x1000 : 0x0000;
-                            uint16_t tile_half;
+//                            uint16_t patternBase = (dd.tile & 0x01) ? 0x1000 : 0x0000;
+//                            uint16_t tile_half;
 
-                            if (row < 8)
-                                tile_half = dd.tile & 0xFE;
-                            else
-                                tile_half = (dd.tile & 0xFE) + 1;
+//                            if (row < 8)
+//                                tile_half = dd.tile & 0xFE;
+//                            else
+//                                tile_half = (dd.tile & 0xFE) + 1;
 
-                            int offset = row & 0x07;
-                            sprite_lsb = patternBase + tile_half * 16 + offset;
-                        }
+//                            int offset = row & 0x07;
+//                            sprite_lsb = patternBase + tile_half * 16 + offset;
+//                        }
 
-                        bus->read_ppu(sprite_lsb);
-                        bus->read_ppu(sprite_lsb + 8);
+                        bus->read_ppu(0x1000);
+                       // bus->read_ppu(sprite_lsb + 8);
 
                     }
                 }

@@ -27,10 +27,9 @@ MainWindow::MainWindow(QWidget *parent)
     setFocusPolicy(Qt::StrongFocus);
     setFocus();
 
-    ui->widget_2->setVisible(false);
-
+    ui->widget_4->setVisible(false);
 #ifdef DEBUG_ON
-    ui->widget_2->setVisible(true);
+    ui->widget_4->setVisible(true);
 
     debug_tiles_widget1.reset(new MyOpenGL(128, 128, this));
     debug_tiles_widget1->setFixedSize(300, 300);
