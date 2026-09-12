@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1265</width>
-    <height>1212</height>
+    <height>900</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -45,7 +45,7 @@
        <item>
         <layout class="QVBoxLayout" name="verticalLayout">
          <property name="sizeConstraint">
-          <enum>QLayout::SetMaximumSize</enum>
+          <enum>QLayout::SizeConstraint::SetMaximumSize</enum>
          </property>
         </layout>
        </item>
@@ -75,7 +75,7 @@
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_6">
               <property name="sizeConstraint">
-               <enum>QLayout::SetDefaultConstraint</enum>
+               <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
               </property>
               <item>
                <widget class="QWidget" name="widget_2" native="true">
@@ -88,97 +88,134 @@
                 <property name="minimumSize">
                  <size>
                   <width>622</width>
-                  <height>967</height>
+                  <height>500</height>
                  </size>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_5">
                  <property name="sizeConstraint">
-                  <enum>QLayout::SetFixedSize</enum>
+                  <enum>QLayout::SizeConstraint::SetFixedSize</enum>
                  </property>
                  <item>
                   <layout class="QVBoxLayout" name="verticalLayout_3">
                    <property name="sizeConstraint">
-                    <enum>QLayout::SetDefaultConstraint</enum>
+                    <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
                    </property>
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_2">
                      <property name="sizeConstraint">
-                      <enum>QLayout::SetMinimumSize</enum>
+                      <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
                      </property>
                     </layout>
                    </item>
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_5">
                      <property name="sizeConstraint">
-                      <enum>QLayout::SetMinimumSize</enum>
+                      <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
                      </property>
                     </layout>
                    </item>
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_3">
+                     <property name="sizeConstraint">
+                      <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
+                     </property>
                      <item>
-                      <widget class="QTextEdit" name="cpu_debuger">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
+                      <layout class="QVBoxLayout" name="verticalLayout_9">
+                       <property name="sizeConstraint">
+                        <enum>QLayout::SizeConstraint::SetFixedSize</enum>
                        </property>
-                       <property name="font">
-                        <font>
-                         <family>Tahoma</family>
-                         <pointsize>12</pointsize>
-                         <weight>50</weight>
-                         <bold>false</bold>
-                        </font>
-                       </property>
-                       <property name="frameShape">
-                        <enum>QFrame::StyledPanel</enum>
-                       </property>
-                       <property name="frameShadow">
-                        <enum>QFrame::Sunken</enum>
-                       </property>
-                       <property name="verticalScrollBarPolicy">
-                        <enum>Qt::ScrollBarAlwaysOff</enum>
-                       </property>
-                       <property name="horizontalScrollBarPolicy">
-                        <enum>Qt::ScrollBarAlwaysOff</enum>
-                       </property>
-                       <property name="sizeAdjustPolicy">
-                        <enum>QAbstractScrollArea::AdjustToContents</enum>
-                       </property>
-                       <property name="readOnly">
-                        <bool>true</bool>
-                       </property>
-                       <property name="html">
-                        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+                       <item>
+                        <widget class="QTextEdit" name="cpu_debuger">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="font">
+                          <font>
+                           <family>Tahoma</family>
+                           <pointsize>12</pointsize>
+                           <bold>false</bold>
+                          </font>
+                         </property>
+                         <property name="frameShape">
+                          <enum>QFrame::Shape::StyledPanel</enum>
+                         </property>
+                         <property name="frameShadow">
+                          <enum>QFrame::Shadow::Sunken</enum>
+                         </property>
+                         <property name="verticalScrollBarPolicy">
+                          <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+                         </property>
+                         <property name="horizontalScrollBarPolicy">
+                          <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+                         </property>
+                         <property name="sizeAdjustPolicy">
+                          <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents</enum>
+                         </property>
+                         <property name="readOnly">
+                          <bool>true</bool>
+                         </property>
+                         <property name="html">
+                          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Tahoma'; font-size:12pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Verdana'; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                       </property>
-                      </widget>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="verticalSpacer_2">
+                         <property name="orientation">
+                          <enum>Qt::Orientation::Vertical</enum>
+                         </property>
+                         <property name="sizeType">
+                          <enum>QSizePolicy::Policy::Fixed</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>1</width>
+                           <height>1</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                      </layout>
                      </item>
                      <item>
                       <layout class="QVBoxLayout" name="verticalLayout_4">
+                       <property name="sizeConstraint">
+                        <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
+                       </property>
                        <item>
                         <layout class="QFormLayout" name="formLayout">
                          <property name="sizeConstraint">
-                          <enum>QLayout::SetDefaultConstraint</enum>
+                          <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
                          </property>
                          <property name="rowWrapPolicy">
-                          <enum>QFormLayout::DontWrapRows</enum>
+                          <enum>QFormLayout::RowWrapPolicy::DontWrapRows</enum>
                          </property>
                          <property name="labelAlignment">
-                          <set>Qt::AlignCenter</set>
+                          <set>Qt::AlignmentFlag::AlignCenter</set>
                          </property>
                          <item row="0" column="0">
                           <widget class="QLabel" name="label">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>PC</string>
                            </property>
                            <property name="alignment">
-                            <set>Qt::AlignCenter</set>
+                            <set>Qt::AlignmentFlag::AlignCenter</set>
                            </property>
                           </widget>
                          </item>
@@ -190,6 +227,12 @@ p, li { white-space: pre-wrap; }
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string/>
                            </property>
@@ -197,11 +240,17 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="1" column="0">
                           <widget class="QLabel" name="label_3">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>SP</string>
                            </property>
                            <property name="alignment">
-                            <set>Qt::AlignCenter</set>
+                            <set>Qt::AlignmentFlag::AlignCenter</set>
                            </property>
                           </widget>
                          </item>
@@ -213,6 +262,12 @@ p, li { white-space: pre-wrap; }
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string/>
                            </property>
@@ -220,11 +275,17 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="2" column="0">
                           <widget class="QLabel" name="label_5">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>Status </string>
                            </property>
                            <property name="alignment">
-                            <set>Qt::AlignCenter</set>
+                            <set>Qt::AlignmentFlag::AlignCenter</set>
                            </property>
                           </widget>
                          </item>
@@ -236,6 +297,12 @@ p, li { white-space: pre-wrap; }
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string/>
                            </property>
@@ -243,11 +310,17 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="3" column="0">
                           <widget class="QLabel" name="label_7">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>A</string>
                            </property>
                            <property name="alignment">
-                            <set>Qt::AlignCenter</set>
+                            <set>Qt::AlignmentFlag::AlignCenter</set>
                            </property>
                           </widget>
                          </item>
@@ -259,6 +332,12 @@ p, li { white-space: pre-wrap; }
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string/>
                            </property>
@@ -266,11 +345,17 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="4" column="0">
                           <widget class="QLabel" name="label_9">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>X</string>
                            </property>
                            <property name="alignment">
-                            <set>Qt::AlignCenter</set>
+                            <set>Qt::AlignmentFlag::AlignCenter</set>
                            </property>
                           </widget>
                          </item>
@@ -281,6 +366,12 @@ p, li { white-space: pre-wrap; }
                              <horstretch>0</horstretch>
                              <verstretch>0</verstretch>
                             </sizepolicy>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
                            </property>
                            <property name="text">
                             <string/>
@@ -295,11 +386,17 @@ p, li { white-space: pre-wrap; }
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>Y</string>
                            </property>
                            <property name="alignment">
-                            <set>Qt::AlignCenter</set>
+                            <set>Qt::AlignmentFlag::AlignCenter</set>
                            </property>
                           </widget>
                          </item>
@@ -311,6 +408,12 @@ p, li { white-space: pre-wrap; }
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string/>
                            </property>
@@ -318,11 +421,17 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="6" column="0">
                           <widget class="QLabel" name="label_13">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>PPUSTATUS</string>
                            </property>
                            <property name="alignment">
-                            <set>Qt::AlignCenter</set>
+                            <set>Qt::AlignmentFlag::AlignCenter</set>
                            </property>
                           </widget>
                          </item>
@@ -334,6 +443,12 @@ p, li { white-space: pre-wrap; }
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string/>
                            </property>
@@ -341,6 +456,12 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="7" column="0">
                           <widget class="QLabel" name="label_15">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>PPUSCROLL</string>
                            </property>
@@ -354,6 +475,12 @@ p, li { white-space: pre-wrap; }
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string/>
                            </property>
@@ -361,6 +488,12 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="8" column="0">
                           <widget class="QLabel" name="label_17">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>OAMDATA</string>
                            </property>
@@ -374,6 +507,12 @@ p, li { white-space: pre-wrap; }
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string/>
                            </property>
@@ -381,6 +520,12 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="9" column="0">
                           <widget class="QLabel" name="label_19">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>OAMADDR</string>
                            </property>
@@ -393,6 +538,12 @@ p, li { white-space: pre-wrap; }
                              <horstretch>0</horstretch>
                              <verstretch>0</verstretch>
                             </sizepolicy>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
                            </property>
                            <property name="text">
                             <string/>
@@ -407,6 +558,12 @@ p, li { white-space: pre-wrap; }
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string/>
                            </property>
@@ -414,6 +571,12 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="11" column="0">
                           <widget class="QLabel" name="label_23">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>PPUMASK</string>
                            </property>
@@ -427,6 +590,12 @@ p, li { white-space: pre-wrap; }
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string/>
                            </property>
@@ -434,6 +603,12 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="12" column="0">
                           <widget class="QLabel" name="label_25">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>PPUCTRL</string>
                            </property>
@@ -447,6 +622,12 @@ p, li { white-space: pre-wrap; }
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string/>
                            </property>
@@ -454,6 +635,12 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="13" column="0">
                           <widget class="QLabel" name="label_ppuaddr">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>PPUADDR</string>
                            </property>
@@ -467,6 +654,12 @@ p, li { white-space: pre-wrap; }
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string/>
                            </property>
@@ -474,6 +667,12 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="10" column="0">
                           <widget class="QLabel" name="label_21">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>PPUDATA</string>
                            </property>
@@ -481,6 +680,12 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="14" column="0">
                           <widget class="QLabel" name="label_2">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string>FPS</string>
                            </property>
@@ -493,6 +698,12 @@ p, li { white-space: pre-wrap; }
                              <horstretch>0</horstretch>
                              <verstretch>0</verstretch>
                             </sizepolicy>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
                            </property>
                            <property name="text">
                             <string/>
@@ -523,7 +734,7 @@ p, li { white-space: pre-wrap; }
                    </property>
                    <layout class="QHBoxLayout" name="horizontalLayout_6">
                     <property name="sizeConstraint">
-                     <enum>QLayout::SetDefaultConstraint</enum>
+                     <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
                     </property>
                     <property name="leftMargin">
                      <number>0</number>
@@ -548,7 +759,6 @@ p, li { white-space: pre-wrap; }
                       <property name="font">
                        <font>
                         <pointsize>12</pointsize>
-                        <weight>75</weight>
                         <bold>true</bold>
                        </font>
                       </property>
@@ -591,7 +801,6 @@ p, li { white-space: pre-wrap; }
                         <property name="font">
                          <font>
                           <pointsize>12</pointsize>
-                          <weight>75</weight>
                           <bold>true</bold>
                          </font>
                         </property>
@@ -603,7 +812,7 @@ p, li { white-space: pre-wrap; }
                       <item>
                        <spacer name="horizontalSpacer">
                         <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
+                         <enum>Qt::Orientation::Horizontal</enum>
                         </property>
                         <property name="sizeHint" stdset="0">
                          <size>
@@ -659,19 +868,18 @@ p, li { white-space: pre-wrap; }
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>200</height>
+                  <height>50</height>
                  </size>
                 </property>
                 <property name="font">
                  <font>
                   <family>Tahoma</family>
                   <pointsize>12</pointsize>
-                  <weight>75</weight>
-                  <bold>true</bold>
+                  <bold>false</bold>
                  </font>
                 </property>
                 <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                 <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
                 </property>
                 <property name="readOnly">
                  <bool>true</bool>
@@ -686,7 +894,7 @@ p, li { white-space: pre-wrap; }
          <item>
           <spacer name="verticalSpacer">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -709,7 +917,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>1265</width>
-     <height>27</height>
+     <height>34</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">

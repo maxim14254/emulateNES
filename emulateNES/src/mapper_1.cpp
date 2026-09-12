@@ -1,6 +1,8 @@
 #include "mapper_1.h"
 #include <QDebug>
 
+
+
 Mapper_1::Mapper_1(QFile& file, NESHeader _header)
 {
     header = _header;

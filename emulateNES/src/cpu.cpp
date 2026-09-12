@@ -10,6 +10,10 @@
 #include "log.h"
 #endif
 
+#ifdef DEBUG_ON
+std::vector<std::tuple<uint16_t, uint8_t, uint8_t>> traces(256);
+int trace;
+#endif
 
 
 CPU::CPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
@@ -300,6 +304,24 @@ CPU::CPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 
 CPU::~CPU()
 {
+
+#ifdef DEBUG_ON
+
+    for(int i = 0; i < traces.size(); ++i)
+    {
+        if(trace + 1 >= traces.size())
+        {
+            trace = 0;
+        }
+
+        qDebug() << "PC:" << Qt::hex << std::get<0>(traces[trace]) << " Opcode:" << Qt::hex << std::get<1>(traces[trace])
+                 << " SP:" << Qt::hex << std::get<2>(traces[trace]);
+
+        ++trace;
+    }
+
+#endif
+
     start = false;
 
     if(run_t.joinable())
@@ -501,6 +523,11 @@ void CPU::run()
 
         uint8_t val = bus->read_cpu(PC, false);
         uint64_t old_cycles = cycles;
+
+#ifdef DEBUG_ON
+        traces[trace] = {PC, val, SP};
+        trace = (trace + 1) % traces.size();
+#endif
 
         std::function<void(CPU&)> instr_func = table_instructions[val].func;
         instr_func(*this);

@@ -96,13 +96,15 @@ void PPU::set_register(uint16_t addr, uint8_t data)
 
     if(addr == 0x2000)
     {
+        bool _old = (PPUCTRL & 0x80) != 0;
+
         PPUCTRL = data;
         temp_VRAM = (temp_VRAM & 0xF3FF) | ((data & 0x03) << 10);
 
-        if ((PPUCTRL & 0x80) && (PPUSTATUS & 0x80))
-        {
+        bool _new = (data & 0x80) != 0;
+
+        if (!_old && _new && (PPUSTATUS & 0x80))
             bus->cpu_request_nmi();
-        }
 
     }
     else if(addr == 0x2001)
