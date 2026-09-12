@@ -2,7 +2,6 @@
 #define APU_H
 
 #include <QIODevice>
-#include <deque>
 #include "Nes_Oscs.h"
 #include <QtMultimedia/QAudioOutput>
 
@@ -54,7 +53,7 @@ public:
 
 
     static const unsigned int no_irq = INT_MAX / 2 + 1;
-    int last_dmc_cycles = 0;
+    int64_t last_dmc_cycles = 0;
     int osc_enables = 0;
 
 private:
@@ -64,7 +63,7 @@ private:
     qint16 last = 0;
     uint8_t status;
 
-    int last_cycles = 0;
+    int64_t last_cycles = 0;
     nes_time_t next_irq = 0;
     nes_time_t earliest_irq_;
     uint32_t frame_delay = 1;

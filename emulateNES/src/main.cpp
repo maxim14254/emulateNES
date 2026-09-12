@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     if (dev.isFormatSupported(format))
     {
         QAudioOutput* sink = new QAudioOutput(dev, format);
-        sink->setBufferSize(8192);
+        sink->setBufferSize(16384);
         sink->setNotifyInterval(5);
 
         APU* apu = new APU(format.sampleRate(), &bus, sink);
@@ -71,6 +71,7 @@ int main(int argc, char *argv[])
     //:/games/Chip 'n Dale - Rescue Rangers 2 (USA).nes
     //:/games/Contra Force (USA).nes
     //:/games/RoboCop 3 (USA).nes
+    // :/games/Super Mario Bros. (World).nes
     int exec = a.exec();
 
     return exec;

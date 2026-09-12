@@ -35,7 +35,7 @@ public:
     uint8_t get_register(uint16_t addr, bool onlyRead);
     void set_register(uint16_t addr, uint8_t data);
     void set_oam(uint8_t _oam);
-    void run(int cycles);
+    void run(uint64_t cycles);
     void run_watch_all_tiles();
     void run_watch_cpu_instr(uint16_t PC);
     void run_watch_palettes();

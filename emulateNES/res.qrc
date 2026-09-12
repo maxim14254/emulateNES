@@ -42,5 +42,8 @@
         <file>games/Snow Brothers (USA).nes</file>
         <file>games/Excitebike (Europe).nes</file>
         <file>games/F1 Race (Japan).nes</file>
+        <file>games/Adventure Island Classic (Europe).nes</file>
+        <file>games/Arkanoid (USA).nes</file>
+        <file>games/Contra (USA).nes</file>
     </qresource>
 </RCC>

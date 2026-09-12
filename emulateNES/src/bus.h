@@ -29,9 +29,9 @@ public:
     void init_CPU(CPU* _cpu);
     void init_APU(APU* _cpu);
 
-    void run_steps_ppu(int cycles);
-    void end_frame_apu(int cycles);
-    void run_apu(int cycles);
+    void run_steps_ppu(uint64_t cycles);
+    void end_frame_apu(uint64_t cycles);
+    void run_apu(uint64_t cycles);
     void set_apu_irq(bool level);
     void set_mapper_irq(bool level);
 

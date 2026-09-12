@@ -36,8 +36,9 @@ APU::APU(double sampleRate, Bus* _bus, QAudioOutput* _sink)
     output( NULL );
     volume( 1.0 );
     reset( false );
+    enable_nonlinear(1.0);
 
-    blip.set_sample_rate((long)m_sampleRate, 250);
+    blip.set_sample_rate((long)m_sampleRate, 1000);
     blip.clock_rate(1789773);
     output(&blip);
 
@@ -49,7 +50,7 @@ APU::APU(double sampleRate, Bus* _bus, QAudioOutput* _sink)
 
     samplesToWrite = int(bytesToWrite / 2);
 
-    temp.resize(samplesToWrite);
+    temp.resize(4096);
 }
 
 void APU::run_(uint64_t cycles)
@@ -175,7 +176,7 @@ void APU::run(uint64_t cycles)
                 break;
 
             case 3:
-                frame_counter = 0;
+                frame_counter = -1;
 
                 if (frame_mode_5step & 0x80)
                     frame_delay += frame_period - (dmc.pal_mode ? 2 : 6);
@@ -200,6 +201,7 @@ void APU::treble_eq( const blip_eq_t& eq )
 void APU::update_irq_line()
 {
     bool level = irq_flag || dmc.irq_flag;
+
     bus->set_apu_irq(level);
 }
 
@@ -360,11 +362,27 @@ void APU::pump_audio()
     if (avail <= 0)
         return;
 
-    int toRead = qMin(avail, temp.size());
-    long got = blip.read_samples(reinterpret_cast<blip_sample_t*>(temp.data()), toRead, 0);
+    // Всегда вычитываем из blip — иначе он переполнится
+    int toRead = qMin(avail, (int)temp.size());
+    long got = blip.read_samples(
+        reinterpret_cast<blip_sample_t*>(temp.data()), toRead, 0);
 
-    if (got > 0)
-        audioDev->write(reinterpret_cast<const char*>(temp.constData()), got * sizeof(qint16));
+    if (got <= 0)
+        return;
+
+    qint64 freeBytes = sink->bytesFree();
+    qint64 canWrite = qMin<qint64>(freeBytes, got * (qint64)sizeof(qint16));
+
+    if (canWrite > 0)
+        audioDev->write(
+            reinterpret_cast<const char*>(temp.constData()),
+            canWrite);
+
+    static int dropped = 0;
+    if (canWrite < got * (qint64)sizeof(qint16))
+        dropped += (int)(got - canWrite / 2);
+
+
 }
 
 void APU::irq_changed()

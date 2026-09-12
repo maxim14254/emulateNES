@@ -167,7 +167,7 @@ void PPU::set_oam(uint8_t _oam)
 #endif
 }
 
-void PPU::run(int cycles)
+void PPU::run(uint64_t cycles)
 {
     int count = cycles * 3;
 
@@ -241,7 +241,7 @@ void PPU::run(int cycles)
                 }
             }
             else if(cycle >= 257 && cycle <= 320)
-            {
+            {                
                 static size_t j = 0;
                 if(cycle == 257)
                 {
@@ -259,10 +259,14 @@ void PPU::run(int cycles)
                     {
                         get_sprites_on_next_scanline(j++);
                     }
-                    else
+                    else if (PPUMASK & 0x10)   // спрайты включены
                     {
-                        if (!(PPUMASK & 0x10))
-                            continue;
+                        // Пустой слот: PPU всё равно читает из pattern table,
+                        // выбранной PPUCTRL.3 — это критично для MMC3 A12.
+                        uint16_t patternBase = (PPUCTRL & 0x08) ? 0x1000 : 0x0000;
+                        bus->read_ppu(patternBase);
+                        bus->read_ppu(patternBase + 8);
+                    }
 
 //                        Sprite dd = Sprite{oam[0], oam[0 + 1], oam[0 + 2], oam[0 + 3], 0 / 4};
 
@@ -296,10 +300,10 @@ void PPU::run(int cycles)
 //                            sprite_lsb = patternBase + tile_half * 16 + offset;
 //                        }
 
-                        bus->read_ppu(0x1000);
+ //                       bus->read_ppu(0x1000);
                        // bus->read_ppu(sprite_lsb + 8);
 
-                    }
+
                 }
             }
             else if(cycle >= 321 && cycle <= 336)
@@ -614,13 +618,12 @@ void PPU::get_current_sprites()
 {
     uint8_t sprite_height = (PPUCTRL & 0x20) > 0 ? 16 : 8;
 
+    sprites_current_scanline.clear();
+
     for (uint8_t i = 0; i < 8; ++i)
     {
         shif_sprite_lsb[i] = 0;
         shif_sprite_msb[i] = 0;
-
-        if(sprites_current_scanline.size() > 0)
-            sprites_current_scanline.pop_back();
     }
 
     for (size_t i = 0; i < oam.size(); i += 4)

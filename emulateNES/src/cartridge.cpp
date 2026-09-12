@@ -5,6 +5,7 @@
 #include "mapper_0.h"
 #include "mapper_1.h"
 #include "mapper_3.h"
+#include "mapper_2.h"
 #include "mapper_34.h"
 #include "mapper_4.h"
 
@@ -35,7 +36,7 @@ Cartridge::Cartridge(const QString& path, bool* status, Bus* bus)
             }
             else if(map == 2)
             {
-                // UNROM
+                mapper.reset(new Mapper_2(file, header));
             }
             else if(map == 3)
             {

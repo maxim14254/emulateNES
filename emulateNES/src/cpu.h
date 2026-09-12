@@ -41,6 +41,7 @@ public:
     uint8_t get_A(){ return A; }
     uint8_t get_X(){ return X; }
     uint8_t get_Y(){ return Y; }
+    int get_IRQ(){ return IRQ; }
     uint8_t get_gamepad(uint8_t i){ return gamepad[i]; }
 
     void release_irq();

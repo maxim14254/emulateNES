@@ -85,6 +85,7 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     }
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода DMA
     {
+        //apu->run(cpu->cycles); // догнать APU до текущего момента
         apu->write_registers(addr, data); // APU
 
         if(addr == 0x4014) // DMA
@@ -208,21 +209,32 @@ void Bus::init_APU(APU *_apu)
     apu = _apu;
 }
 
-void Bus::run_steps_ppu(int cycles)
+void Bus::run_steps_ppu(uint64_t cycles)
 {
     ppu->run(cycles);
 }
 
 uint64_t old_cycles = 0;
-void Bus::end_frame_apu(int cycles)
+void Bus::end_frame_apu(uint64_t cycles)
 {
     apu->end_frame(cycles, old_cycles);
 
     old_cycles = cycles;
+
+    using clock = std::chrono::steady_clock;
+    static clock::time_point nextFrame = clock::now();
+    constexpr auto framePeriod = std::chrono::nanoseconds(16639267);
+
+    nextFrame += framePeriod;
+    auto now = clock::now();
+    if (nextFrame > now)
+        std::this_thread::sleep_until(nextFrame);
+    else
+        nextFrame = now;
 }
 
 uint64_t old_cycles1 = 0;
-void Bus::run_apu(int cycles)
+void Bus::run_apu(uint64_t cycles)
 {
     apu->run(cycles - old_cycles1);
 
@@ -231,6 +243,7 @@ void Bus::run_apu(int cycles)
 
 void Bus::set_apu_irq(bool level)
 {
+
     if (apu_irq_level == level)
         return;
 
