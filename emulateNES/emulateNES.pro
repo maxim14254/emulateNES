@@ -22,7 +22,7 @@ SOURCES += $$files(src/*.cpp) \
 HEADERS += $$files(src/*.h) \
 
 
-FORMS += $$files(forms/*)
+FORMS += $$files(forms/*) \
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -33,5 +33,6 @@ RESOURCES += \
     res.qrc
 
 DISTFILES += \
+    games/Battletoads-Double Dragon (USA).nes \
     games/RoboCop 3 (USA).nes
 

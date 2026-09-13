@@ -8,6 +8,7 @@
 #include "mapper_2.h"
 #include "mapper_34.h"
 #include "mapper_4.h"
+#include "mapper_7.h"
 
 
 Cartridge::Cartridge(const QString& path, bool* status, Bus* bus)
@@ -45,6 +46,10 @@ Cartridge::Cartridge(const QString& path, bool* status, Bus* bus)
             else if(map == 4)
             {
                 mapper.reset(new Mapper_4(file, header, bus));
+            }
+            else if(map == 7)
+            {
+                mapper.reset(new Mapper_7(file, header, bus));
             }
             else if(map == 34)
             {

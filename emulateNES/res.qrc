@@ -45,5 +45,6 @@
         <file>games/Adventure Island Classic (Europe).nes</file>
         <file>games/Arkanoid (USA).nes</file>
         <file>games/Contra (USA).nes</file>
+        <file>games/Battletoads-Double Dragon (USA).nes</file>
     </qresource>
 </RCC>
