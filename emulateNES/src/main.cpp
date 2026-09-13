@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/Battletoads-Double Dragon (USA).nes");
+    bool rez = cpu.slot_init_new_cartridge(":/games/Little Nemo - The Dream Master (USA).nes");
     //:/games/F1 Race (Japan).nes
     //:/games/Home Alone 2 - Lost in New York (USA).nes
     //:/games/Double Dragon II - The Revenge (USA).nes
