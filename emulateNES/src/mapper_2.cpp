@@ -156,3 +156,4 @@ uint16_t Mapper_2::get_IRQ()
         return 0;
     return mapper_read_prg(0xFFFE) | (mapper_read_prg(0xFFFF) << 8);
 }
+

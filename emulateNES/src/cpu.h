@@ -9,6 +9,8 @@
 #include <QString>
 #include <memory>
 #include <thread>
+#include "save.h"
+#include <QDataStream>
 
 
 class Bus;
@@ -52,6 +54,14 @@ public:
     //static uint64_t get_cycles(){ return cycles; }
     uint64_t get_PC(){ return PC; }
 
+    void set_save_callback(const std::function<void()>& callback) { save_callback = callback; }
+    void set_load_callback(const std::function<void()>& callback) { load_callback = callback; }
+
+    friend QDataStream &operator<<(QDataStream &stream, const CPU &cpu);
+    friend QDataStream &operator>>(QDataStream &in, CPU &cpu);
+
+    friend class SaveLoad;
+
 public slots:
     bool slot_init_new_cartridge(const QString& path);
 
@@ -80,6 +90,9 @@ private:
     MainWindow* window;
 
     uint8_t gamepad[2];
+
+    std::function<void()> save_callback;
+    std::function<void()> load_callback;
 
     void run();
     void reset();

@@ -27,6 +27,7 @@ public:
     uint16_t get_RESET() override;
     uint16_t get_IRQ() override;
 
+
 private:
     uint8_t chr_bank = 0;
     uint8_t chr_bank_mask = 0;

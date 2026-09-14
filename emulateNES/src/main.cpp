@@ -6,6 +6,7 @@
 #include "bus.h"
 #include "ppu.h"
 #include "apu.h"
+#include "save.h"
 #include <QtMultimedia/QAudioDeviceInfo>
 #include <QtMultimedia/QAudioOutput>
 #include <QtMultimedia/QAudioFormat>
@@ -64,14 +65,16 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/Battletoads-Double Dragon (USA).nes");
+    bool rez = cpu.slot_init_new_cartridge(":/games/Rockin' Kats (USA).nes");
+
+    SaveLoad save_load(cpu, bus, ppu);
     //:/games/F1 Race (Japan).nes
     //:/games/Home Alone 2 - Lost in New York (USA).nes
     //:/games/Double Dragon II - The Revenge (USA).nes
     //:/games/Chip 'n Dale - Rescue Rangers 2 (USA).nes
     //:/games/Contra Force (USA).nes
     //:/games/RoboCop 3 (USA).nes
-    // :/games/Super Mario Bros. (World).nes
+    //:/games/Super Mario Bros. (World).nes
     int exec = a.exec();
 
     return exec;

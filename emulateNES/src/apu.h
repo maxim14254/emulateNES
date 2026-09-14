@@ -51,6 +51,9 @@ public:
     nes_time_t next_dmc_read_cycles() const;
     void end_frame(uint64_t cycles, uint64_t old_cycles);
 
+    friend QDataStream &operator<<(QDataStream &stream, const APU &cpu);
+    friend QDataStream &operator>>(QDataStream &in, APU &cpu);
+
 
     static const unsigned int no_irq = INT_MAX / 2 + 1;
     int64_t last_dmc_cycles = 0;

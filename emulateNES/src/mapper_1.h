@@ -26,6 +26,7 @@ public:
     uint16_t get_RESET() override;
     uint16_t get_IRQ() override;
 
+
 private:
     uint8_t reg_control = 0x0C;
     uint8_t reg_chr0 = 0;

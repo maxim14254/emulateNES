@@ -10,6 +10,58 @@
 #include <QProcess>
 
 
+
+QDataStream &operator<<(QDataStream &out, const PPU &ppu)
+{
+    out << ppu.PPUCTRL << ppu.PPUMASK << ppu.PPUSTATUS << ppu.OAMADDR << ppu.OAMDATA << ppu.PPUSCROLL << ppu.PPUDATA;
+    out << ppu.PPUADDR << ppu.current_VRAM << ppu.render_VRAM << ppu.temp_VRAM;
+    out << ppu.numb_pixelX << ppu.ppu_data_buffer << ppu.openBus;
+    out << ppu.w;
+    out << ppu.scanline << ppu.cycle;
+    out << (quint64)ppu.frame;
+    out << ppu.shift_tile_lsb << ppu.shift_tile_msb << ppu.shift_attrib_lsb << ppu.shift_attrib_msb;
+
+    for (int i = 0; i < 8; ++i)
+        out << ppu.shif_sprite_lsb[i];
+
+    for (int i = 0; i < 8; ++i)
+        out << ppu.shif_sprite_msb[i];
+
+    out << ppu.sprite_from_sprite0 << ppu.sprite0_hit_this_scanline;
+
+    for (int i = 0; i < 256; ++i)
+        out << ppu.oam[i];
+
+    return out;
+}
+
+QDataStream &operator>>(QDataStream &in, PPU &ppu)
+{
+    quint64 f  = 0;
+
+    in >> ppu.PPUCTRL >> ppu.PPUMASK >> ppu.PPUSTATUS >> ppu.OAMADDR >> ppu.OAMDATA >> ppu.PPUSCROLL >> ppu.PPUDATA;
+    in >> ppu.PPUADDR >> ppu.current_VRAM >> ppu.render_VRAM >> ppu.temp_VRAM;
+    in >> ppu.numb_pixelX >> ppu.ppu_data_buffer >> ppu.openBus;
+    in >> ppu.w;
+    in >> ppu.scanline >> ppu.cycle;
+    in >> f;
+    ppu.frame = f;
+    in >> ppu.shift_tile_lsb >> ppu.shift_tile_msb >> ppu.shift_attrib_lsb >> ppu.shift_attrib_msb;
+
+    for (int i = 0; i < 8; ++i)
+        in >> ppu.shif_sprite_lsb[i];
+
+    for (int i = 0; i < 8; ++i)
+        in >> ppu.shif_sprite_msb[i];
+
+    in >> ppu.sprite_from_sprite0 >> ppu.sprite0_hit_this_scanline;
+
+    for (int i = 0; i < 256; ++i)
+        in >> ppu.oam[i];
+
+    return in;
+}
+
 PPU::PPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 {
     oam.resize(256);
@@ -267,8 +319,6 @@ void PPU::run(uint64_t cycles)
                     }
                     else if (PPUMASK & 0x10)   // спрайты включены
                     {
-                        // Пустой слот: PPU всё равно читает из pattern table,
-                        // выбранной PPUCTRL.3 — это критично для MMC3 A12.
                         uint16_t patternBase = (PPUCTRL & 0x08) ? 0x1000 : 0x0000;
                         bus->read_ppu(patternBase);
                         bus->read_ppu(patternBase + 8);

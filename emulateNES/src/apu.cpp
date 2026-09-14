@@ -9,6 +9,120 @@
 
 int samplesToWrite = 0;
 
+
+QDataStream &operator<<(QDataStream &out, const APU &apu)
+{
+     out << static_cast<qint64>(apu.last_cycles);
+     out << static_cast<qint64>(apu.last_dmc_cycles);
+     out << static_cast<qint32>(apu.next_irq);
+     out << static_cast<qint32>(apu.earliest_irq_);
+     out << static_cast<quint32>(apu.frame_delay);
+     out << static_cast<qint32>(apu.frame_period);
+     out << static_cast<qint32>(apu.frame_counter);
+     out << static_cast<quint8>(apu.frame_mode_5step);
+     out << static_cast<quint8>(apu.irq_flag ? 1 : 0);
+     out << static_cast<quint8>(apu.frame_irq_flag  ? 1 : 0);
+     out << static_cast<qint32>(apu.osc_enables);
+     out << static_cast<quint8>(apu.status);
+
+     out << apu.sampleAccum;
+     out << static_cast<qint16>(apu.last);
+
+     out << apu.pulse1_output;
+     out << apu.pulse2_output;
+     out << static_cast<quint8>(apu.noise_output);
+     out << static_cast<quint8>(apu.triangle_output);
+
+     out << static_cast<quint8>(apu.pulse1_enable ? 1 : 0);
+     out << static_cast<quint8>(apu.pulse2_enable ? 1 : 0);
+     out << static_cast<quint8>(apu.noise_enable ? 1 : 0);
+     out << static_cast<quint8>(apu.triangle_enable ? 1 : 0);
+
+//     out << apu.square1;
+//     out << apu.square2;
+//     out << apu.triangle;
+//     out << apu.noise;
+//     out << apu.dmc;
+
+//     out << apu.square_synth;
+
+//     out << apu.blip;
+
+     return out;
+}
+
+QDataStream &operator>>(QDataStream &in, APU &apu)
+{
+    qint64 i64;
+    qint32 i32;
+    quint32 u32;
+    quint8 u8;
+    quint16 u16;
+
+    in >> i64;
+    apu.last_cycles = (int64_t)i64;
+    in >> i64;
+    apu.last_dmc_cycles = (int64_t)i64;
+    in >> i32;
+    apu.next_irq = (nes_time_t)i32;
+    in >> i32;
+    apu.earliest_irq_ = (nes_time_t)i32;
+    in >> u32;
+    apu.frame_delay = u32;
+    in >> i32;
+    apu.frame_period = i32;
+    in >> i32;
+    apu.frame_counter = i32;
+    in >> u8;
+    apu.frame_mode_5step = u8;
+    in >> u8;
+    apu.irq_flag = (u8 != 0);
+    in >> u8;
+    apu.frame_irq_flag = (u8 != 0);
+    in >> i32;
+    apu.osc_enables = i32;
+    in >> u8;
+    apu.status = u8;
+
+    in >> apu.sampleAccum;
+    in >> u16;
+    apu.last = (qint16)u16;
+
+    in >> apu.pulse1_output;
+    in >> apu.pulse2_output;
+    in >> u8;
+    apu.noise_output = u8;
+    in >> u8;
+    apu.triangle_output = u8;
+
+    in >> u8;
+    apu.pulse1_enable = (u8 != 0);
+    in >> u8;
+    apu.pulse2_enable = (u8 != 0);
+    in >> u8;
+    apu.noise_enable = (u8 != 0);
+    in >> u8;
+    apu.triangle_enable = (u8 != 0);
+
+//    in >> apu.square1;
+//    in >> apu.square2;
+//    in >> apu.triangle;
+//    in >> apu.noise;
+//    in >> apu.dmc;
+
+//    in >> apu.square_synth;
+//    in >> apu.blip;
+
+    apu.output(&apu.blip);
+
+    apu.dmc.apu = &apu;
+
+   // apu.ring_buffer = RingBufferSPSC(13500);
+    std::fill(apu.temp.begin(), apu.temp.end(), qint16(0));
+
+    return in;
+}
+
 int prg_reader(void* _prg_reader_data, nes_addr_t addr)
 {
     Bus* bus = static_cast<Bus*>(_prg_reader_data);

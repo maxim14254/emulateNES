@@ -29,6 +29,9 @@ public:
 
     void clock_irq_on_a12(uint16_t addr);
 
+    friend QDataStream &operator<<(QDataStream &stream, const Mapper_4 &mapper);
+    friend QDataStream &operator>>(QDataStream &in, Mapper_4 &mapper);
+
 private:
     void update_banks();
     //void clock_irq_on_a12(uint16_t addr);
@@ -54,8 +57,10 @@ private:
     bool irq_reload = false;
     bool irq_enabled = false;
 
-    // A12 edge detect
     bool last_a12 = false;
+
+    uint8_t a12_low_count = 0;
+    static constexpr uint8_t A12_FILTER = 4;
 
     Bus* bus;
 };

@@ -62,8 +62,8 @@ private:
     std::vector<uint8_t> palette;           //палитра
     std::unique_ptr<Cartridge> cartridge;   //Картридж
     PPU* ppu;                               //Видеокарта
-    CPU* cpu;
-    APU* apu;
+    CPU* cpu;                               //ЦП
+    APU* apu;                               //Звуковая карта
 
     uint16_t cycle;
     uint16_t scanline;
@@ -79,7 +79,7 @@ private:
         12,16,24,18,48,20,96,22,192,24,72,26,16,28,32,30
     };
 
-    //
+    friend class SaveLoad;
 };
 
 #endif // BUS_H

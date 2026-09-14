@@ -35,6 +35,8 @@ public:
 private:
     std::unique_ptr<Mapper> mapper;
     uint8_t map = 0;
+
+    friend class SaveLoad;
 };
 
 #endif // CARTRIDGE_H

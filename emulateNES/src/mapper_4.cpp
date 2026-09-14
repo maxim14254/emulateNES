@@ -5,6 +5,61 @@
 #include "ppu.h"
 
 
+
+QDataStream &operator<<(QDataStream &out, const Mapper_4 &mapper)
+{
+    out << mapper.bank_select;
+
+    for(int i = 0; i < 8; ++i)
+        out << mapper.bank_registers[i];
+
+    out << mapper.prg_mode << mapper.chr_mode << mapper.prg_ram_enable << mapper.prg_ram_write_protect;
+
+    for(int i = 0; i < 4; ++i)
+        out << mapper.prg_bank_map[i];
+
+    for(int i = 0; i < 8; ++i)
+        out << mapper.chr_bank_map[i];
+
+    out << mapper.irq_latch << mapper.irq_counter;
+    out << mapper.irq_reload << mapper.irq_enabled << mapper.last_a12;
+    out << mapper.a12_low_count;
+
+    for(int i = 0; i < 0x2000; ++i)
+        out << mapper.prg_ram[i];
+
+    out << mapper.Orintation;
+
+    return out;
+}
+
+QDataStream &operator>>(QDataStream &in, Mapper_4 &mapper)
+{
+    in >> mapper.bank_select;
+
+    for(int i = 0; i < 8; ++i)
+        in >> mapper.bank_registers[i];
+
+    in >> mapper.prg_mode >> mapper.chr_mode >> mapper.prg_ram_enable >> mapper.prg_ram_write_protect;
+
+    for(int i = 0; i < 4; ++i)
+        in >> mapper.prg_bank_map[i];
+
+    for(int i = 0; i < 8; ++i)
+        in >> mapper.chr_bank_map[i];
+
+    in >> mapper.irq_latch >> mapper.irq_counter;
+    in >> mapper.irq_reload >> mapper.irq_enabled >> mapper.last_a12;
+    in >> mapper.a12_low_count;
+
+    for(int i = 0; i < 0x2000; ++i)
+        in >> mapper.prg_ram[i];
+
+    in >> mapper.Orintation;
+
+    return in;
+}
+
 Mapper_4::Mapper_4(QFile& file, NESHeader _header, Bus* _bus) : bus(_bus)
 {
     header = _header;
@@ -126,25 +181,32 @@ uint8_t Mapper_4::mapper_read_prg(uint16_t addr)
 
 void Mapper_4::clock_irq_on_a12(uint16_t addr)
 {
-//    if(!(PPU::PPUMASK & 0x08) || !(PPU::PPUMASK & 0x10))
-//        return;
+    if(!(PPU::PPUMASK & 0x08) || !(PPU::PPUMASK & 0x10))
+        return;
 
     bool a12 = addr & 0x1000;
 
     if (a12 && !last_a12)
     {
-        // Фронт
-        if (irq_reload || irq_counter == 0)
+        if (a12_low_count >= A12_FILTER)
         {
-            irq_counter = irq_latch;
-            irq_reload = false;
-        }
-        else
-            --irq_counter;
+            if (irq_reload || irq_counter == 0)
+            {
+                irq_counter = irq_latch;
+                irq_reload = false;
+            }
+            else
+                --irq_counter;
 
-        if (irq_counter == 0 && irq_enabled)
-            bus->set_mapper_irq(true);
+            if (irq_counter == 0 && irq_enabled)
+                bus->set_mapper_irq(true);
+        }
     }
+
+    if (a12)
+        a12_low_count = 0;
+    else if (a12_low_count < 255)
+        ++a12_low_count;
 
     last_a12 = a12;
 }

@@ -15,6 +15,36 @@ std::vector<std::tuple<uint16_t, uint8_t, uint8_t>> traces(256);
 int trace;
 #endif
 
+QDataStream &operator<<(QDataStream &out, const CPU &cpu)
+{
+    out << cpu.A;
+    out << cpu.X;
+    out << cpu.Y;
+    out << cpu.SP;
+    out << cpu.status;
+    out << cpu.PC;
+    out << (quint64)cpu.cycles;
+    out << cpu.nmi_pending;
+
+    return out;
+}
+
+QDataStream &operator>>(QDataStream &in, CPU &cpu)
+{
+    quint64 c = 0;
+    in >> cpu.A;
+    in >> cpu.X;
+    in >> cpu.Y;
+    in >> cpu.SP;
+    in >> cpu.status;
+    in >> cpu.PC;
+    in >> c;
+    in >> cpu.nmi_pending;
+
+    cpu.cycles = c;
+
+    return in;
+}
 
 CPU::CPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 {
@@ -473,6 +503,12 @@ void CPU::slot_release_key(int key)
         break;
     case Qt::Key::Key_Right:
         gamepad[0] &= ~0x01;
+        break;
+    case Qt::Key::Key_F5:
+        save_callback();
+        break;
+    case Qt::Key::Key_F9:
+        load_callback();
         break;
     }
 }

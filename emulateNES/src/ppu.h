@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <QDataStream>
 
 
 class Bus;
@@ -43,6 +44,8 @@ public:
     uint8_t getppustatus(){return PPUSTATUS;}
     uint8_t static inline PPUMASK;
 
+    friend QDataStream &operator<<(QDataStream &stream, const PPU &ppu);
+    friend QDataStream &operator>>(QDataStream &in, PPU &ppu);
 
 private:
     uint8_t PPUCTRL, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA; // регистры
@@ -137,6 +140,7 @@ private:
         {204, 210, 120}, {180, 222, 120}, {168, 226, 144}, {152, 226, 180},
         {160, 214, 228}, {160, 162, 160}, {  0,   0,   0}, {  0,   0,   0}
     };
+
 };
 
 #endif // PPU_H

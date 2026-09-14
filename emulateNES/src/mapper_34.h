@@ -26,6 +26,7 @@ public:
     uint16_t get_RESET() override;
     uint16_t get_IRQ() override;
 
+
 private:
     uint8_t prg_bank = 0;
     uint32_t prg_bank_count_32k = 0;

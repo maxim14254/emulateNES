@@ -25,6 +25,7 @@ public:
     uint16_t get_RESET() override;
     uint16_t get_IRQ() override;
 
+
 };
 
 #endif // MAPPER___H
