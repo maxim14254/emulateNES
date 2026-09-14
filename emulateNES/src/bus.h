@@ -41,6 +41,7 @@ public:
     void run_watch_all_tiles();
     void run_watch_cpu_instr(uint16_t PC);
     void fff();
+    uint8_t get_mapper_numb();
 
     uint16_t get_NMI();
     uint16_t get_RESET();

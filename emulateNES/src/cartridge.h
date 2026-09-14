@@ -23,6 +23,7 @@ public:
     void write_chr_ram(uint16_t addr, uint8_t data);
     void mapper_write(uint16_t addr, uint8_t data);
     void fff();
+    uint8_t get_mapper_numb() { return map;}
 
     uint16_t map_nametable_addr(uint16_t addr);
 

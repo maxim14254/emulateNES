@@ -49,7 +49,7 @@ Cartridge::Cartridge(const QString& path, bool* status, Bus* bus)
             }
             else if(map == 7)
             {
-                mapper.reset(new Mapper_7(file, header, bus));
+                mapper.reset(new Mapper_7(file, header));
             }
             else if(map == 34)
             {

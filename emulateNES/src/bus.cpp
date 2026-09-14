@@ -293,6 +293,11 @@ void Bus::fff()
     cartridge->fff();
 }
 
+uint8_t Bus::get_mapper_numb()
+{
+    return cartridge->get_mapper_numb();
+}
+
 uint16_t Bus::get_NMI()
 {
     return cartridge->get_NMI();

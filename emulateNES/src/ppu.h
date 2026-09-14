@@ -101,6 +101,8 @@ private:
     MainWindow* window;
     Bus* bus;
 
+    bool sprite0_hit_this_scanline = true;
+
 
     void ppu_tick();
     uint8_t get_background(uint8_t& color_index);

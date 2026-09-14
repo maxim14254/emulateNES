@@ -190,6 +190,12 @@ void PPU::run(uint64_t cycles)
                 uint8_t color_index2 = 0;
                 uint8_t color_sprite = get_sprite(priority, color_index2);
 
+                if (bus->get_mapper_numb() == 7 && (PPUMASK & 0x10) && color_index2 > 0 && sprite_from_sprite0 && !sprite0_hit_this_scanline) // великий костыль
+                {
+                    PPUSTATUS |= 0x40;
+                    sprite0_hit_this_scanline = true;
+                }
+
                 shift_tile_lsb <<= 1;
                 shift_tile_msb <<= 1;
 
@@ -560,6 +566,7 @@ void PPU::ppu_tick()
     {
         cycle = 0;
         ++scanline;
+        sprite0_hit_this_scanline = false;
 
 #if DEBUG_ON
         if(!run_without_scanline_mutex && (go_scanline < 0 || go_scanline == scanline))
