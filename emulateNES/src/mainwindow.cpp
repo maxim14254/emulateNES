@@ -45,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->cpu_debuger->setVisible(true);
     ui->cpu_debuger->setPlainText("");
-    ui->cpu_debuger->setFixedSize(350, 300);
+    ui->cpu_debuger->setFixedWidth(370);
     ui->cpu_debuger->setTextInteractionFlags(Qt::NoTextInteraction);
 
     ui->verticalLayout_3->addStretch();
