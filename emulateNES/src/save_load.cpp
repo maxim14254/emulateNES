@@ -1,4 +1,4 @@
-#include "save.h"
+#include "save_load.h"
 #include <QFile>
 #include <QCoreApplication>
 #include <QMessageBox>
@@ -6,10 +6,11 @@
 #include <QDir>
 #include "cartridge.h"
 #include "mapper_4.h"
+#include "mainwindow.h"
 #include "global.h"
 
 
-SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu, APU* _apu) : cpu(_cpu), bus(_bus), ppu(_ppu), apu(_apu)
+SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu, APU* _apu, MainWindow& _w) : cpu(_cpu), bus(_bus), ppu(_ppu), apu(_apu), w(_w)
 {
     SaveDir = QCoreApplication::applicationDirPath() + "/saves/";
 
@@ -18,13 +19,14 @@ SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu, APU* _apu) : cpu(_cpu), bus(
 
     cpu.set_save_callback(std::bind(&SaveLoad::Save, this));
     cpu.set_load_callback(std::bind(&SaveLoad::Load, this));
+    cpu.chande_slot_callback = [&]()->uint8_t& { return saveNumb; };
 }
 
 void SaveLoad::Save()
 {
     QFile file(QString("%1save_%2.sav").arg(SaveDir).arg(saveNumb));
 
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text))
+    if (file.open(QIODevice::WriteOnly))
     {
         QByteArray array;
         QDataStream out(&array, QIODevice::WriteOnly);
@@ -53,6 +55,8 @@ void SaveLoad::Save()
 
         file.write(array);
         file.close();
+
+        w.show_text(QString("Сохранено в слот:%1").arg(saveNumb));
     }
     else
     {
@@ -72,6 +76,15 @@ void SaveLoad::Load()
 
         QDataStream in(&array, QIODevice::ReadOnly);
 
+        QString p;
+        in >> p;
+
+        if(p != cpu.path)
+        {
+            w.show_text(QString("Неверный ROM"));
+            return;
+        }
+
         if(!_update)
         {
             std::lock_guard<std::mutex> lg(update_frame_mutex);
@@ -81,6 +94,7 @@ void SaveLoad::Load()
         }
 
         std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+
         //CPU регистры
         in >> cpu;
 
@@ -93,6 +107,8 @@ void SaveLoad::Load()
         //APU
         if(apu)
             in >> *apu;
+
+        w.show_text(QString("Загружен слот:%1").arg(saveNumb));
     }
     else
     {

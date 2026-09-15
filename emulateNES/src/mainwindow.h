@@ -32,6 +32,7 @@ public:
 
     void clear_cpu_debug();
     void show_real_FPS(int microsec);
+    void show_text(const QString& text);
 
 public slots:
     void slot_show_error_message();

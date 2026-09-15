@@ -45,6 +45,12 @@ void MyOpenGL::set_frame_buffer(std::vector<uint32_t>& frame_buffer)
         nesFrame.swap(frame_buffer);
 }
 
+void MyOpenGL::show_text(const QString& _text)
+{
+    text = _text;
+    time_show_text = std::chrono::steady_clock::now();
+}
+
 void MyOpenGL::initializeGL()
 {    
     initializeOpenGLFunctions();
@@ -184,9 +190,32 @@ void MyOpenGL::paintEvent(QPaintEvent *event)
 {
     QOpenGLWidget::paintEvent(event);
 
-#ifdef DEBUG_ON
     if(width1 == 256 && height1 == 240) // условие для отсевания дебажных экранов от главного
     {
+        if(!text.isEmpty())
+        {
+            QPainter painter(this);
+            painter.setRenderHint(QPainter::Antialiasing);
+
+            QFont font("Arial", 18);
+
+            QPainterPath path;
+            path.addText(10, 30, font, text);
+
+            painter.setPen(QPen(Qt::black, 1));
+            painter.setBrush(Qt::white);
+            painter.drawPath(path);
+
+            painter.end();
+
+            auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time_show_text);
+
+            if(elapsed_ms.count() > 2000)
+                text = "";
+        }
+
+#ifdef DEBUG_ON
+
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
 
@@ -200,7 +229,8 @@ void MyOpenGL::paintEvent(QPaintEvent *event)
         painter.drawPath(path);
 
         painter.end();
-    }
 #endif
+
+    }
 }
 

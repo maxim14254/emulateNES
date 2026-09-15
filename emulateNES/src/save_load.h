@@ -10,7 +10,7 @@
 class SaveLoad
 {
 public:
-    SaveLoad(CPU& cpu, Bus& bus, PPU& ppu, APU* apu);
+    SaveLoad(CPU& cpu, Bus& bus, PPU& ppu, APU* apu, MainWindow& w);
 
     void Save();
     void Load();
@@ -20,6 +20,7 @@ private:
     Bus& bus;
     PPU& ppu;
     APU* apu;
+    MainWindow& w;
 
     QString SaveDir;
 

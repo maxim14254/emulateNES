@@ -17,6 +17,8 @@ public:
 
     void set_frame_buffer(std::vector<uint32_t>& frame_buffer);
 
+    void show_text(const QString& text);
+
 protected:
     void initializeGL() override;
     void resizeGL(int w, int h) override;
@@ -34,8 +36,12 @@ private:
 
     MainWindow* window;
 
+    QString text;
+
     int imgY;
     int imgX;
+
+    std::chrono::steady_clock::time_point time_show_text;
 
 };
 

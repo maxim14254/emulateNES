@@ -17,6 +17,7 @@ int trace;
 
 QDataStream &operator<<(QDataStream &out, const CPU &cpu)
 {
+    out << cpu.path;
     out << cpu.A;
     out << cpu.X;
     out << cpu.Y;
@@ -425,13 +426,13 @@ void CPU::handle_irq()
     cycles += 7;
 }
 
-bool CPU::slot_init_new_cartridge(const QString& path)
+bool CPU::slot_init_new_cartridge(const QString& _path)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_stop);
 
         bool status;
-        bus->init_new_cartridge(path, &status);
+        bus->init_new_cartridge(_path, &status);
 
         if(!status)
             return false;
@@ -445,6 +446,7 @@ bool CPU::slot_init_new_cartridge(const QString& path)
         run_t = std::thread(&CPU::run, this);
     });
 
+    path = _path;
     return true;
 
 }
@@ -513,6 +515,12 @@ void CPU::slot_release_key(int key)
         break;
     case Qt::Key::Key_F9:
         load_callback();
+        break;
+    case Qt::Key::Key_Plus:
+        window->show_text(QString("Выбран слот:%1").arg(++chande_slot_callback()));
+        break;
+    case Qt::Key::Key_Minus:
+        window->show_text(QString("Выбран слот:%1").arg(--chande_slot_callback()));
         break;
     }
 }

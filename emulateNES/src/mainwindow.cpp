@@ -140,6 +140,11 @@ void MainWindow::show_real_FPS(int microsec)
 #endif
 }
 
+void MainWindow::show_text(const QString& text)
+{
+    my_openGL->show_text(text);
+}
+
 void MainWindow::slot_show_error_message()
 {
     QMessageBox message(QMessageBox::Icon::Critical, "Error", "Ошибка эмуляции KIL", QMessageBox::StandardButton::Ok);

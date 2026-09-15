@@ -9,7 +9,6 @@
 #include <QString>
 #include <memory>
 #include <thread>
-#include "save.h"
 #include <QDataStream>
 
 
@@ -93,6 +92,7 @@ private:
 
     std::function<void()> save_callback;
     std::function<void()> load_callback;
+    std::function<uint8_t&()> chande_slot_callback;
 
     void run();
     void reset();
@@ -103,6 +103,7 @@ private:
     void handle_nmi();
     void handle_irq();
 
+    QString path;
 
     //адресации
     uint8_t immediate(uint16_t* addr = nullptr, bool onlyRead = false);            // 1 цикл
