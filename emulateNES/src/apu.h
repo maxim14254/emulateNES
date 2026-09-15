@@ -54,7 +54,6 @@ public:
     friend QDataStream &operator<<(QDataStream &stream, const APU &cpu);
     friend QDataStream &operator>>(QDataStream &in, APU &cpu);
 
-
     static const unsigned int no_irq = INT_MAX / 2 + 1;
     int64_t last_dmc_cycles = 0;
     int osc_enables = 0;

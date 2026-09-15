@@ -32,11 +32,12 @@ public:
     uint16_t get_IRQ();
     int get_orintation();
 
+    friend QDataStream &operator<<(QDataStream &stream, const Cartridge &cartridge);
+    friend QDataStream &operator>>(QDataStream &in, Cartridge &cartridge);
+
 private:
     std::unique_ptr<Mapper> mapper;
     uint8_t map = 0;
-
-    friend class SaveLoad;
 };
 
 #endif // CARTRIDGE_H

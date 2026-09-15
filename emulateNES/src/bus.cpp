@@ -10,6 +10,42 @@
 #include "mapper.h"
 
 
+QDataStream &operator<<(QDataStream &out, const Bus &bus)
+{
+    for(int i = 0; i < 0x800; ++i)
+        out << bus.ram[i];
+    for(int i = 0; i < 0x800; ++i)
+        out << bus.vram[i];
+    for(int i = 0; i < 0x20; ++i)
+        out << bus.palette[i];
+    for(int i = 0; i < 2; ++i)
+        out << bus.controller[i];
+
+    out << *bus.cartridge.get();
+
+    return out;
+}
+
+QDataStream &operator>>(QDataStream &in, Bus &bus)
+{
+    for(int i = 0; i < 0x800; ++i)
+        in >> bus.ram[i];
+    for(int i = 0; i < 0x800; ++i)
+        in >> bus.vram[i];
+    for(int i = 0; i < 0x20; ++i)
+        in >> bus.palette[i];
+    for(int i = 0; i < 2; ++i)
+        in >> bus.controller[i];
+
+    in >> *bus.cartridge.get();
+
+    bus.old_cycles1 = bus.cpu->cycles;
+    bus.old_cycles  = bus.cpu->cycles;
+
+    return in;
+}
+
+
 Bus::Bus()
 {
     ram.resize(0x800);
@@ -48,7 +84,8 @@ uint8_t Bus::read_cpu(uint16_t addr, bool onlyRead)
         }
         else if(addr == 0x4015)
         {
-            return apu->read_status();
+            if(apu)
+                return apu->read_status();
         }
         else
             return 0x00; // TO DO
@@ -86,7 +123,8 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода DMA
     {
         //apu->run(cpu->cycles); // догнать APU до текущего момента
-        apu->write_registers(addr, data); // APU
+        if(apu)
+            apu->write_registers(addr, data); // APU
 
         if(addr == 0x4014) // DMA
             ppu->set_oam(data);
@@ -214,31 +252,35 @@ void Bus::run_steps_ppu(uint64_t cycles)
     ppu->run(cycles);
 }
 
-uint64_t old_cycles = 0;
 void Bus::end_frame_apu(uint64_t cycles)
 {
-    apu->end_frame(cycles, old_cycles);
+    if(apu)
+    {
+        apu->end_frame(cycles, old_cycles);
 
-    old_cycles = cycles;
+        old_cycles = cycles;
 
-    using clock = std::chrono::steady_clock;
-    static clock::time_point nextFrame = clock::now();
-    constexpr auto framePeriod = std::chrono::nanoseconds(16639267);
+        using clock = std::chrono::steady_clock;
+        static clock::time_point nextFrame = clock::now();
+        constexpr auto framePeriod = std::chrono::nanoseconds(16639267);
 
-    nextFrame += framePeriod;
-    auto now = clock::now();
-    if (nextFrame > now)
-        std::this_thread::sleep_until(nextFrame);
-    else
-        nextFrame = now;
+        nextFrame += framePeriod;
+        auto now = clock::now();
+        if (nextFrame > now)
+            std::this_thread::sleep_until(nextFrame);
+        else
+            nextFrame = now;
+    }
 }
 
-uint64_t old_cycles1 = 0;
 void Bus::run_apu(uint64_t cycles)
 {
-    apu->run(cycles - old_cycles1);
+    if(apu)
+    {
+        apu->run(cycles - old_cycles1);
 
-    old_cycles1 = cycles;
+        old_cycles1 = cycles;
+    }
 }
 
 void Bus::set_apu_irq(bool level)

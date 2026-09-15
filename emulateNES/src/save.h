@@ -4,12 +4,13 @@
 #include "cpu.h"
 #include "bus.h"
 #include "ppu.h"
+#include "apu.h"
 
 
 class SaveLoad
 {
 public:
-    SaveLoad(CPU& cpu, Bus& bus, PPU& ppu);
+    SaveLoad(CPU& cpu, Bus& bus, PPU& ppu, APU* apu);
 
     void Save();
     void Load();
@@ -18,6 +19,7 @@ private:
     CPU& cpu;
     Bus& bus;
     PPU& ppu;
+    APU* apu;
 
     QString SaveDir;
 

@@ -6,9 +6,10 @@
 #include <QDir>
 #include "cartridge.h"
 #include "mapper_4.h"
+#include "global.h"
 
 
-SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu) : cpu(_cpu), bus(_bus), ppu(_ppu)
+SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu, APU* _apu) : cpu(_cpu), bus(_bus), ppu(_ppu), apu(_apu)
 {
     SaveDir = QCoreApplication::applicationDirPath() + "/saves/";
 
@@ -28,6 +29,14 @@ void SaveLoad::Save()
         QByteArray array;
         QDataStream out(&array, QIODevice::WriteOnly);
 
+        if(!_update)
+        {
+            std::lock_guard<std::mutex> lg(update_frame_mutex);
+            _update = true;
+
+            cv.notify_one();
+        }
+
         std::lock_guard<std::mutex> lock(cpu.mutex_stop);
         //CPU регистры
         out << cpu;
@@ -35,14 +44,12 @@ void SaveLoad::Save()
         //PPU регистры
         out << ppu;
 
-        // Маппер
-        if(bus.cartridge->map == 4)
-        {
-            Mapper_4* mapper = dynamic_cast<Mapper_4*>(bus.cartridge->mapper.get());
-            out << *mapper;
-        }
+        //Bus
+        out << bus;
 
         //APU
+        if(apu)
+            out << *apu;
 
         file.write(array);
         file.close();
@@ -58,12 +65,20 @@ void SaveLoad::Load()
 {
     QFile file(QString("%1save_%2.sav").arg(SaveDir).arg(saveNumb));
 
-    if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+    if (file.open(QIODevice::ReadOnly))
     {
         QByteArray array = file.readAll();
         file.close();
 
         QDataStream in(&array, QIODevice::ReadOnly);
+
+        if(!_update)
+        {
+            std::lock_guard<std::mutex> lg(update_frame_mutex);
+            _update = true;
+
+            cv.notify_one();
+        }
 
         std::lock_guard<std::mutex> lock(cpu.mutex_stop);
         //CPU регистры
@@ -72,14 +87,12 @@ void SaveLoad::Load()
         //PPU регистры
         in >> ppu;
 
-        // Маппер
-        if(bus.cartridge->map == 4)
-        {
-            Mapper_4* mapper = dynamic_cast<Mapper_4*>(bus.cartridge->mapper.get());
-            in >> *mapper;
-        }
+        //Bus
+        in >> bus;
 
         //APU
+        if(apu)
+            in >> *apu;
     }
     else
     {

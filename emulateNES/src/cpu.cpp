@@ -23,8 +23,10 @@ QDataStream &operator<<(QDataStream &out, const CPU &cpu)
     out << cpu.SP;
     out << cpu.status;
     out << cpu.PC;
-    out << (quint64)cpu.cycles;
+    out << cpu.IRQ;
+    out << static_cast<quint64>(cpu.cycles);
     out << cpu.nmi_pending;
+    out << cpu.last_vblank;
 
     return out;
 }
@@ -38,8 +40,10 @@ QDataStream &operator>>(QDataStream &in, CPU &cpu)
     in >> cpu.SP;
     in >> cpu.status;
     in >> cpu.PC;
+    in >> cpu.IRQ;
     in >> c;
     in >> cpu.nmi_pending;
+    in >> cpu.last_vblank;
 
     cpu.cycles = c;
 
@@ -515,8 +519,6 @@ void CPU::slot_release_key(int key)
 
 void CPU::run()
 {
-    bool last_vblank = false;
-
     while (start.load())
     {
         std::lock_guard<std::mutex> lock(mutex_stop);

@@ -39,15 +39,14 @@ int main(int argc, char *argv[])
 
     QAudioDeviceInfo dev = QAudioDeviceInfo::defaultOutputDevice();
 
+    APU* apu = nullptr;
     if (dev.isFormatSupported(format))
     {
         QAudioOutput* sink = new QAudioOutput(dev, format);
         sink->setBufferSize(16384);
         sink->setNotifyInterval(5);
 
-        APU* apu = new APU(format.sampleRate(), &bus, sink);
-
-        bus.init_APU(apu);
+        apu = new APU(format.sampleRate(), &bus, sink);
     }
     else
     {
@@ -55,6 +54,8 @@ int main(int argc, char *argv[])
                             QMessageBox::StandardButton::Ok);
         message.exec();
     }
+
+    bus.init_APU(apu);
 
     PPU ppu(&w, &bus);
     bus.init_PPU(&ppu);
@@ -67,7 +68,7 @@ int main(int argc, char *argv[])
     bus.init_CPU(&cpu);
     bool rez = cpu.slot_init_new_cartridge(":/games/Rockin' Kats (USA).nes");
 
-    SaveLoad save_load(cpu, bus, ppu);
+    SaveLoad save_load(cpu, bus, ppu, apu);
     //:/games/F1 Race (Japan).nes
     //:/games/Home Alone 2 - Lost in New York (USA).nes
     //:/games/Double Dragon II - The Revenge (USA).nes

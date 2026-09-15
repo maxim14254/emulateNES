@@ -37,6 +37,7 @@ struct Nes_Osc
 		last_amp = amp;
 		return delta;
 	}
+
 };
 
 struct Nes_Envelope : Nes_Osc
@@ -51,6 +52,7 @@ struct Nes_Envelope : Nes_Osc
 		env_delay = 0;
 		Nes_Osc::reset();
 	}
+
 };
 
 // Nes_Square
@@ -75,7 +77,47 @@ struct Nes_Square : Nes_Envelope
 	}
 	nes_time_t maintain_phase( nes_time_t time, nes_time_t end_time,
 			nes_time_t timer_period );
+
+    friend QDataStream &operator<<(QDataStream &out, const Nes_Square &apu);
+    friend QDataStream &operator>>(QDataStream &in, Nes_Square &apu);
 };
+inline QDataStream &operator<<(QDataStream &out, const Nes_Square &apu)
+{
+    for(int i = 0; i < 4; ++i)
+        out << apu.regs[i];
+    for(int i = 0; i < 4; ++i)
+        out << apu.reg_written[i];
+    out << apu.length_counter;
+    out << apu.delay;
+    out << apu.last_amp;
+
+    out << apu.envelope;
+    out << apu.env_delay;
+
+    out << apu.phase;
+    out << apu.sweep_delay;
+
+    return out;
+}
+inline QDataStream &operator>>(QDataStream &in, Nes_Square &apu)
+{
+    for(int i = 0; i < 4; ++i)
+        in >> apu.regs[i];
+    for(int i = 0; i < 4; ++i)
+        in >> apu.reg_written[i];
+    in >> apu.length_counter;
+    in >> apu.delay;
+    in >> apu.last_amp;
+
+    in >> apu.envelope;
+    in >> apu.env_delay;
+
+    in >> apu.phase;
+    in >> apu.sweep_delay;
+
+
+    return in;
+}
 
 // Nes_Triangle
 struct Nes_Triangle : Nes_Osc
@@ -92,10 +134,45 @@ struct Nes_Triangle : Nes_Osc
 		linear_counter = 0;
 		phase = 1;
 		Nes_Osc::reset();
-	}
+    }
 	nes_time_t maintain_phase( nes_time_t time, nes_time_t end_time,
 			nes_time_t timer_period );
+
+    friend QDataStream &operator<<(QDataStream &out, const Nes_Triangle &apu);
+    friend QDataStream &operator>>(QDataStream &in, Nes_Triangle &apu);
 };
+inline QDataStream &operator<<(QDataStream &out, const Nes_Triangle &apu)
+{
+    for(int i = 0; i < 4; ++i)
+        out << apu.regs[i];
+    for(int i = 0; i < 4; ++i)
+        out << apu.reg_written[i];
+    out << apu.length_counter;
+    out << apu.delay;
+    out << apu.last_amp;
+
+    out << apu.phase;
+    out << apu.linear_counter;
+
+
+    return out;
+}
+inline QDataStream &operator>>(QDataStream &in, Nes_Triangle &apu)
+{
+    for(int i = 0; i < 4; ++i)
+        in >> apu.regs[i];
+    for(int i = 0; i < 4; ++i)
+        in >> apu.reg_written[i];
+    in >> apu.length_counter;
+    in >> apu.delay;
+    in >> apu.last_amp;
+
+    in >> apu.phase;
+    in >> apu.linear_counter;
+
+
+    return in;
+}
 
 // Nes_Noise
 struct Nes_Noise : Nes_Envelope
@@ -107,8 +184,46 @@ struct Nes_Noise : Nes_Envelope
 	void reset() {
 		noise = 1 << 14;
 		Nes_Envelope::reset();
-	}
+    }
+
+    friend QDataStream &operator<<(QDataStream &out, const Nes_Noise &apu);
+    friend QDataStream &operator>>(QDataStream &in, Nes_Noise &apu);
 };
+inline QDataStream &operator<<(QDataStream &out, const Nes_Noise &apu)
+{
+    for(int i = 0; i < 4; ++i)
+        out << apu.regs[i];
+    for(int i = 0; i < 4; ++i)
+        out << apu.reg_written[i];
+    out << apu.length_counter;
+    out << apu.delay;
+    out << apu.last_amp;
+
+    out << apu.envelope;
+    out << apu.env_delay;
+
+    out << apu.noise;
+
+    return out;
+}
+inline QDataStream &operator>>(QDataStream &in, Nes_Noise &apu)
+{
+    for(int i = 0; i < 4; ++i)
+        in >> apu.regs[i];
+    for(int i = 0; i < 4; ++i)
+        in >> apu.reg_written[i];
+    in >> apu.length_counter;
+    in >> apu.delay;
+    in >> apu.last_amp;
+
+    in >> apu.envelope;
+    in >> apu.env_delay;
+
+    in >> apu.noise;
+
+
+    return in;
+}
 
 // Nes_Dmc
 struct Nes_Dmc : Nes_Osc
@@ -147,7 +262,62 @@ struct Nes_Dmc : Nes_Osc
 	void reload_sample();
 	void reset();
 	int count_reads( nes_time_t, nes_time_t* ) const;
-	nes_time_t next_read_time() const;
+    nes_time_t next_read_time() const;
+
+    friend QDataStream &operator<<(QDataStream &out, const Nes_Dmc &apu);
+    friend QDataStream &operator>>(QDataStream &in, Nes_Dmc &apu);
 };
+inline QDataStream &operator<<(QDataStream &out, const Nes_Dmc &apu)
+{
+    for(int i = 0; i < 4; ++i)
+        out << apu.regs[i];
+    for(int i = 0; i < 4; ++i)
+        out << apu.reg_written[i];
+    out << apu.length_counter;
+    out << apu.delay;
+    out << apu.last_amp;
+
+    out << apu.address;
+    out << apu.period;
+    out << apu.buf;
+    out << apu.bits_remain;
+    out << apu.bits;
+    out << apu.buf_full;
+    out << apu.silence;
+    out << apu.dac;
+    out << apu.next_irq;
+    out << apu.irq_enabled;
+    out << apu.irq_flag;
+    out << apu.pal_mode;
+
+
+    return out;
+}
+inline QDataStream &operator>>(QDataStream &in, Nes_Dmc &apu)
+{
+    for(int i = 0; i < 4; ++i)
+        in >> apu.regs[i];
+    for(int i = 0; i < 4; ++i)
+        in >> apu.reg_written[i];
+    in >> apu.length_counter;
+    in >> apu.delay;
+    in >> apu.last_amp;
+
+    in >> apu.address;
+    in >> apu.period;
+    in >> apu.buf;
+    in >> apu.bits_remain;
+    in >> apu.bits;
+    in >> apu.buf_full;
+    in >> apu.silence;
+    in >> apu.dac;
+    in >> apu.next_irq;
+    in >> apu.irq_enabled;
+    in >> apu.irq_flag;
+    in >> apu.pal_mode;
+
+
+    return in;
+}
 
 #endif

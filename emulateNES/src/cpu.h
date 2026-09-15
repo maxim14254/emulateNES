@@ -79,7 +79,6 @@ private:
     uint8_t status = 0;            // флаги
     Bus* bus;                   // шина
 
-    uint16_t NMI = 0;
     uint16_t RESET = 0;
     int IRQ = 0;
 
@@ -87,6 +86,7 @@ private:
     std::once_flag start_once_flag;
     std::thread run_t;
     bool nmi_pending = false;
+    bool last_vblank = false;
     MainWindow* window;
 
     uint8_t gamepad[2];

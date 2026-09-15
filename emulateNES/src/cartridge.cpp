@@ -11,6 +11,75 @@
 #include "mapper_7.h"
 
 
+QDataStream &operator<<(QDataStream &out, const Cartridge &cartridge)
+{
+    if(cartridge.map == 0)
+    {
+
+    }
+    else if(cartridge.map == 1)
+    {
+
+    }
+    else if(cartridge.map == 2)
+    {
+
+    }
+    else if(cartridge.map == 3)
+    {
+
+    }
+    else if(cartridge.map == 4)
+    {
+        Mapper_4* mapper = dynamic_cast<Mapper_4*>(cartridge.mapper.get());
+        out << *mapper;
+    }
+    else if(cartridge.map == 7)
+    {
+
+    }
+    else if(cartridge.map == 34)
+    {
+
+    }
+
+    return out;
+}
+QDataStream &operator>>(QDataStream &in, Cartridge &cartridge)
+{
+    if(cartridge.map == 0)
+    {
+
+    }
+    else if(cartridge.map == 1)
+    {
+
+    }
+    else if(cartridge.map == 2)
+    {
+
+    }
+    else if(cartridge.map == 3)
+    {
+
+    }
+    else if(cartridge.map == 4)
+    {
+        Mapper_4* mapper = dynamic_cast<Mapper_4*>(cartridge.mapper.get());
+        in >> *mapper;
+    }
+    else if(cartridge.map == 7)
+    {
+
+    }
+    else if(cartridge.map == 34)
+    {
+
+    }
+
+    return in;
+}
+
 Cartridge::Cartridge(const QString& path, bool* status, Bus* bus)
 {
     QFile file(path);

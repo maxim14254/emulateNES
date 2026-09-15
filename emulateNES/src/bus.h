@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <memory>
-
+#include <QDataStream>
 
 class Cartridge;
 class QString;
@@ -56,6 +56,9 @@ public:
     uint8_t get_X();
     uint8_t get_Y();
 
+    friend QDataStream &operator<<(QDataStream &stream, const Bus &bus);
+    friend QDataStream &operator>>(QDataStream &in, Bus &bus);
+
 private:
     std::vector<uint8_t> ram;               //ОЗУ
     std::vector<uint8_t> vram;              //видеопамять
@@ -65,21 +68,19 @@ private:
     CPU* cpu;                               //ЦП
     APU* apu;                               //Звуковая карта
 
-    uint16_t cycle;
-    uint16_t scanline;
-    uint16_t frame;
     uint8_t controller[2];
 
     bool apu_irq_level = false;
     bool apu_mapper_level = false;
+
+    uint64_t old_cycles = 0;
+    uint64_t old_cycles1 = 0;
 
     uint8_t LENGTH_TABLE[32] =
     {
         10,254,20, 2,40, 4,80, 6,160, 8,60,10,14,12,26,14,
         12,16,24,18,48,20,96,22,192,24,72,26,16,28,32,30
     };
-
-    friend class SaveLoad;
 };
 
 #endif // BUS_H

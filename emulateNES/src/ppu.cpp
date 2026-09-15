@@ -18,7 +18,7 @@ QDataStream &operator<<(QDataStream &out, const PPU &ppu)
     out << ppu.numb_pixelX << ppu.ppu_data_buffer << ppu.openBus;
     out << ppu.w;
     out << ppu.scanline << ppu.cycle;
-    out << (quint64)ppu.frame;
+    out << static_cast<quint64>(ppu.frame);
     out << ppu.shift_tile_lsb << ppu.shift_tile_msb << ppu.shift_attrib_lsb << ppu.shift_attrib_msb;
 
     for (int i = 0; i < 8; ++i)

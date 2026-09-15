@@ -11,6 +11,7 @@
 	#if INT_MAX < 0x7FFFFFFF
 		#error "int must be at least 32 bits"
 	#endif
+    #include <QDataStream>
 
 	typedef int blip_long;
 	typedef unsigned blip_ulong;
@@ -93,6 +94,7 @@ public:
 	blip_resampled_time_t resampled_duration( int t ) const     { return t * factor_; }
 	blip_resampled_time_t resampled_time( blip_time_t t ) const { return t * factor_ + offset_; }
 	blip_resampled_time_t clock_rate_factor( uint32_t clock_rate ) const;
+
 public:
 	Blip_Buffer();
 	~Blip_Buffer();
@@ -167,6 +169,9 @@ private:
 		void volume_unit( double );
 		Blip_Synth_( short* impulses, int width );
 		void treble_eq( blip_eq_t const& );
+
+        friend QDataStream& operator<<(QDataStream&, const Blip_Synth_&);
+        friend QDataStream& operator>>(QDataStream&, Blip_Synth_&);
 	private:
 		double volume_unit_;
 		short* const impulses;
@@ -175,6 +180,21 @@ private:
 		int impulses_size() const { return blip_res / 2 * width + 1; }
 		void adjust_impulse();
 	};
+
+    inline QDataStream& operator<<(QDataStream& out, const Blip_Synth_& apu)
+    {
+        out << apu.last_amp;
+        out << apu.delta_factor;
+
+        return out;
+    }
+    inline QDataStream& operator>>(QDataStream& in, Blip_Synth_& apu)
+    {
+        in >> apu.last_amp;
+        in >> apu.delta_factor;
+
+        return in;
+    }
 
 // Quality level. Start with blip_good_quality.
 const int blip_med_quality  = 8;
@@ -220,6 +240,9 @@ public:
 		offset_resampled( t * impl.buf->factor_ + impl.buf->offset_, delta, impl.buf );
 	}
 
+    friend QDataStream& operator<<(QDataStream&, const Blip_Synth&);
+    friend QDataStream& operator>>(QDataStream&, Blip_Synth&);
+
 private:
 #if BLIP_BUFFER_FAST
 	Blip_Synth_Fast_ impl;
@@ -236,6 +259,18 @@ public:
 	Blip_Synth           (      Blip_Synth &&) = delete;
 	Blip_Synth& operator=(const Blip_Synth  &) = delete;
 };
+inline QDataStream& operator<<(QDataStream& out, const Blip_Synth<blip_good_quality,1>& apu)
+{
+    out << apu.impl;
+
+    return out;
+}
+inline QDataStream& operator>>(QDataStream& in, Blip_Synth<blip_good_quality,1>& apu)
+{
+    in >> apu.impl;
+
+    return in;
+}
 
 // Low-pass equalization parameters
 class blip_eq_t {

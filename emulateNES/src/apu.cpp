@@ -12,112 +12,45 @@ int samplesToWrite = 0;
 
 QDataStream &operator<<(QDataStream &out, const APU &apu)
 {
-     out << static_cast<qint64>(apu.last_cycles);
-     out << static_cast<qint64>(apu.last_dmc_cycles);
-     out << static_cast<qint32>(apu.next_irq);
-     out << static_cast<qint32>(apu.earliest_irq_);
-     out << static_cast<quint32>(apu.frame_delay);
-     out << static_cast<qint32>(apu.frame_period);
-     out << static_cast<qint32>(apu.frame_counter);
-     out << static_cast<quint8>(apu.frame_mode_5step);
-     out << static_cast<quint8>(apu.irq_flag ? 1 : 0);
-     out << static_cast<quint8>(apu.frame_irq_flag  ? 1 : 0);
-     out << static_cast<qint32>(apu.osc_enables);
-     out << static_cast<quint8>(apu.status);
+    out << static_cast<qint64>(apu.last_cycles)
+        << static_cast<qint64>(apu.last_dmc_cycles);
+    out << apu.next_irq << apu.earliest_irq_;
+    out << apu.frame_delay << apu.frame_period << apu.frame_counter;
+    out << apu.frame_mode_5step << apu.irq_flag;
+    out << apu.osc_enables;
 
-     out << apu.sampleAccum;
-     out << static_cast<qint16>(apu.last);
+    out << apu.square1 << apu.square2 << apu.triangle
+        << apu.noise   << apu.dmc;
 
-     out << apu.pulse1_output;
-     out << apu.pulse2_output;
-     out << static_cast<quint8>(apu.noise_output);
-     out << static_cast<quint8>(apu.triangle_output);
+    out << static_cast<quint32>(apu.blip.offset_);
+    out << apu.square_synth;
 
-     out << static_cast<quint8>(apu.pulse1_enable ? 1 : 0);
-     out << static_cast<quint8>(apu.pulse2_enable ? 1 : 0);
-     out << static_cast<quint8>(apu.noise_enable ? 1 : 0);
-     out << static_cast<quint8>(apu.triangle_enable ? 1 : 0);
-
-//     out << apu.square1;
-//     out << apu.square2;
-//     out << apu.triangle;
-//     out << apu.noise;
-//     out << apu.dmc;
-
-//     out << apu.square_synth;
-
-//     out << apu.blip;
-
-     return out;
+    return out;;
 }
 
 QDataStream &operator>>(QDataStream &in, APU &apu)
 {
-    qint64 i64;
-    qint32 i32;
+    qint64  i64;
     quint32 u32;
-    quint8 u8;
-    quint16 u16;
 
-    in >> i64;
-    apu.last_cycles = (int64_t)i64;
-    in >> i64;
-    apu.last_dmc_cycles = (int64_t)i64;
-    in >> i32;
-    apu.next_irq = (nes_time_t)i32;
-    in >> i32;
-    apu.earliest_irq_ = (nes_time_t)i32;
+    in >> i64; apu.last_cycles     = i64;
+    in >> i64; apu.last_dmc_cycles = i64;
+    in >> apu.next_irq >> apu.earliest_irq_;
+    in >> apu.frame_delay >> apu.frame_period >> apu.frame_counter;
+    in >> apu.frame_mode_5step >> apu.irq_flag;
+    in >> apu.osc_enables;
+
+    in >> apu.square1 >> apu.square2 >> apu.triangle
+       >> apu.noise   >> apu.dmc;
+
     in >> u32;
-    apu.frame_delay = u32;
-    in >> i32;
-    apu.frame_period = i32;
-    in >> i32;
-    apu.frame_counter = i32;
-    in >> u8;
-    apu.frame_mode_5step = u8;
-    in >> u8;
-    apu.irq_flag = (u8 != 0);
-    in >> u8;
-    apu.frame_irq_flag = (u8 != 0);
-    in >> i32;
-    apu.osc_enables = i32;
-    in >> u8;
-    apu.status = u8;
+    apu.blip.offset_ = static_cast<Blip_Buffer::blip_resampled_time_t>(u32);
+    in >> apu.square_synth;
 
-    in >> apu.sampleAccum;
-    in >> u16;
-    apu.last = (qint16)u16;
-
-    in >> apu.pulse1_output;
-    in >> apu.pulse2_output;
-    in >> u8;
-    apu.noise_output = u8;
-    in >> u8;
-    apu.triangle_output = u8;
-
-    in >> u8;
-    apu.pulse1_enable = (u8 != 0);
-    in >> u8;
-    apu.pulse2_enable = (u8 != 0);
-    in >> u8;
-    apu.noise_enable = (u8 != 0);
-    in >> u8;
-    apu.triangle_enable = (u8 != 0);
-
-//    in >> apu.square1;
-//    in >> apu.square2;
-//    in >> apu.triangle;
-//    in >> apu.noise;
-//    in >> apu.dmc;
-
-//    in >> apu.square_synth;
-//    in >> apu.blip;
-
-    apu.output(&apu.blip);
-
-    apu.dmc.apu = &apu;
-
-   // apu.ring_buffer = RingBufferSPSC(13500);
+    // ---- FIXUP ----
+    apu.output(&apu.blip);          // oscs[i]->output = &blip
+    apu.dmc.apu = &apu;             // обратная ссылка
+    apu.blip.clear(1);              // обнулить offset_/buffer_/reader_accum_
     std::fill(apu.temp.begin(), apu.temp.end(), qint16(0));
 
     return in;
