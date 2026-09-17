@@ -100,6 +100,43 @@ APU::APU(double sampleRate, Bus* _bus, QAudioOutput* _sink)
     temp.resize(4096);
 }
 
+void APU::restart()
+{
+    dmc.apu = this;
+    dmc.prg_reader = prg_reader;
+    dmc.prg_reader_data = bus;
+
+    oscs[0] = &square1;
+    oscs[1] = &square2;
+    oscs[2] = &triangle;
+    oscs[3] = &noise;
+    oscs[4] = &dmc;
+
+    // 2) Сбрасываем настройки выходов/микшера
+    output(nullptr);
+    volume(1.0);
+    enable_nonlinear(1.0);
+    output(&blip);
+
+    // 3) Сбрасываем состояние осцилляторов и счётчиков
+    reset(false);
+
+    // 4) Полностью очищаем blip-буфер от старых сэмплов
+    blip.clear();                 // сбрасывает offset_ / buffer_ / accum_
+    blip.set_sample_rate((long)m_sampleRate, 1000);
+    blip.clock_rate(1789773);
+
+    // 5) Чистим temp на случай, если что-то осталось
+    std::fill(temp.begin(), temp.end(), qint16(0));
+
+    // 6) Перезапускаем аудиопоток, если он был остановлен
+    if (sink->state() != QAudio::ActiveState &&
+        sink->state() != QAudio::SuspendedState)
+    {
+        audioDev = sink->start();
+    }
+}
+
 void APU::run_(uint64_t cycles)
 {
     require( cycles >= last_dmc_cycles );

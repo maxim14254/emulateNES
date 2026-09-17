@@ -229,6 +229,9 @@ void Bus::init_new_cartridge(const QString& path, bool* status)
         return;
 
     std::fill(ram.begin(), ram.end(), 0);
+    apu->restart();
+
+    old_cycles = old_cycles1 = 0;
 }
 
 void Bus::init_PPU(PPU *_ppu)
@@ -257,7 +260,7 @@ void Bus::end_frame_apu(uint64_t cycles)
     {
         using clock = std::chrono::steady_clock;
         static clock::time_point nextFrame = clock::now();
-        constexpr auto framePeriod = std::chrono::nanoseconds(16439267);
+        constexpr auto framePeriod = std::chrono::nanoseconds(16639267);
 
         apu->end_frame(cycles, old_cycles);
 

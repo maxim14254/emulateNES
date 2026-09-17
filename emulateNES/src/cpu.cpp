@@ -57,6 +57,10 @@ CPU::CPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
     connect(window, &MainWindow::signal_init_new_cartridge, this, &CPU::slot_init_new_cartridge);
     connect(window, &MainWindow::signal_press_key, this, &CPU::slot_press_key);
     connect(window, &MainWindow::signal_release_key, this, &CPU::slot_release_key);
+    connect(window, &MainWindow::signal_restart, this, [&]()
+    {
+        slot_init_new_cartridge(path);
+    });
 
     gamepad[0] = 0;
     gamepad[1] = 0;
@@ -438,6 +442,7 @@ bool CPU::slot_init_new_cartridge(const QString& _path)
             return false;
 
         reset();
+
     }
 
     std::call_once(start_once_flag, [&]

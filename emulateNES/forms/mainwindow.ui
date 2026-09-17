@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>805</width>
-    <height>740</height>
+    <height>744</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -879,13 +879,19 @@ p, li { white-space: pre-wrap; }
     <property name="title">
      <string>Меню</string>
     </property>
-    <addaction name="action"/>
+    <addaction name="restart"/>
+    <addaction name="exit"/>
    </widget>
    <addaction name="menu"/>
   </widget>
-  <action name="action">
+  <action name="exit">
    <property name="text">
     <string>Выход</string>
+   </property>
+  </action>
+  <action name="restart">
+   <property name="text">
+    <string>Рестарт</string>
    </property>
   </action>
  </widget>

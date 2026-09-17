@@ -125,3 +125,26 @@ uint16_t Mapper_7::map_nametable_addr(uint16_t addr)
     return (addr & 0x03FF);
 }
 
+uint16_t Mapper_7::get_NMI()
+{
+    if(prg_rom.size() > 0)
+        return mapper_read_prg(0xFFFA) | mapper_read_prg(0xFFFB) << 8;
+    else
+        return 0;
+}
+
+uint16_t Mapper_7::get_RESET()
+{
+    if(prg_rom.size() > 0)
+        return mapper_read_prg(0xFFFC) | mapper_read_prg(0xFFFD) << 8;
+    else
+        return 0;
+}
+
+uint16_t Mapper_7::get_IRQ()
+{
+    if(prg_rom.size() > 0)
+        return mapper_read_prg(0xFFFE) | mapper_read_prg(0xFFFF) << 8;
+    else
+        return 0;
+}

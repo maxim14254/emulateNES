@@ -55,6 +55,7 @@ signals:
     void signal_init_new_cartridge(const QString& path);
     void signal_press_key(int);
     void signal_release_key(int);
+    void signal_restart();
 
 private slots:
     void on_toolButton_clicked();

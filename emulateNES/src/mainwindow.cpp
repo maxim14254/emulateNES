@@ -28,6 +28,16 @@ MainWindow::MainWindow(QWidget *parent)
     setFocus();
 
     ui->widget_4->setVisible(false);
+
+    connect(ui->restart, &QAction::triggered, this, [&]()
+    {
+        emit signal_restart();
+    });
+
+    connect(ui->exit, &QAction::triggered, this, [&]()
+    {
+        this->close();
+    });
 #ifdef DEBUG_ON
     ui->widget_4->setVisible(true);
 

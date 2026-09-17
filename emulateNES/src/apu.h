@@ -41,6 +41,7 @@ public:
 
 
     void run(uint64_t cycles);
+    void restart();
     void write_registers(uint16_t addr, uint8_t data);
     uint8_t read_status();
     void set_tempo( double t );

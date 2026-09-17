@@ -26,6 +26,11 @@ public:
     friend QDataStream &operator<<(QDataStream &stream, const Mapper_7 &mapper);
     friend QDataStream &operator>>(QDataStream &in, Mapper_7 &mapper);
 
+    uint16_t get_NMI() override;
+    uint16_t get_RESET() override;
+    uint16_t get_IRQ() override;
+
+
 private:
     uint8_t prg_bank = 0;
 };

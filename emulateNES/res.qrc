@@ -46,5 +46,14 @@
         <file>games/Contra (USA).nes</file>
         <file>games/Battletoads-Double Dragon (USA).nes</file>
         <file>games/Little Nemo - The Dream Master (USA).nes</file>
+        <file>games/Aladdin.nes</file>
+        <file>games/BattleCity (Japan).nes</file>
+        <file>games/Gun.Smoke (USA).nes</file>
+        <file>games/Ice Climber (Japan) (En).nes</file>
+        <file>games/Mach Rider (Europe).nes</file>
+        <file>games/Mickey's Safari in Letterland (USA).nes</file>
+        <file>games/Tennis (Europe).nes</file>
+        <file>games/Top Gun (USA).nes</file>
+        <file>games/demo.nes</file>
     </qresource>
 </RCC>
