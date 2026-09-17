@@ -1,4 +1,29 @@
 #include "mapper_3.h"
+#include <QDataStream>
+
+
+
+QDataStream &operator<<(QDataStream &out, const Mapper_3 &mapper)
+{
+    out << mapper.chr_bank;
+    out << mapper.chr_bank_mask;
+
+    for(int i = 0; i < 0x2000; ++i)
+        out << mapper.prg_ram[i];
+
+    return out;
+}
+
+QDataStream &operator>>(QDataStream &in, Mapper_3 &mapper)
+{
+    in >> mapper.chr_bank;
+    in >> mapper.chr_bank_mask;
+
+    for(int i = 0; i < 0x2000; ++i)
+        in >> mapper.prg_ram[i];
+
+    return in;
+}
 
 Mapper_3::Mapper_3(QFile& file, NESHeader _header)
 {

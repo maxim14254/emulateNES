@@ -27,6 +27,8 @@ public:
     uint16_t get_RESET() override;
     uint16_t get_IRQ() override;
 
+    friend QDataStream &operator<<(QDataStream &stream, const Mapper_3 &mapper);
+    friend QDataStream &operator>>(QDataStream &in, Mapper_3 &mapper);
 
 private:
     uint8_t chr_bank = 0;

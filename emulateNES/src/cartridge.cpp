@@ -15,19 +15,23 @@ QDataStream &operator<<(QDataStream &out, const Cartridge &cartridge)
 {
     if(cartridge.map == 0)
     {
-
+        Mapper_0* mapper = dynamic_cast<Mapper_0*>(cartridge.mapper.get());
+        out << *mapper;
     }
     else if(cartridge.map == 1)
     {
-
+        Mapper_1* mapper = dynamic_cast<Mapper_1*>(cartridge.mapper.get());
+        out << *mapper;
     }
     else if(cartridge.map == 2)
     {
-
+        Mapper_2* mapper = dynamic_cast<Mapper_2*>(cartridge.mapper.get());
+        out << *mapper;
     }
     else if(cartridge.map == 3)
     {
-
+        Mapper_3* mapper = dynamic_cast<Mapper_3*>(cartridge.mapper.get());
+        out << *mapper;
     }
     else if(cartridge.map == 4)
     {
@@ -36,11 +40,13 @@ QDataStream &operator<<(QDataStream &out, const Cartridge &cartridge)
     }
     else if(cartridge.map == 7)
     {
-
+        Mapper_7* mapper = dynamic_cast<Mapper_7*>(cartridge.mapper.get());
+        out << *mapper;
     }
     else if(cartridge.map == 34)
     {
-
+        Mapper_34* mapper = dynamic_cast<Mapper_34*>(cartridge.mapper.get());
+        out << *mapper;
     }
 
     return out;
@@ -49,19 +55,23 @@ QDataStream &operator>>(QDataStream &in, Cartridge &cartridge)
 {
     if(cartridge.map == 0)
     {
-
+        Mapper_0* mapper = dynamic_cast<Mapper_0*>(cartridge.mapper.get());
+        in >> *mapper;
     }
     else if(cartridge.map == 1)
     {
-
+        Mapper_1* mapper = dynamic_cast<Mapper_1*>(cartridge.mapper.get());
+        in >> *mapper;
     }
     else if(cartridge.map == 2)
     {
-
+        Mapper_2* mapper = dynamic_cast<Mapper_2*>(cartridge.mapper.get());
+        in >> *mapper;
     }
     else if(cartridge.map == 3)
     {
-
+        Mapper_3* mapper = dynamic_cast<Mapper_3*>(cartridge.mapper.get());
+        in >> *mapper;
     }
     else if(cartridge.map == 4)
     {
@@ -70,11 +80,13 @@ QDataStream &operator>>(QDataStream &in, Cartridge &cartridge)
     }
     else if(cartridge.map == 7)
     {
-
+        Mapper_7* mapper = dynamic_cast<Mapper_7*>(cartridge.mapper.get());
+        in >> *mapper;
     }
     else if(cartridge.map == 34)
     {
-
+        Mapper_34* mapper = dynamic_cast<Mapper_34*>(cartridge.mapper.get());
+        in >> *mapper;
     }
 
     return in;

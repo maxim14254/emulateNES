@@ -5,6 +5,7 @@
 #include <memory>
 #include <QDataStream>
 
+
 class Cartridge;
 class QString;
 class PPU;

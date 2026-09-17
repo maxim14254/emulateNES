@@ -6,7 +6,9 @@
 #include <memory>
 #include "mapper.h"
 
+
 class Bus;
+class Mapper_0;
 
 class Cartridge
 {

@@ -1,7 +1,39 @@
 #include "mapper_1.h"
 #include <QDebug>
+#include <QDataStream>
 
 
+QDataStream &operator<<(QDataStream &out, const Mapper_1 &mapper)
+{
+    out << mapper.reg_control;
+    out << mapper.reg_chr0;
+    out << mapper.reg_chr1;
+    out << mapper.reg_prg;
+
+    out << mapper.shift_reg;
+    out << mapper.shift_cnt;
+
+    for(int i = 0; i < 0x2000; ++i)
+        out <<  mapper.prg_ram[i];
+
+    return out;
+}
+
+QDataStream &operator>>(QDataStream &in, Mapper_1 &mapper)
+{
+    in >> mapper.reg_control;
+    in >> mapper.reg_chr0;
+    in >> mapper.reg_chr1;
+    in >> mapper.reg_prg;
+
+    in >> mapper.shift_reg;
+    in >> mapper.shift_cnt;
+
+    for(int i = 0; i < 0x2000; ++i)
+        in >> mapper.prg_ram[i];
+
+    return in;
+}
 
 Mapper_1::Mapper_1(QFile& file, NESHeader _header)
 {

@@ -1,5 +1,27 @@
 #include "mapper_7.h"
 #include <QFile>
+#include <QDataStream>
+
+
+QDataStream &operator<<(QDataStream &out, const Mapper_7 &mapper)
+{
+    out << mapper.prg_bank;
+
+    for(int i = 0; i < 0x2000; ++i)
+        out << mapper.prg_ram[i];
+
+    return out;
+}
+
+QDataStream &operator>>(QDataStream &in, Mapper_7 &mapper)
+{
+    in >> mapper.prg_bank;
+
+    for(int i = 0; i < 0x2000; ++i)
+        in >> mapper.prg_ram[i];
+
+    return in;
+}
 
 Mapper_7::Mapper_7(QFile& file, NESHeader _header)
 {

@@ -26,6 +26,8 @@ public:
     uint16_t get_RESET() override;
     uint16_t get_IRQ() override;
 
+    friend QDataStream &operator<<(QDataStream &stream, const Mapper_1 &mapper);
+    friend QDataStream &operator>>(QDataStream &in, Mapper_1 &mapper);
 
 private:
     uint8_t reg_control = 0x0C;

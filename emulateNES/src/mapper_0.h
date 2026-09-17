@@ -25,6 +25,8 @@ public:
     uint16_t get_RESET() override;
     uint16_t get_IRQ() override;
 
+    friend QDataStream &operator<<(QDataStream &stream, const Mapper_0 &mapper);
+    friend QDataStream &operator>>(QDataStream &in, Mapper_0 &mapper);
 
 };
 

@@ -25,14 +25,16 @@ public:
     uint16_t get_RESET() override;
     uint16_t get_IRQ() override;
 
+    friend QDataStream &operator<<(QDataStream &stream, const Mapper_2 &mapper);
+    friend QDataStream &operator>>(QDataStream &in, Mapper_2 &mapper);
 
 private:
     uint8_t reg_prg = 0;
     uint32_t total_prg_banks = 1;
 
-    uint32_t map_prg_addr(uint16_t addr);
-
     uint8_t reg_chr = 0;
+
+    uint32_t map_prg_addr(uint16_t addr);
 };
 
 

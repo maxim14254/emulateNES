@@ -1,4 +1,28 @@
 #include "mapper_34.h"
+#include <QDataStream>
+
+
+QDataStream &operator<<(QDataStream &out, const Mapper_34 &mapper)
+{
+    out << mapper.prg_bank;
+    out << mapper.prg_bank_count_32k;
+
+    for(int i = 0; i < 0x2000; ++i)
+        out << mapper.prg_ram[i];
+
+    return out;
+}
+
+QDataStream &operator>>(QDataStream &in, Mapper_34 &mapper)
+{
+    in >> mapper.prg_bank;
+    in >> mapper.prg_bank_count_32k;
+
+    for(int i = 0; i < 0x2000; ++i)
+        in >> mapper.prg_ram[i];
+
+    return in;
+}
 
 Mapper_34::Mapper_34(QFile& file, NESHeader _header)
 {

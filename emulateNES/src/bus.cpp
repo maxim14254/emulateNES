@@ -92,8 +92,8 @@ uint8_t Bus::read_cpu(uint16_t addr, bool onlyRead)
     }
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
     {
-        return 0;
-        //return cartridge->mapper_read_prg(addr);
+        //return 0;
+        return cartridge->mapper_read_prg(addr);
     }
     else if(addr >= 0x6000 && addr <= 0x7FFF) // ОЗУ картриджа
     {
@@ -122,7 +122,6 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     }
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода DMA
     {
-        //apu->run(cpu->cycles); // догнать APU до текущего момента
         if(apu)
             apu->write_registers(addr, data); // APU
 
@@ -136,7 +135,7 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
     {
         //return 0;
-        //cartridge->write_chr_ram(addr, data);
+        cartridge->write_chr_ram(addr, data);
     }
     else if(addr >= 0x6000 && addr <= 0x7FFF) // ОЗУ картриджа
     {
@@ -256,13 +255,13 @@ void Bus::end_frame_apu(uint64_t cycles)
 {
     if(apu)
     {
+        using clock = std::chrono::steady_clock;
+        static clock::time_point nextFrame = clock::now();
+        constexpr auto framePeriod = std::chrono::nanoseconds(16439267);
+
         apu->end_frame(cycles, old_cycles);
 
         old_cycles = cycles;
-
-        using clock = std::chrono::steady_clock;
-        static clock::time_point nextFrame = clock::now();
-        constexpr auto framePeriod = std::chrono::nanoseconds(16639267);
 
         nextFrame += framePeriod;
         auto now = clock::now();

@@ -23,6 +23,9 @@ public:
     void mapper_write(uint16_t addr, uint8_t data) override;
     uint16_t map_nametable_addr(uint16_t addr) override;
 
+    friend QDataStream &operator<<(QDataStream &stream, const Mapper_7 &mapper);
+    friend QDataStream &operator>>(QDataStream &in, Mapper_7 &mapper);
+
 private:
     uint8_t prg_bank = 0;
 };
