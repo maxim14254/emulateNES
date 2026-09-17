@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/Battletoads-Double Dragon (USA).nes");
+    bool rez = cpu.slot_init_new_cartridge(":/games/BattleCity (Japan).nes");
 
     SaveLoad save_load(cpu, bus, ppu, apu, w);
 

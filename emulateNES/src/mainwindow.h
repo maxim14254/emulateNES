@@ -60,6 +60,8 @@ signals:
 private slots:
     void on_toolButton_clicked();
     void on_toolButton_2_clicked();
+    void on_back_btn_clicked();
+    void on_back_btn_2_clicked();
 };
 
 #endif // MAINWINDOW_H

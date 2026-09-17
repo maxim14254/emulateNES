@@ -14,11 +14,13 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    ui->stackedWidget->setCurrentIndex(0);
+
     setWindowIcon(QIcon(":/nintendoNES.ico"));
 
     my_openGL.reset(new MyOpenGL(256, 240, this));
     my_openGL->setMinimumSize(800, 600);
-    ui->verticalLayout->addWidget(my_openGL.get());
+    ui->verticalLayout_10->addWidget(my_openGL.get());
 
     ui->cpu_debuger->setVisible(false);
 
@@ -38,6 +40,17 @@ MainWindow::MainWindow(QWidget *parent)
     {
         this->close();
     });
+
+    connect(ui->pick_game, &QAction::triggered, this, [&]()
+    {
+        ui->stackedWidget->setCurrentIndex(1);
+    });
+
+    connect(ui->params, &QAction::triggered, this, [&]()
+    {
+        ui->stackedWidget->setCurrentIndex(2);
+    });
+
 #ifdef DEBUG_ON
     ui->widget_4->setVisible(true);
 
@@ -329,5 +342,17 @@ void MainWindow::on_toolButton_2_clicked()
 
     cv.notify_one();
 #endif
+}
+
+
+void MainWindow::on_back_btn_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(0);
+}
+
+
+void MainWindow::on_back_btn_2_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(0);
 }
 
