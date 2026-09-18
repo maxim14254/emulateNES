@@ -66,13 +66,23 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/BattleCity (Japan).nes");
+    bool rez = cpu.slot_init_new_cartridge(":/games/Track & Field (USA).nes");
 
+    //:/games/Bomberman (USA).nes
+    //:/games/Tom & Jerry - The Ultimate Game of Cat and Mouse! (USA).nes
+    //:/games/Jackal (USA).nes
+    //:/games/Batman - Return of the Joker (USA).nes
+    //:/games/Captain America and the Avengers (USA).nes
+    //:/games/Chessmaster, The (USA).nes
+    //:/games/Galaxian (Japan).nes
+    //:/games/Jackal (USA).nes
+    //:/games/Jungle Book, The (USA).nes
+    //:/games/Kekkyoku Nankyoku Daibouken (Japan).nes
+    //:/games/Power Blade 2 (USA).nes
+    //:/games/Tetris (USA) (Tengen) (Unl).nes
+    //:/games/Side Pocket (USA).nes
     SaveLoad save_load(cpu, bus, ppu, apu, w);
 
-    //:/games/Mach Rider (Europe).nes
-    //:/games/Mickey's Safari in Letterland (USA).nes
-    //:/games/Snow Brothers (USA).nes
     int exec = a.exec();
 
     return exec;

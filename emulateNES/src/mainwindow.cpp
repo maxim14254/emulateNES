@@ -7,7 +7,6 @@
 #include "global.h"
 
 
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -18,8 +17,42 @@ MainWindow::MainWindow(QWidget *parent)
 
     setWindowIcon(QIcon(":/nintendoNES.ico"));
 
+    ui->listWidget->setViewMode(QListView::IconMode);
+    ui->listWidget->setFlow(QListView::LeftToRight);
+    ui->listWidget->setWrapping(true);
+    ui->listWidget->setResizeMode(QListView::Adjust);
+    ui->listWidget->setMovement(QListView::Static);
+    ui->listWidget->setUniformItemSizes(true);
+    ui->listWidget->setIconSize(QSize(250, 250));
+    ui->listWidget->setGridSize(QSize(300, 300));
+    ui->listWidget->setSpacing(8);
+    ui->listWidget->setWordWrap(true);
+    ui->listWidget->setStyleSheet(R"(QListWidget::item {
+                                        border-radius: 8px;
+                                        padding: 4px;
+                                    }
+                                    QListWidget::item:selected {
+                                        background: #501b6f96;
+                                        color: white;
+                                        border-radius: 8px;
+                                    }
+                                    QListWidget::item:hover {
+                                        background: #502a3f55;
+                                        color: #ffffff;
+                                        border-radius: 8px;
+                                    }
+                                )");
+
+
+    QSize size(970, 800);
+
+    #ifdef DEBUG_ON
+    size.setWidth(800);
+    size.setHeight(600);
+    #endif
+
     my_openGL.reset(new MyOpenGL(256, 240, this));
-    my_openGL->setMinimumSize(800, 600);
+    my_openGL->setMinimumSize(size);
     ui->verticalLayout_10->addWidget(my_openGL.get());
 
     ui->cpu_debuger->setVisible(false);
@@ -51,6 +84,26 @@ MainWindow::MainWindow(QWidget *parent)
         ui->stackedWidget->setCurrentIndex(2);
     });
 
+    connect(ui->listWidget, &QListWidget::itemActivated, this, [&](QListWidgetItem* item)
+    {
+        if (!item)
+            return;
+
+        QString path = QString(":/games/%1.nes").arg(item->text());
+
+    });
+
+
+    QDir dir(":/games");
+    for (const QFileInfo& fi : dir.entryInfoList(QDir::Files))
+    {
+        auto* it = new QListWidgetItem(QIcon(QString(":/games/images/%1.png").arg(fi.baseName())), QString("%1").arg(fi.baseName()));
+        it->setTextAlignment(Qt::AlignCenter);
+        it->setSizeHint(QSize(300, 300));
+
+        ui->listWidget->addItem(it);
+    }
+
 #ifdef DEBUG_ON
     ui->widget_4->setVisible(true);
 
@@ -78,6 +131,9 @@ MainWindow::MainWindow(QWidget *parent)
     delete ui->verticalLayout_6;
     resize(850, 750);
 #endif
+
+    QRect screen = QGuiApplication::primaryScreen()->availableGeometry();
+    move(screen.center() - rect().center());
 }
 
 MainWindow::~MainWindow()

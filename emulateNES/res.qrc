@@ -1,25 +1,9 @@
 <RCC>
     <qresource prefix="/">
-        <file>games/Super Mario Bros. (World).nes</file>
         <file>nintendoNES.ico</file>
-        <file>games/nestest.nes</file>
-        <file>games/all_instrs.nes</file>
-        <file>games/1-instr_timing.nes</file>
-        <file>games/2-branch_timing.nes</file>
         <file>games/Donkey Kong (Japan).nes</file>
-        <file>games/ppu_vbl_nmi.nes</file>
         <file>games/Popeye (World) (Rev 1).nes</file>
-        <file>games/test_ppu_read_buffer.nes</file>
-        <file>games/ppu_open_bus.nes</file>
-        <file>games/02-vbl_set_time.nes</file>
-        <file>games/03-vbl_clear_time.nes</file>
-        <file>games/04-nmi_control.nes</file>
-        <file>games/color_test.nes</file>
-        <file>games/240pee-bnrom.nes</file>
         <file>games/Contra Force (USA).nes</file>
-        <file>games/5-MMC3.nes</file>
-        <file>games/1-clocking.nes</file>
-        <file>games/3.A12_clocking.nes</file>
         <file>games/Tiny Toon Adventures (USA).nes</file>
         <file>games/DuckTales 2 (USA).nes</file>
         <file>games/Home Alone 2 - Lost in New York (USA).nes</file>
@@ -28,7 +12,6 @@
         <file>games/Rockin' Kats (USA).nes</file>
         <file>games/Chip 'n Dale - Rescue Rangers 2 (USA).nes</file>
         <file>games/Darkwing Duck (USA).nes</file>
-        <file>games/Super Mario Bros. 3 (USA).nes</file>
         <file>games/Blaster Master (USA).nes</file>
         <file>games/Double Dragon II - The Revenge (USA).nes</file>
         <file>games/Circus Charlie (Japan).nes</file>
@@ -38,7 +21,6 @@
         <file>games/Zombie Nation (USA).nes</file>
         <file>games/Road Fighter (Europe).nes</file>
         <file>games/Wacky Races (USA).nes</file>
-        <file>games/Snow Brothers (USA).nes</file>
         <file>games/Excitebike (Europe).nes</file>
         <file>games/F1 Race (Japan).nes</file>
         <file>games/Adventure Island Classic (Europe).nes</file>
@@ -48,12 +30,164 @@
         <file>games/Little Nemo - The Dream Master (USA).nes</file>
         <file>games/Aladdin.nes</file>
         <file>games/BattleCity (Japan).nes</file>
-        <file>games/Gun.Smoke (USA).nes</file>
         <file>games/Ice Climber (Japan) (En).nes</file>
-        <file>games/Mach Rider (Europe).nes</file>
-        <file>games/Mickey's Safari in Letterland (USA).nes</file>
         <file>games/Tennis (Europe).nes</file>
         <file>games/Top Gun (USA).nes</file>
-        <file>games/demo.nes</file>
+        <file>games/Chip 'n Dale - Rescue Rangers (USA).nes</file>
+        <file>games/Teenage Mutant Ninja Turtles III - The Manhattan Project (USA).nes</file>
+        <file>games/DuckTales (USA).nes</file>
+        <file>games/Battletoads (USA).nes</file>
+        <file>games/Bomberman (USA).nes</file>
+        <file>games/Teenage Mutant Ninja Turtles - Tournament Fighters (USA).nes</file>
+        <file>games/Felix the Cat (USA) (Hudson).nes</file>
+        <file>games/Super C (USA).nes</file>
+        <file>games/Teenage Mutant Ninja Turtles II - The Arcade Game (USA).nes</file>
+        <file>games/Prince of Persia (USA).nes</file>
+        <file>games/Tom &amp; Jerry - The Ultimate Game of Cat and Mouse! (USA).nes</file>
+        <file>games/Lode Runner (USA).nes</file>
+        <file>games/Jackal (USA).nes</file>
+        <file>games/Mighty Final Fight (USA).nes</file>
+        <file>games/Teenage Mutant Ninja Turtles (USA).nes</file>
+        <file>games/Castlevania (USA).nes</file>
+        <file>games/Shatterhand (USA).nes</file>
+        <file>games/Double Dragon III - The Sacred Stones (USA).nes</file>
+        <file>games/Tiny Toon Adventures 2 - Trouble in Wackyland (USA).nes</file>
+        <file>games/Mega Man (USA).nes</file>
+        <file>games/Batman - The Video Game (USA).nes</file>
+        <file>games/Flintstones, The - The Surprise at Dinosaur Peak! (USA).nes</file>
+        <file>games/Ike Ike! Nekketsu Hockey-bu - Subette Koronde Dairantou (Japan).nes</file>
+        <file>games/Super Lion King (Asia) (En) (NT-656) (Pirate).nes</file>
+        <file>games/1943 - The Battle of Midway (USA).nes</file>
+        <file>games/Adventure Island II (USA).nes</file>
+        <file>games/Balloon Fight (USA).nes</file>
+        <file>games/Batman - Return of the Joker (USA).nes</file>
+        <file>games/Captain America and the Avengers (USA).nes</file>
+        <file>games/Chessmaster, The (USA).nes</file>
+        <file>games/Double Dribble (USA).nes</file>
+        <file>games/Flintstones, The - The Rescue of Dino &amp; Hoppy (USA).nes</file>
+        <file>games/Galaxian (Japan).nes</file>
+        <file>games/Jungle Book, The (USA).nes</file>
+        <file>games/Kekkyoku Nankyoku Daibouken (Japan).nes</file>
+        <file>games/Little Mermaid, The (USA).nes</file>
+        <file>games/Lunar Pool (USA).nes</file>
+        <file>games/Mega Man 2 (USA).nes</file>
+        <file>games/Ninja Gaiden (USA).nes</file>
+        <file>games/Ninja Gaiden III - The Ancient Ship of Doom (USA).nes</file>
+        <file>games/Pac-Man (USA) (Namco).nes</file>
+        <file>games/Power Blade 2 (USA).nes</file>
+        <file>games/Side Pocket (USA).nes</file>
+        <file>games/Spider-Man - Return of the Sinister Six (USA).nes</file>
+        <file>games/TaleSpin (USA).nes</file>
+        <file>games/Terminator 2 - Judgment Day (USA).nes</file>
+        <file>games/Tetris (USA) (Tengen) (Unl).nes</file>
+        <file>games/Top Gun - The Second Mission (USA).nes</file>
+        <file>games/Track &amp; Field (USA).nes</file>
+        <file>games/testROMs/02-vbl_set_time.nes</file>
+        <file>games/testROMs/03-vbl_clear_time.nes</file>
+        <file>games/testROMs/04-nmi_control.nes</file>
+        <file>games/testROMs/1-clocking.nes</file>
+        <file>games/testROMs/1-instr_timing.nes</file>
+        <file>games/testROMs/2-branch_timing.nes</file>
+        <file>games/testROMs/240pee-bnrom.nes</file>
+        <file>games/testROMs/3.A12_clocking.nes</file>
+        <file>games/testROMs/5-MMC3.nes</file>
+        <file>games/testROMs/all_instrs.nes</file>
+        <file>games/testROMs/color_test.nes</file>
+        <file>games/testROMs/demo.nes</file>
+        <file>games/testROMs/nestest.nes</file>
+        <file>games/testROMs/ppu_open_bus.nes</file>
+        <file>games/testROMs/ppu_vbl_nmi.nes</file>
+        <file>games/testROMs/test_ppu_read_buffer.nes</file>
+        <file>games/images/1943 - The Battle of Midway (USA).png</file>
+        <file>games/images/Addams Family, The (USA).png</file>
+        <file>games/images/Adventure Island Classic (Europe).png</file>
+        <file>games/images/Adventure Island II (USA).png</file>
+        <file>games/images/Aladdin.png</file>
+        <file>games/images/Arkanoid (USA).png</file>
+        <file>games/images/Balloon Fight (USA).png</file>
+        <file>games/images/Batman - Return of the Joker (USA).png</file>
+        <file>games/images/Batman - The Video Game (USA).png</file>
+        <file>games/images/BattleCity (Japan).png</file>
+        <file>games/images/Battletoads (USA).png</file>
+        <file>games/images/Battletoads-Double Dragon (USA).png</file>
+        <file>games/images/Blaster Master (USA).png</file>
+        <file>games/images/Bomberman (USA).png</file>
+        <file>games/images/Captain America and the Avengers (USA).png</file>
+        <file>games/images/Castlevania (USA).png</file>
+        <file>games/images/Chessmaster, The (USA).png</file>
+        <file>games/images/Chip 'n Dale - Rescue Rangers (USA).png</file>
+        <file>games/images/Chip 'n Dale - Rescue Rangers 2 (USA).png</file>
+        <file>games/images/Circus Charlie (Japan).png</file>
+        <file>games/images/Contra (USA).png</file>
+        <file>games/images/Contra Force (USA).png</file>
+        <file>games/images/Darkwing Duck (USA).png</file>
+        <file>games/images/Donkey Kong (Japan).png</file>
+        <file>games/images/Double Dragon II - The Revenge (USA).png</file>
+        <file>games/images/Double Dragon III - The Sacred Stones (USA).png</file>
+        <file>games/images/Double Dribble (USA).png</file>
+        <file>games/images/DuckTales (USA).png</file>
+        <file>games/images/DuckTales 2 (USA).png</file>
+        <file>games/images/Excitebike (Europe).png</file>
+        <file>games/images/F1 Race (Japan).png</file>
+        <file>games/images/Felix the Cat (USA) (Hudson).png</file>
+        <file>games/images/Flintstones, The - The Rescue of Dino &amp; Hoppy (USA).png</file>
+        <file>games/images/Flintstones, The - The Surprise at Dinosaur Peak! (USA).png</file>
+        <file>games/images/Galaxian (Japan).png</file>
+        <file>games/images/Home Alone 2 - Lost in New York (USA).png</file>
+        <file>games/images/Ice Climber (Japan) (En).png</file>
+        <file>games/images/Ike Ike! Nekketsu Hockey-bu - Subette Koronde Dairantou (Japan).png</file>
+        <file>games/images/Jackal (USA).png</file>
+        <file>games/images/Jungle Book, The (USA).png</file>
+        <file>games/images/Karateka (Japan).png</file>
+        <file>games/images/Kekkyoku Nankyoku Daibouken (Japan).png</file>
+        <file>games/images/Little Mermaid, The (USA).png</file>
+        <file>games/images/Little Nemo - The Dream Master (USA).png</file>
+        <file>games/images/Lode Runner (USA).png</file>
+        <file>games/images/Lunar Pool (USA).png</file>
+        <file>games/images/Mega Man (USA).png</file>
+        <file>games/images/Mega Man 2 (USA).png</file>
+        <file>games/images/Mighty Final Fight (USA).png</file>
+        <file>games/images/Ninja Gaiden (USA).png</file>
+        <file>games/images/Ninja Gaiden III - The Ancient Ship of Doom (USA).png</file>
+        <file>games/images/Nuts &amp; Milk (Japan).png</file>
+        <file>games/images/Pac-Man (USA) (Namco).png</file>
+        <file>games/images/Popeye (World) (Rev 1).png</file>
+        <file>games/images/Power Blade 2 (USA).png</file>
+        <file>games/images/Prince of Persia (USA).png</file>
+        <file>games/images/Road Fighter (Europe).png</file>
+        <file>games/images/RoboCop 3 (USA).png</file>
+        <file>games/images/Rockin' Kats (USA).png</file>
+        <file>games/images/Shatterhand (USA).png</file>
+        <file>games/images/Side Pocket (USA).png</file>
+        <file>games/images/Snow Brothers (USA).png</file>
+        <file>games/images/Spider-Man - Return of the Sinister Six (USA).png</file>
+        <file>games/images/Super C (USA).png</file>
+        <file>games/images/Super Lion King (Asia) (En) (NT-656) (Pirate).png</file>
+        <file>games/images/TaleSpin (USA).png</file>
+        <file>games/images/Teenage Mutant Ninja Turtles (USA).png</file>
+        <file>games/images/Teenage Mutant Ninja Turtles - Tournament Fighters (USA).png</file>
+        <file>games/images/Teenage Mutant Ninja Turtles II - The Arcade Game (USA).png</file>
+        <file>games/images/Teenage Mutant Ninja Turtles III - The Manhattan Project (USA).png</file>
+        <file>games/images/Tennis (Europe).png</file>
+        <file>games/images/Terminator 2 - Judgment Day (USA).png</file>
+        <file>games/images/Tetris (USA) (Tengen) (Unl).png</file>
+        <file>games/images/Tiny Toon Adventures (USA).png</file>
+        <file>games/images/Tiny Toon Adventures 2 - Trouble in Wackyland (USA).png</file>
+        <file>games/images/Tom &amp; Jerry - The Ultimate Game of Cat and Mouse! (USA).png</file>
+        <file>games/images/Top Gun (USA).png</file>
+        <file>games/images/Top Gun - The Second Mission (USA).png</file>
+        <file>games/images/Toxic Crusaders (USA).png</file>
+        <file>games/images/Track &amp; Field (USA).png</file>
+        <file>games/images/Wacky Races (USA).png</file>
+        <file>games/images/Zombie Nation (USA).png</file>
+        <file>games/Snow Brothers (USA).nes</file>
+        <file>games/Super Mario Bros (World).nes</file>
+        <file>games/Super Mario Bros 3 (USA).nes</file>
+        <file>games/Dr Mario (Europe).nes</file>
+        <file>games/images/Dr Mario (Europe).png</file>
+        <file>games/images/Super Mario Bros 3 (USA).png</file>
+        <file>games/images/Super Mario Bros (World).png</file>
+        <file>games/Gun Smoke (USA).nes</file>
+        <file>games/images/Gun Smoke (USA).png</file>
     </qresource>
 </RCC>

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>805</width>
+    <width>1229</width>
     <height>744</height>
    </rect>
   </property>
@@ -50,7 +50,7 @@
          <item>
           <widget class="QStackedWidget" name="stackedWidget">
            <property name="currentIndex">
-            <number>2</number>
+            <number>1</number>
            </property>
            <widget class="QWidget" name="page">
             <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -140,7 +140,7 @@
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>146</width>
+                    <width>570</width>
                     <height>630</height>
                    </rect>
                   </property>
@@ -158,7 +158,7 @@
                     <number>0</number>
                    </property>
                    <item>
-                    <layout class="QGridLayout" name="gridLayout"/>
+                    <widget class="QListWidget" name="listWidget"/>
                    </item>
                   </layout>
                  </widget>
@@ -1081,7 +1081,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>805</width>
+     <width>1229</width>
      <height>27</height>
     </rect>
    </property>
