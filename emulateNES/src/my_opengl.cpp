@@ -9,7 +9,7 @@
 MyOpenGL::MyOpenGL(GLsizei _width, GLsizei _height, QWidget* parent, Qt::WindowFlags f) : QOpenGLWidget(parent)
 {
     textureId = 0;
-    nesFrame.resize(256 * 240);
+    nesFrame.resize(256 * 240, INT_MAX);
 
     setMouseTracking(true);
 

@@ -54,13 +54,24 @@ QDataStream &operator>>(QDataStream &in, CPU &cpu)
 CPU::CPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
 {
     connect(this, &CPU::signal_error_show, window, &MainWindow::slot_show_error_message, Qt::QueuedConnection);
-    connect(window, &MainWindow::signal_init_new_cartridge, this, &CPU::slot_init_new_cartridge);
     connect(window, &MainWindow::signal_press_key, this, &CPU::slot_press_key);
     connect(window, &MainWindow::signal_release_key, this, &CPU::slot_release_key);
     connect(window, &MainWindow::signal_restart, this, [&]()
     {
         slot_init_new_cartridge(path);
     });
+
+    connect(window, &MainWindow::signal_init_new_cartridge, this, [&](const QString& _path)
+    {
+        IRQ = 0;
+        nmi_pending = false;
+        last_vblank = false;
+        gamepad[0] = 0;
+        gamepad[1] = 0;
+
+        slot_init_new_cartridge(_path);
+    });
+
 
     gamepad[0] = 0;
     gamepad[1] = 0;
@@ -443,16 +454,15 @@ bool CPU::slot_init_new_cartridge(const QString& _path)
 
         reset();
 
-    }
+        if(run_t.joinable())
+            run_t.join();
 
-    std::call_once(start_once_flag, [&]
-    {
         start = true;
         run_t = std::thread(&CPU::run, this);
-    });
 
-    path = _path;
-    return true;
+        path = _path;
+        return true;
+    }
 
 }
 

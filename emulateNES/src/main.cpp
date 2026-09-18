@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus);
     bus.init_CPU(&cpu);
-    bool rez = cpu.slot_init_new_cartridge(":/games/Track & Field (USA).nes");
+   // bool rez = cpu.slot_init_new_cartridge(":/games/Addams Family, The (USA).nes");
 
     //:/games/Bomberman (USA).nes
     //:/games/Tom & Jerry - The Ultimate Game of Cat and Mouse! (USA).nes

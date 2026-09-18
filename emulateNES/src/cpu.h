@@ -3,11 +3,9 @@
 
 
 #include "QObject"
-#include <vector>
 #include <functional>
 #include <mutex>
 #include <QString>
-#include <memory>
 #include <thread>
 #include <QDataStream>
 

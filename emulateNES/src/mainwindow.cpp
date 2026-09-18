@@ -66,7 +66,16 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->restart, &QAction::triggered, this, [&]()
     {
-        emit signal_restart();
+        std::lock_guard<std::mutex> lg(update_frame_mutex);
+        _update = true;
+        cv.notify_one();
+        start = false;
+
+        QMetaObject::invokeMethod(this, [&]()
+                                  {
+                                    emit signal_restart();
+                                  },
+                                  Qt::QueuedConnection);
     });
 
     connect(ui->exit, &QAction::triggered, this, [&]()
@@ -91,6 +100,18 @@ MainWindow::MainWindow(QWidget *parent)
 
         QString path = QString(":/games/%1.nes").arg(item->text());
 
+        ui->stackedWidget->setCurrentIndex(0);
+
+        std::lock_guard<std::mutex> lg(update_frame_mutex);
+        _update = true;
+        cv.notify_one();
+        start = false;
+
+        QMetaObject::invokeMethod(this, [&, path = std::move(path)]()
+                                  {
+                                      emit signal_init_new_cartridge(path);
+                                  },
+                                  Qt::QueuedConnection);
     });
 
 

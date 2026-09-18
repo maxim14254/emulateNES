@@ -7,7 +7,6 @@
 #include "cpu.h"
 #include "global.h"
 #include "apu.h"
-#include "mapper.h"
 
 
 QDataStream &operator<<(QDataStream &out, const Bus &bus)
@@ -229,6 +228,7 @@ void Bus::init_new_cartridge(const QString& path, bool* status)
         return;
 
     std::fill(ram.begin(), ram.end(), 0);
+
     apu->restart();
 
     old_cycles = old_cycles1 = 0;
