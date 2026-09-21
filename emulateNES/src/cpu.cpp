@@ -468,76 +468,113 @@ bool CPU::slot_init_new_cartridge(const QString& _path)
 
 void CPU::slot_press_key(int key)
 {
-    switch (key)
+
+    int val = 0;
+    val = window->getKey(key);
+
+    if(val != 0)
     {
-    case Qt::Key::Key_X:
-        gamepad[0] |= 0x80;
-        break;
-    case Qt::Key::Key_Z:
-        gamepad[0] |= 0x40;
-        break;
-    case Qt::Key::Key_Alt:
-        gamepad[0] |= 0x20;
-        break;
-    case Qt::Key::Key_Control:
-        gamepad[0] |= 0x10;
-        break;
-    case Qt::Key::Key_Up:
-        gamepad[0] |= 0x08;
-        break;
-    case Qt::Key::Key_Down:
-        gamepad[0] |= 0x04;
-        break;
-    case Qt::Key::Key_Left:
-        gamepad[0] |= 0x02;
-        break;
-    case Qt::Key::Key_Right:
-        gamepad[0] |= 0x01;
-        break;
+        if(val > 0)
+            gamepad[0] |= val;
     }
+
+//    switch (key)
+//    {
+//    case Qt::Key::Key_X:
+//        gamepad[0] |= 0x80;
+//        break;
+//    case Qt::Key::Key_Z:
+//        gamepad[0] |= 0x40;
+//        break;
+//    case Qt::Key::Key_Alt:
+//        gamepad[0] |= 0x20;
+//        break;
+//    case Qt::Key::Key_Control:
+//        gamepad[0] |= 0x10;
+//        break;
+//    case Qt::Key::Key_Up:
+//        gamepad[0] |= 0x08;
+//        break;
+//    case Qt::Key::Key_Down:
+//        gamepad[0] |= 0x04;
+//        break;
+//    case Qt::Key::Key_Left:
+//        gamepad[0] |= 0x02;
+//        break;
+//    case Qt::Key::Key_Right:
+//        gamepad[0] |= 0x01;
+//        break;
+//    }
 }
 
 void CPU::slot_release_key(int key)
 {
-    switch (key)
+    int val = 0;
+    val = window->getKey(key);
+
+    if(val != 0)
     {
-    case Qt::Key::Key_X:
-        gamepad[0] &= ~0x80;
-        break;
-    case Qt::Key::Key_Z:
-        gamepad[0] &= ~0x40;
-        break;
-    case Qt::Key::Key_Alt:
-        gamepad[0] &= ~0x20;
-        break;
-    case Qt::Key::Key_Control:
-        gamepad[0] &= ~0x10;
-        break;
-    case Qt::Key::Key_Up:
-        gamepad[0] &= ~0x08;
-        break;
-    case Qt::Key::Key_Down:
-        gamepad[0] &= ~0x04;
-        break;
-    case Qt::Key::Key_Left:
-        gamepad[0] &= ~0x02;
-        break;
-    case Qt::Key::Key_Right:
-        gamepad[0] &= ~0x01;
-        break;
-    case Qt::Key::Key_F5:
-        save_callback();
-        break;
-    case Qt::Key::Key_F9:
-        load_callback();
-        break;
-    case Qt::Key::Key_Plus:
-        window->show_text(QString("Выбран слот:%1").arg(++chande_slot_callback()));
-        break;
-    case Qt::Key::Key_Minus:
-        window->show_text(QString("Выбран слот:%1").arg(--chande_slot_callback()));
-        break;
+        if(val > 0)
+            gamepad[0] &= ~val;
+        else
+        {
+            switch (val)
+            {
+            case -1:
+                save_callback();
+                break;
+            case -2:
+                load_callback();
+                break;
+            case -3:
+                window->show_text(QString("Выбран слот:%1").arg(++chande_slot_callback()));
+                break;
+            case -4:
+                window->show_text(QString("Выбран слот:%1").arg(--chande_slot_callback()));
+                break;
+            }
+        }
     }
+
+//    switch (key)
+//    {
+//    case Qt::Key::Key_X:
+//        gamepad[0] &= ~0x80;
+//        break;
+//    case Qt::Key::Key_Z:
+//        gamepad[0] &= ~0x40;
+//        break;
+//    case Qt::Key::Key_Alt:
+//        gamepad[0] &= ~0x20;
+//        break;
+//    case Qt::Key::Key_Control:
+//        gamepad[0] &= ~0x10;
+//        break;
+//    case Qt::Key::Key_Up:
+//        gamepad[0] &= ~0x08;
+//        break;
+//    case Qt::Key::Key_Down:
+//        gamepad[0] &= ~0x04;
+//        break;
+//    case Qt::Key::Key_Left:
+//        gamepad[0] &= ~0x02;
+//        break;
+//    case Qt::Key::Key_Right:
+//        gamepad[0] &= ~0x01;
+//        break;
+//    case Qt::Key::Key_F5:
+//        save_callback();
+//        break;
+//    case Qt::Key::Key_F9:
+//        load_callback();
+//        break;
+//    case Qt::Key::Key_Plus:
+//        window->show_text(QString("Выбран слот:%1").arg(++chande_slot_callback()));
+//        break;
+//    case Qt::Key::Key_Minus:
+//        window->show_text(QString("Выбран слот:%1").arg(--chande_slot_callback()));
+//        break;
+//    }
 }
 
 void CPU::run()

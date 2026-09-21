@@ -5,6 +5,8 @@
 #include <qmessagebox.h>
 #include <QApplication>
 #include "global.h"
+#include "select_key_wgt.h"
+
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -13,7 +15,32 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    if(!QFile::exists(QCoreApplication::applicationDirPath() + "/config.ini"))
+    {
+        settings.reset(new QSettings(QCoreApplication::applicationDirPath() + "/config.ini", QSettings::IniFormat));
+
+        settings->setValue("Key_Up", Qt::Key::Key_Up);
+        settings->setValue("Key_Down", Qt::Key::Key_Down);
+        settings->setValue("Key_Left", Qt::Key::Key_Left);
+        settings->setValue("Key_Right", Qt::Key::Key_Right);
+        settings->setValue("Key_Select", Qt::Key::Key_Alt);
+        settings->setValue("Key_Start", Qt::Key::Key_Control);
+        settings->setValue("Key_A", Qt::Key::Key_X);
+        settings->setValue("Key_B", Qt::Key::Key_Z);
+        settings->setValue("Key_Save", Qt::Key::Key_F5);
+        settings->setValue("Key_Load", Qt::Key::Key_F9);
+        settings->setValue("Key_Slot+", Qt::Key::Key_Plus);
+        settings->setValue("Key_Slot-", Qt::Key::Key_Minus);
+
+        settings->sync();
+    }
+
     ui->stackedWidget->setCurrentIndex(0);
+
+    selectKeyWgt.reset(new SelectKeyWgt(keys, this));
+    selectKeyWgt->setVisible(false);
+
+    setParams();
 
     setWindowIcon(QIcon(":/nintendoNES.ico"));
 
@@ -112,6 +139,59 @@ MainWindow::MainWindow(QWidget *parent)
                                       emit signal_init_new_cartridge(path);
                                   },
                                   Qt::QueuedConnection);
+    });
+
+    connect(selectKeyWgt.get(), &SelectKeyWgt::changeParams, this, [&](QToolButton* button, int key)
+    {
+        if(button == ui->toolButton_3)
+        {
+            settings->setValue("Key_Up", key);
+        }
+        else if(button == ui->toolButton_4)
+        {
+            settings->setValue("Key_Down", key);
+        }
+        else if(button == ui->toolButton_6)
+        {
+            settings->setValue("Key_Left", key);
+        }
+        else if(button == ui->toolButton_5)
+        {
+            settings->setValue("Key_Right", key);
+        }
+        else if(button == ui->toolButton_7)
+        {
+            settings->setValue("Key_Select", key);
+        }
+        else if(button == ui->toolButton_8)
+        {
+            settings->setValue("Key_Start", key);
+        }
+        else if(button == ui->toolButton_9)
+        {
+            settings->setValue("Key_A", key);
+        }
+        else if(button == ui->toolButton_10)
+        {
+            settings->setValue("Key_B", key);
+        }
+        else if(button == ui->toolButton_11)
+        {
+            settings->setValue("Key_Save", key);
+        }
+        else if(button == ui->toolButton_12)
+        {
+            settings->setValue("Key_Load", key);
+        }
+        else if(button == ui->toolButton_13)
+        {
+            settings->setValue("Key_Slot+", key);
+        }
+        else if(button == ui->toolButton_14)
+        {
+            settings->setValue("Key_Slot-", key);
+        }
+
     });
 
 
@@ -358,6 +438,47 @@ void MainWindow::closeEvent(QCloseEvent *event)
     QMainWindow::closeEvent(event);
 }
 
+void MainWindow::setParams()
+{
+    QFile params(QCoreApplication::applicationDirPath() + "/config.ini");
+
+    if (params.open(QIODevice::ReadOnly))
+    {
+        if(!settings)
+             settings.reset(new QSettings(params.fileName(), QSettings::IniFormat));
+
+        keys[settings->value("Key_Up", Qt::Key::Key_Up).toInt()] = 0x08;
+        keys[settings->value("Key_Down", Qt::Key::Key_Down).toInt()] = 0x04;
+        keys[settings->value("Key_Left", Qt::Key::Key_Left).toInt()] = 0x02;
+        keys[settings->value("Key_Right", Qt::Key::Key_Right).toInt()] = 0x01;
+        keys[settings->value("Key_Select", Qt::Key::Key_Alt).toInt()] = 0x20;
+        keys[settings->value("Key_Start", Qt::Key::Key_Control).toInt()] = 0x10;
+        keys[settings->value("Key_A", Qt::Key::Key_X).toInt()] = 0x80;
+        keys[settings->value("Key_B", Qt::Key::Key_Z).toInt()] = 0x40;
+
+        keys[settings->value("Key_Save", Qt::Key::Key_F5).toInt()] = -1;
+        keys[settings->value("Key_Load", Qt::Key::Key_F9).toInt()] = -2;
+        keys[settings->value("Key_Slot+", Qt::Key::Key_Plus).toInt()] = -3;
+        keys[settings->value("Key_Slot-", Qt::Key::Key_Minus).toInt()] = -4;
+
+        selectKeyWgt->setCurrentButton(ui->toolButton_3, settings->value("Key_Up", Qt::Key::Key_Up).toInt());
+        selectKeyWgt->setCurrentButton(ui->toolButton_4, settings->value("Key_Down", Qt::Key::Key_Down).toInt());
+        selectKeyWgt->setCurrentButton(ui->toolButton_6, settings->value("Key_Left", Qt::Key::Key_Left).toInt());
+        selectKeyWgt->setCurrentButton(ui->toolButton_5, settings->value("Key_Right", Qt::Key::Key_Right).toInt());
+        selectKeyWgt->setCurrentButton(ui->toolButton_7, settings->value("Key_Select", Qt::Key::Key_Alt).toInt());
+        selectKeyWgt->setCurrentButton(ui->toolButton_8, settings->value("Key_Start", Qt::Key::Key_Control).toInt());
+        selectKeyWgt->setCurrentButton(ui->toolButton_9, settings->value("Key_A", Qt::Key::Key_X).toInt());
+        selectKeyWgt->setCurrentButton(ui->toolButton_10, settings->value("Key_B", Qt::Key::Key_Z).toInt());
+
+        selectKeyWgt->setCurrentButton(ui->toolButton_11, settings->value("Key_Save", Qt::Key::Key_F5).toInt());
+        selectKeyWgt->setCurrentButton(ui->toolButton_12, settings->value("Key_Load", Qt::Key::Key_F9).toInt());
+        selectKeyWgt->setCurrentButton(ui->toolButton_13, settings->value("Key_Slot+", Qt::Key::Key_Plus).toInt());
+        selectKeyWgt->setCurrentButton(ui->toolButton_14, settings->value("Key_Slot-", Qt::Key::Key_Minus).toInt());
+    }
+
+    params.close();
+}
+
 void MainWindow::on_toolButton_clicked()
 {
 #ifdef DEBUG_ON
@@ -384,7 +505,6 @@ void MainWindow::on_toolButton_clicked()
     cv.notify_one();
 #endif
 }
-
 
 void MainWindow::on_toolButton_2_clicked()
 {
@@ -421,15 +541,116 @@ void MainWindow::on_toolButton_2_clicked()
 #endif
 }
 
-
 void MainWindow::on_back_btn_clicked()
 {
     ui->stackedWidget->setCurrentIndex(0);
 }
 
-
 void MainWindow::on_back_btn_2_clicked()
 {
     ui->stackedWidget->setCurrentIndex(0);
+}
+
+void MainWindow::on_toolButton_3_clicked()
+{
+    selectKeyWgt->setCurrentButton(ui->toolButton_3);
+    selectKeyWgt->setVisible(true);
+}
+
+void MainWindow::on_toolButton_4_clicked()
+{
+    selectKeyWgt->setCurrentButton(ui->toolButton_4);
+    selectKeyWgt->setVisible(true);
+}
+
+void MainWindow::on_toolButton_6_clicked()
+{
+    selectKeyWgt->setCurrentButton(ui->toolButton_6);
+    selectKeyWgt->setVisible(true);
+}
+
+void MainWindow::on_toolButton_5_clicked()
+{
+    selectKeyWgt->setCurrentButton(ui->toolButton_5);
+    selectKeyWgt->setVisible(true);
+}
+
+void MainWindow::on_toolButton_7_clicked()
+{
+    selectKeyWgt->setCurrentButton(ui->toolButton_7);
+    selectKeyWgt->setVisible(true);
+}
+
+void MainWindow::on_toolButton_8_clicked()
+{
+    selectKeyWgt->setCurrentButton(ui->toolButton_8);
+    selectKeyWgt->setVisible(true);
+}
+
+void MainWindow::on_toolButton_9_clicked()
+{
+    selectKeyWgt->setCurrentButton(ui->toolButton_9);
+    selectKeyWgt->setVisible(true);
+}
+
+void MainWindow::on_toolButton_10_clicked()
+{
+    selectKeyWgt->setCurrentButton(ui->toolButton_10);
+    selectKeyWgt->setVisible(true);
+}
+
+void MainWindow::on_toolButton_11_clicked()
+{
+    selectKeyWgt->setCurrentButton(ui->toolButton_11);
+    selectKeyWgt->setVisible(true);
+}
+
+void MainWindow::on_toolButton_12_clicked()
+{
+    selectKeyWgt->setCurrentButton(ui->toolButton_12);
+    selectKeyWgt->setVisible(true);
+}
+
+void MainWindow::on_toolButton_13_clicked()
+{
+    selectKeyWgt->setCurrentButton(ui->toolButton_13);
+    selectKeyWgt->setVisible(true);
+}
+
+void MainWindow::on_toolButton_14_clicked()
+{
+    selectKeyWgt->setCurrentButton(ui->toolButton_14);
+    selectKeyWgt->setVisible(true);
+}
+
+void MainWindow::on_save_param_btn_clicked()
+{
+    if(selectKeyWgt)
+    {
+        keys.clear();
+
+        keys[settings->value("Key_Up", Qt::Key::Key_Up).toInt()] = 0x08;
+        keys[settings->value("Key_Down", Qt::Key::Key_Down).toInt()] = 0x04;
+        keys[settings->value("Key_Left", Qt::Key::Key_Left).toInt()] = 0x02;
+        keys[settings->value("Key_Right", Qt::Key::Key_Right).toInt()] = 0x01;
+        keys[settings->value("Key_Select", Qt::Key::Key_Alt).toInt()] = 0x20;
+        keys[settings->value("Key_Start", Qt::Key::Key_Control).toInt()] = 0x10;
+        keys[settings->value("Key_A", Qt::Key::Key_X).toInt()] = 0x80;
+        keys[settings->value("Key_B", Qt::Key::Key_Z).toInt()] = 0x40;
+
+        keys[settings->value("Key_Save", Qt::Key::Key_F5).toInt()] = -1;
+        keys[settings->value("Key_Load", Qt::Key::Key_F9).toInt()] = -2;
+        keys[settings->value("Key_Slot+", Qt::Key::Key_Plus).toInt()] = -3;
+        keys[settings->value("Key_Slot-", Qt::Key::Key_Minus).toInt()] = -4;
+
+        settings->sync();
+
+        setWindowTitle("Сохранено");
+
+        QTimer::singleShot(1000, [&]()
+        {
+            setWindowTitle("NES");
+        });
+    }
 }
 

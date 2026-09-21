@@ -7,6 +7,9 @@
 
 
 class MyOpenGL;
+class SelectKeyWgt;
+class QToolButton;
+class QSettings;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -34,6 +37,8 @@ public:
     void show_real_FPS(int microsec);
     void show_text(const QString& text);
 
+    int getKey(int code) { return keys[code];}
+
 public slots:
     void slot_show_error_message();
 
@@ -50,6 +55,11 @@ private:
     std::unique_ptr<MyOpenGL> debug_tiles_widget2;
     std::unique_ptr<MyOpenGL> debug_palettes_widget;
     std::unique_ptr<QTextEdit> cpu_debuger;
+    std::unique_ptr<SelectKeyWgt> selectKeyWgt;
+    std::map<int, int> keys;
+    std::unique_ptr<QSettings> settings;
+
+    void setParams();
 
 signals:
     void signal_init_new_cartridge(const QString& path);
@@ -62,6 +72,20 @@ private slots:
     void on_toolButton_2_clicked();
     void on_back_btn_clicked();
     void on_back_btn_2_clicked();
+
+    void on_toolButton_3_clicked();
+    void on_toolButton_4_clicked();
+    void on_toolButton_6_clicked();
+    void on_toolButton_5_clicked();
+    void on_toolButton_7_clicked();
+    void on_toolButton_8_clicked();
+    void on_toolButton_9_clicked();
+    void on_toolButton_10_clicked();
+    void on_toolButton_11_clicked();
+    void on_toolButton_12_clicked();
+    void on_toolButton_13_clicked();
+    void on_toolButton_14_clicked();
+    void on_save_param_btn_clicked();
 };
 
 #endif // MAINWINDOW_H
