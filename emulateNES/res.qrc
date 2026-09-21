@@ -28,24 +28,19 @@
         <file>games/Contra (USA).nes</file>
         <file>games/Battletoads-Double Dragon (USA).nes</file>
         <file>games/Little Nemo - The Dream Master (USA).nes</file>
-        <file>games/Aladdin.nes</file>
         <file>games/BattleCity (Japan).nes</file>
         <file>games/Ice Climber (Japan) (En).nes</file>
-        <file>games/Tennis (Europe).nes</file>
         <file>games/Top Gun (USA).nes</file>
         <file>games/Chip 'n Dale - Rescue Rangers (USA).nes</file>
         <file>games/Teenage Mutant Ninja Turtles III - The Manhattan Project (USA).nes</file>
         <file>games/DuckTales (USA).nes</file>
         <file>games/Battletoads (USA).nes</file>
-        <file>games/Bomberman (USA).nes</file>
         <file>games/Teenage Mutant Ninja Turtles - Tournament Fighters (USA).nes</file>
         <file>games/Felix the Cat (USA) (Hudson).nes</file>
         <file>games/Super C (USA).nes</file>
         <file>games/Teenage Mutant Ninja Turtles II - The Arcade Game (USA).nes</file>
         <file>games/Prince of Persia (USA).nes</file>
-        <file>games/Tom &amp; Jerry - The Ultimate Game of Cat and Mouse! (USA).nes</file>
         <file>games/Lode Runner (USA).nes</file>
-        <file>games/Jackal (USA).nes</file>
         <file>games/Mighty Final Fight (USA).nes</file>
         <file>games/Teenage Mutant Ninja Turtles (USA).nes</file>
         <file>games/Castlevania (USA).nes</file>
@@ -60,14 +55,8 @@
         <file>games/1943 - The Battle of Midway (USA).nes</file>
         <file>games/Adventure Island II (USA).nes</file>
         <file>games/Balloon Fight (USA).nes</file>
-        <file>games/Batman - Return of the Joker (USA).nes</file>
-        <file>games/Captain America and the Avengers (USA).nes</file>
-        <file>games/Chessmaster, The (USA).nes</file>
         <file>games/Double Dribble (USA).nes</file>
         <file>games/Flintstones, The - The Rescue of Dino &amp; Hoppy (USA).nes</file>
-        <file>games/Galaxian (Japan).nes</file>
-        <file>games/Jungle Book, The (USA).nes</file>
-        <file>games/Kekkyoku Nankyoku Daibouken (Japan).nes</file>
         <file>games/Little Mermaid, The (USA).nes</file>
         <file>games/Lunar Pool (USA).nes</file>
         <file>games/Mega Man 2 (USA).nes</file>
@@ -79,7 +68,6 @@
         <file>games/Spider-Man - Return of the Sinister Six (USA).nes</file>
         <file>games/TaleSpin (USA).nes</file>
         <file>games/Terminator 2 - Judgment Day (USA).nes</file>
-        <file>games/Tetris (USA) (Tengen) (Unl).nes</file>
         <file>games/Top Gun - The Second Mission (USA).nes</file>
         <file>games/Track &amp; Field (USA).nes</file>
         <file>games/testROMs/02-vbl_set_time.nes</file>
@@ -180,7 +168,6 @@
         <file>games/images/Track &amp; Field (USA).png</file>
         <file>games/images/Wacky Races (USA).png</file>
         <file>games/images/Zombie Nation (USA).png</file>
-        <file>games/Snow Brothers (USA).nes</file>
         <file>games/Super Mario Bros (World).nes</file>
         <file>games/Super Mario Bros 3 (USA).nes</file>
         <file>games/Dr Mario (Europe).nes</file>
@@ -189,5 +176,6 @@
         <file>games/images/Super Mario Bros (World).png</file>
         <file>games/Gun Smoke (USA).nes</file>
         <file>games/images/Gun Smoke (USA).png</file>
+        <file>games/Tennis (Europe).nes</file>
     </qresource>
 </RCC>
