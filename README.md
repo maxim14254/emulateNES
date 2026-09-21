@@ -10,7 +10,7 @@
 sudo apt update
 sudo apt install qtbase5-dev qtmultimedia5-dev libqt5multimedia5-plugins libglu1-mesa-dev
 ```
-#### macOs
+#### macOS
 ```bash
 brew install qt@5
 ```
