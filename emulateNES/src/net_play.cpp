@@ -26,7 +26,10 @@ void NetPlay::writeDatagram(const Data &data)
 void NetPlay::connecting(const std::string &host, quint16 _port)
 {
     if(is_connect)
-        socket->disconnect();
+    {
+        socket->close();
+        is_connect = false;
+    }
 
     port = _port;
 
@@ -116,6 +119,7 @@ void NetPlay::readyRead()
     {
         QMessageBox box(QMessageBox::Icon::Information, "info", QString("Подключился пользователь %1").arg(bytes.mid(5, -1).toStdString().c_str()), QMessageBox::StandardButton::Ok);
         box.exec();
+        return;
     }
 
     QDataStream in(bytes);
