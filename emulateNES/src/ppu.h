@@ -10,6 +10,7 @@
 
 class Bus;
 class MainWindow;
+class NetPlay;
 
 
 
@@ -30,7 +31,7 @@ public:
         size_t index;
     };
 
-    PPU(MainWindow* _window, Bus* _bus);
+    PPU(MainWindow* _window, Bus* _bus, NetPlay* _netPlay);
     ~PPU();
 
     uint8_t get_register(uint16_t addr, bool onlyRead);
@@ -41,7 +42,9 @@ public:
     void run_watch_cpu_instr(uint16_t PC);
     void run_watch_palettes();
     void reset();
-    uint8_t getppustatus(){return PPUSTATUS;}
+
+    uint64_t getFrame() { return frame; }
+    uint8_t getppustatus(){ return PPUSTATUS; }
     uint8_t static inline PPUMASK;
 
     friend QDataStream &operator<<(QDataStream &stream, const PPU &ppu);
@@ -103,6 +106,7 @@ private:
 
     MainWindow* window;
     Bus* bus;
+    NetPlay* netPlay;
 
     bool sprite0_hit_this_scanline = true;
 
@@ -118,6 +122,8 @@ private:
     void get_sprites_on_next_scanline(int i, bool a = true);
     void get_current_sprites();
     void download_asm_buffer(std::map<uint16_t, std::string>& assembler_buf);
+
+    void cooperative_game();
 
     Color nesPalette[64] = { // системная NES‑палитра
         { 84,  84,  84}, {  0,  30, 116}, {  8,  16, 144}, { 48,   0, 136},

@@ -11,6 +11,7 @@
 #include <QtMultimedia/QAudioOutput>
 #include <QtMultimedia/QAudioFormat>
 #include <QMessageBox>
+#include "net_play.h"
 
 
 #ifdef LOG_ON
@@ -24,10 +25,12 @@ int main(int argc, char *argv[])
 
     QApplication::setAttribute(Qt::AA_ForceRasterWidgets, false);
 
-    MainWindow w;
+    NetPlay netPlay;
+
+    MainWindow w(&netPlay);
     w.show();
 
-    Bus bus;
+    Bus bus(&netPlay);
 
     QAudioFormat format;
     format.setSampleRate(48000);
@@ -57,14 +60,14 @@ int main(int argc, char *argv[])
 
     bus.init_APU(apu);
 
-    PPU ppu(&w, &bus);
+    PPU ppu(&w, &bus, &netPlay);
     bus.init_PPU(&ppu);
 
 #ifdef LOG_ON
     LOG::Init(&ppu);
 #endif
 
-    CPU cpu(&w, &bus);
+    CPU cpu(&w, &bus, &netPlay);
     bus.init_CPU(&cpu);
    // bool rez = cpu.slot_init_new_cartridge(":/games/Addams Family, The (USA).nes");
 
@@ -81,7 +84,7 @@ int main(int argc, char *argv[])
     //:/games/Power Blade 2 (USA).nes
     //:/games/Tetris (USA) (Tengen) (Unl).nes
     //:/games/Side Pocket (USA).nes
-    SaveLoad save_load(cpu, bus, ppu, apu, w);
+    SaveLoad save_load(cpu, bus, ppu, apu, netPlay, w);
 
     int exec = a.exec();
 

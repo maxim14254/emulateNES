@@ -8,6 +8,7 @@
 #include "cpu.h"
 #include "mapper_4.h"
 #include <QProcess>
+#include "net_play.h"
 
 
 
@@ -62,7 +63,7 @@ QDataStream &operator>>(QDataStream &in, PPU &ppu)
     return in;
 }
 
-PPU::PPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
+PPU::PPU(MainWindow* _window, Bus* _bus, NetPlay* _netPlay) : window(_window), bus(_bus), netPlay(_netPlay)
 {
     oam.resize(256);
 
@@ -323,43 +324,6 @@ void PPU::run(uint64_t cycles)
                         bus->read_ppu(patternBase);
                         bus->read_ppu(patternBase + 8);
                     }
-
-//                        Sprite dd = Sprite{oam[0], oam[0 + 1], oam[0 + 2], oam[0 + 3], 0 / 4};
-
-//                        uint16_t sprite_lsb = 0;
-
-//                        if(!(PPUCTRL & 0x20)) // 8x8
-//                        {
-//                            uint16_t patternBase = (PPUCTRL & 0x8) ? 0x1000 : 0x0000;
-
-//                            if(!(dd.attr & 0x80)) // нормальная ориентация
-//                                sprite_lsb = patternBase + dd.tile * 16 + (scanline - dd.y);
-//                            else // зеркальная ориентация по вертикали
-//                                sprite_lsb = patternBase + dd.tile * 16 + (7 - (scanline - dd.y));
-//                        }
-//                        else // 8x16
-//                        {
-//                            int row = scanline - dd.y;
-
-//                            if (dd.attr & 0x80)
-//                                row = 15 - row;
-
-//                            uint16_t patternBase = (dd.tile & 0x01) ? 0x1000 : 0x0000;
-//                            uint16_t tile_half;
-
-//                            if (row < 8)
-//                                tile_half = dd.tile & 0xFE;
-//                            else
-//                                tile_half = (dd.tile & 0xFE) + 1;
-
-//                            int offset = row & 0x07;
-//                            sprite_lsb = patternBase + tile_half * 16 + offset;
-//                        }
-
- //                       bus->read_ppu(0x1000);
-                       // bus->read_ppu(sprite_lsb + 8);
-
-
                 }
             }
             else if(cycle >= 321 && cycle <= 336)
@@ -416,6 +380,9 @@ void PPU::run(uint64_t cycles)
             {
                 bus->cpu_request_nmi();
             }
+
+            if(netPlay->isConnnection())
+                cooperative_game();
 
             {
                 std::unique_lock<std::mutex> update_frame(update_frame_mutex);
@@ -789,6 +756,32 @@ void PPU::download_asm_buffer(std::map<uint16_t, std::string> &assembler_buf)
         }
 
         assembler_buf[line_addr] = inst;
+    }
+}
+
+void PPU::cooperative_game()
+{
+    auto another_controller = netPlay->getData(frame - 3);
+    auto my_controller = netPlay->getLocalData(frame - 3);
+
+    if(another_controller != std::nullopt)
+    {
+        if(netPlay->isFirstPlayer())
+            bus->set_cpu_controller(1, another_controller.value().controller);
+        else
+            bus->set_cpu_controller(0, another_controller.value().controller);
+    }
+    else
+    {
+
+    }
+
+    if(my_controller != std::nullopt)
+    {
+        if(netPlay->isFirstPlayer())
+            bus->set_cpu_controller(0, my_controller.value());
+        else
+            bus->set_cpu_controller(1, my_controller.value());
     }
 }
 

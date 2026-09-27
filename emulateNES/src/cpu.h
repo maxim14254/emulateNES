@@ -10,8 +10,10 @@
 #include <QDataStream>
 
 
+
 class Bus;
 class MainWindow;
+class NetPlay;
 
 enum StatusFlags
 {
@@ -30,7 +32,7 @@ class CPU : public QObject
     Q_OBJECT
 
 public:
-    CPU(MainWindow* _window, Bus* _bus);
+    CPU(MainWindow* _window, Bus* _bus, NetPlay* _netPlay);
     ~CPU();
 
     void request_nmi();
@@ -41,7 +43,7 @@ public:
     uint8_t get_X(){ return X; }
     uint8_t get_Y(){ return Y; }
     int get_IRQ(){ return IRQ; }
-    uint8_t get_gamepad(uint8_t i){ return gamepad[i]; }
+    uint8_t& get_gamepad(uint8_t i){ return gamepad[i]; }
 
     void release_irq();
     void request_irq();
@@ -53,6 +55,7 @@ public:
 
     void set_save_callback(const std::function<void()>& callback) { save_callback = callback; }
     void set_load_callback(const std::function<void()>& callback) { load_callback = callback; }
+    void set_start_newgame_for_net_callback(const std::function<void()>& callback) { start_newgame_for_net_callback = callback; }
 
     friend QDataStream &operator<<(QDataStream &stream, const CPU &cpu);
     friend QDataStream &operator>>(QDataStream &in, CPU &cpu);
@@ -75,6 +78,7 @@ private:
     uint16_t PC = 0;                // счетчик команд
     uint8_t status = 0;            // флаги
     Bus* bus;                   // шина
+    NetPlay* netPlay;
 
     uint16_t RESET = 0;
     int IRQ = 0;
@@ -87,9 +91,11 @@ private:
     MainWindow* window;
 
     uint8_t gamepad[2];
+    uint8_t net_gamepad;
 
     std::function<void()> save_callback;
     std::function<void()> load_callback;
+    std::function<void()> start_newgame_for_net_callback;
     std::function<uint8_t&()> chande_slot_callback;
 
     void run();

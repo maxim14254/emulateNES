@@ -11,12 +11,13 @@ class QString;
 class PPU;
 class CPU;
 class APU;
+class NetPlay;
 
 class Bus
 {
 public:
 
-    Bus();
+    Bus(NetPlay* _netPlay);
     ~Bus();
 
     uint8_t read_cpu(uint16_t addr, bool onlyRead = false);
@@ -37,7 +38,9 @@ public:
     void set_mapper_irq(bool level);
 
     void cpu_request_nmi();
+    void set_cpu_controller(uint8_t index, uint8_t value);
     void reset_ppu();
+    uint64_t getFrame();
 
     void run_watch_all_tiles();
     void run_watch_cpu_instr(uint16_t PC);
@@ -68,6 +71,7 @@ private:
     PPU* ppu;                               //Видеокарта
     CPU* cpu;                               //ЦП
     APU* apu;                               //Звуковая карта
+    NetPlay* netPlay;
 
     uint8_t controller[2];
 

@@ -3,7 +3,7 @@ include(../NES.pro)
 TEMPLATE = app
 
 #QT       += core gui openglwidgets opengl
-QT       += core gui opengl multimedia multimediawidgets
+QT       += core gui opengl multimedia multimediawidgets network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

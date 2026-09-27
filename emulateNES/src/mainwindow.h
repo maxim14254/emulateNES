@@ -6,10 +6,12 @@
 #include <QTextEdit>
 
 
+
 class MyOpenGL;
 class SelectKeyWgt;
 class QToolButton;
 class QSettings;
+class NetPlay;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -22,7 +24,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(NetPlay* netPlay, QWidget *parent = nullptr);
     ~MainWindow();
 
     void render_frame(std::vector<uint32_t>& frame_buffer);
@@ -58,6 +60,7 @@ private:
     std::unique_ptr<SelectKeyWgt> selectKeyWgt;
     std::map<int, int> keys;
     std::unique_ptr<QSettings> settings;
+    NetPlay* netPlay;
 
     void setParams();
 
@@ -86,6 +89,9 @@ private slots:
     void on_toolButton_13_clicked();
     void on_toolButton_14_clicked();
     void on_save_param_btn_clicked();
+    void on_connect_btn_clicked();
+    void on_radioButton_2_clicked();
+    void on_radioButton_clicked();
 };
 
 #endif // MAINWINDOW_H

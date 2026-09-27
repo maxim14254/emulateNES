@@ -7,6 +7,7 @@
 #include "cpu.h"
 #include "global.h"
 #include "apu.h"
+#include "net_play.h"
 
 
 QDataStream &operator<<(QDataStream &out, const Bus &bus)
@@ -45,7 +46,7 @@ QDataStream &operator>>(QDataStream &in, Bus &bus)
 }
 
 
-Bus::Bus()
+Bus::Bus(NetPlay* _netPlay) : netPlay(_netPlay)
 {
     ram.resize(0x800);
     vram.resize(0x800);
@@ -317,9 +318,19 @@ void Bus::cpu_request_nmi()
     cpu->request_nmi();
 }
 
+void Bus::set_cpu_controller(uint8_t index, uint8_t value)
+{
+    cpu->get_gamepad(index) = value;
+}
+
 void Bus::reset_ppu()
 {
     ppu->reset();
+}
+
+uint64_t Bus::getFrame()
+{
+    return ppu->getFrame();
 }
 
 void Bus::run_watch_all_tiles()

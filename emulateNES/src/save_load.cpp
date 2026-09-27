@@ -10,7 +10,7 @@
 #include "global.h"
 
 
-SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu, APU* _apu, MainWindow& _w) : cpu(_cpu), bus(_bus), ppu(_ppu), apu(_apu), w(_w)
+SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu, APU* _apu, NetPlay& _netPlay, MainWindow& _w) : cpu(_cpu), bus(_bus), ppu(_ppu), apu(_apu), netPlay(_netPlay), w(_w)
 {
     SaveDir = QCoreApplication::applicationDirPath() + "/saves/";
 
@@ -19,6 +19,7 @@ SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu, APU* _apu, MainWindow& _w) :
 
     cpu.set_save_callback(std::bind(&SaveLoad::Save, this));
     cpu.set_load_callback(std::bind(&SaveLoad::Load, this));
+    cpu.set_start_newgame_for_net_callback(std::bind(&SaveLoad::StartGameForNet, this));
     cpu.chande_slot_callback = [&]()->uint8_t& { return saveNumb; };
 }
 
@@ -115,4 +116,27 @@ void SaveLoad::Load()
         QMessageBox message(QMessageBox::Icon::Information, "Ошибка", QString("Не удалось загрузить файл %1").arg(file.fileName()), QMessageBox::StandardButton::Ok);
         message.exec();
     }
+}
+
+void SaveLoad::StartGameForNet()
+{
+    QByteArray array;
+    QDataStream out(&array, QIODevice::WriteOnly);
+
+    out << cpu.path;
+
+    //CPU регистры
+    out << cpu;
+
+    //PPU регистры
+    out << ppu;
+
+    //Bus
+    out << bus;
+
+    //APU
+    if(apu)
+        out << *apu;
+
+
 }

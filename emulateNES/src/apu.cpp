@@ -112,24 +112,19 @@ void APU::restart()
     oscs[3] = &noise;
     oscs[4] = &dmc;
 
-    // 2) Сбрасываем настройки выходов/микшера
     output(nullptr);
     volume(1.0);
     enable_nonlinear(1.0);
     output(&blip);
 
-    // 3) Сбрасываем состояние осцилляторов и счётчиков
     reset(false);
 
-    // 4) Полностью очищаем blip-буфер от старых сэмплов
-    blip.clear();                 // сбрасывает offset_ / buffer_ / accum_
+    blip.clear();
     blip.set_sample_rate((long)m_sampleRate, 1000);
     blip.clock_rate(1789773);
 
-    // 5) Чистим temp на случай, если что-то осталось
     std::fill(temp.begin(), temp.end(), qint16(0));
 
-    // 6) Перезапускаем аудиопоток, если он был остановлен
     if (sink->state() != QAudio::ActiveState &&
         sink->state() != QAudio::SuspendedState)
     {

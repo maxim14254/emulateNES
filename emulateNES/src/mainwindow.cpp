@@ -6,12 +6,14 @@
 #include <QApplication>
 #include "global.h"
 #include "select_key_wgt.h"
+#include "net_play.h"
+#include <QRegularExpression>
+#include <QRegularExpressionValidator>
 
 
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent),
-    ui(new Ui::MainWindow)
+MainWindow::MainWindow(NetPlay* _netPlay, QWidget *parent)
+    : QMainWindow(parent), ui(new Ui::MainWindow), netPlay(_netPlay)
 {
     ui->setupUi(this);
 
@@ -90,6 +92,24 @@ MainWindow::MainWindow(QWidget *parent)
     setFocus();
 
     ui->widget_4->setVisible(false);
+
+    ui->status_connect->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    ui->status_connect->setStyleSheet("QToolButton { border: none; border-radius: 7px; background-color: #E74C3C; padding: 4px; }"); // "#F39C12"  "#2ECC71"
+
+    auto *ipRe = new QRegularExpression(R"((\d{1,3}\.){3}\d{1,3})");
+    ui->lineEdit_3->setValidator(new QRegularExpressionValidator(*ipRe, this));
+    ui->lineEdit_4->setValidator(new QIntValidator(0, 65535, this));
+
+    connect(ui->lineEdit_4, &QLineEdit::textChanged, this, [&](const QString& value)
+    {
+        bool ok = ui->lineEdit_4->hasAcceptableInput();
+
+        if(!ok)
+        {
+            const_cast<QString&>(value).chop(1);
+            ui->lineEdit_4->setText(value);
+        }
+    });
 
     connect(ui->restart, &QAction::triggered, this, [&]()
     {
@@ -652,5 +672,42 @@ void MainWindow::on_save_param_btn_clicked()
             setWindowTitle("NES");
         });
     }
+}
+
+
+void MainWindow::on_connect_btn_clicked()
+{
+    if(ui->lineEdit_3->text().isEmpty() || ui->lineEdit_4->text().isEmpty())
+    {
+        ui->status_connect->setStyleSheet("QToolButton { border: none; border-radius: 7px; background-color: #E74C3C; padding: 4px; }");
+        ui->status_connect->setText("Ошибка");
+
+        return;
+    }
+
+    netPlay->connecting(ui->lineEdit_3->text().toStdString(), ui->lineEdit_4->text().toUInt());
+
+    if(netPlay->isConnnection())
+    {
+        ui->status_connect->setStyleSheet("QToolButton { border: none; border-radius: 7px; background-color: #2ECC71; padding: 4px; }");
+        ui->status_connect->setText("Подключено");
+    }
+    else
+    {
+        ui->status_connect->setStyleSheet("QToolButton { border: none; border-radius: 7px; background-color: #E74C3C; padding: 4px; }");
+        ui->status_connect->setText("Не подключен");
+    }
+}
+
+
+void MainWindow::on_radioButton_2_clicked()
+{
+    netPlay->set_player(true);
+}
+
+
+void MainWindow::on_radioButton_clicked()
+{
+    netPlay->set_player(false);
 }
 

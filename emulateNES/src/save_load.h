@@ -5,21 +5,24 @@
 #include "bus.h"
 #include "ppu.h"
 #include "apu.h"
+#include "net_play.h"
 
 
 class SaveLoad
 {
 public:
-    SaveLoad(CPU& cpu, Bus& bus, PPU& ppu, APU* apu, MainWindow& w);
+    SaveLoad(CPU& cpu, Bus& bus, PPU& ppu, APU* apu, NetPlay& _netPlay, MainWindow& w);
 
     void Save();
     void Load();
+    void StartGameForNet();
 
 private:
     CPU& cpu;
     Bus& bus;
     PPU& ppu;
     APU* apu;
+    NetPlay& netPlay;
     MainWindow& w;
 
     QString SaveDir;

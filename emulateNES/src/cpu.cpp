@@ -5,6 +5,9 @@
 #include "mainwindow.h"
 #include <QDebug>
 #include "global.h"
+#include "net_play.h"
+
+
 
 #ifdef LOG_ON
 #include "log.h"
@@ -51,7 +54,7 @@ QDataStream &operator>>(QDataStream &in, CPU &cpu)
     return in;
 }
 
-CPU::CPU(MainWindow* _window, Bus* _bus) : window(_window), bus(_bus)
+CPU::CPU(MainWindow* _window, Bus* _bus, NetPlay* _netPlay) : bus(_bus), netPlay(_netPlay), window(_window)
 {
     connect(this, &CPU::signal_error_show, window, &MainWindow::slot_show_error_message, Qt::QueuedConnection);
     connect(window, &MainWindow::signal_press_key, this, &CPU::slot_press_key);
@@ -461,6 +464,10 @@ bool CPU::slot_init_new_cartridge(const QString& _path)
         run_t = std::thread(&CPU::run, this);
 
         path = _path;
+
+        if(netPlay->isConnnection())
+            start_newgame_for_net_callback();
+
         return true;
     }
 
@@ -468,43 +475,34 @@ bool CPU::slot_init_new_cartridge(const QString& _path)
 
 void CPU::slot_press_key(int key)
 {
-
     int val = 0;
     val = window->getKey(key);
 
     if(val != 0)
     {
         if(val > 0)
-            gamepad[0] |= val;
-    }
+        {
+            if(netPlay->isConnnection())
+            {
+                static bool flag = true;
 
-//    switch (key)
-//    {
-//    case Qt::Key::Key_X:
-//        gamepad[0] |= 0x80;
-//        break;
-//    case Qt::Key::Key_Z:
-//        gamepad[0] |= 0x40;
-//        break;
-//    case Qt::Key::Key_Alt:
-//        gamepad[0] |= 0x20;
-//        break;
-//    case Qt::Key::Key_Control:
-//        gamepad[0] |= 0x10;
-//        break;
-//    case Qt::Key::Key_Up:
-//        gamepad[0] |= 0x08;
-//        break;
-//    case Qt::Key::Key_Down:
-//        gamepad[0] |= 0x04;
-//        break;
-//    case Qt::Key::Key_Left:
-//        gamepad[0] |= 0x02;
-//        break;
-//    case Qt::Key::Key_Right:
-//        gamepad[0] |= 0x01;
-//        break;
-//    }
+                if(flag)
+                {
+                    flag = false;
+
+                    if(netPlay->isFirstPlayer())
+                        net_gamepad = gamepad[0];
+                    else
+                        net_gamepad = gamepad[1];
+                }
+
+                net_gamepad |= val;
+                netPlay->setLocalData(bus->getFrame(), net_gamepad);
+            }
+            else
+                gamepad[0] |= val;
+        }
+    }
 }
 
 void CPU::slot_release_key(int key)
@@ -515,7 +513,27 @@ void CPU::slot_release_key(int key)
     if(val != 0)
     {
         if(val > 0)
-            gamepad[0] &= ~val;
+        {
+            if(netPlay->isConnnection())
+            {
+                static bool flag = true;
+
+                if(flag)
+                {
+                    flag = false;
+
+                    if(netPlay->isFirstPlayer())
+                        net_gamepad = gamepad[0];
+                    else
+                        net_gamepad = gamepad[1];
+                }
+
+                net_gamepad &= ~val;
+                netPlay->setLocalData(bus->getFrame(), net_gamepad);
+            }
+            else
+                gamepad[0] &= ~val;
+        }
         else
         {
             switch (val)
@@ -535,46 +553,6 @@ void CPU::slot_release_key(int key)
             }
         }
     }
-
-//    switch (key)
-//    {
-//    case Qt::Key::Key_X:
-//        gamepad[0] &= ~0x80;
-//        break;
-//    case Qt::Key::Key_Z:
-//        gamepad[0] &= ~0x40;
-//        break;
-//    case Qt::Key::Key_Alt:
-//        gamepad[0] &= ~0x20;
-//        break;
-//    case Qt::Key::Key_Control:
-//        gamepad[0] &= ~0x10;
-//        break;
-//    case Qt::Key::Key_Up:
-//        gamepad[0] &= ~0x08;
-//        break;
-//    case Qt::Key::Key_Down:
-//        gamepad[0] &= ~0x04;
-//        break;
-//    case Qt::Key::Key_Left:
-//        gamepad[0] &= ~0x02;
-//        break;
-//    case Qt::Key::Key_Right:
-//        gamepad[0] &= ~0x01;
-//        break;
-//    case Qt::Key::Key_F5:
-//        save_callback();
-//        break;
-//    case Qt::Key::Key_F9:
-//        load_callback();
-//        break;
-//    case Qt::Key::Key_Plus:
-//        window->show_text(QString("Выбран слот:%1").arg(++chande_slot_callback()));
-//        break;
-//    case Qt::Key::Key_Minus:
-//        window->show_text(QString("Выбран слот:%1").arg(--chande_slot_callback()));
-//        break;
-//    }
 }
 
 void CPU::run()
@@ -614,6 +592,7 @@ void CPU::run()
             bool current_vblank = (bus->get_ppu_status() & 0x80) > 0;
             if(current_vblank && !last_vblank)
                 bus->end_frame_apu(cycles);
+
             last_vblank = current_vblank;
 
             continue;
