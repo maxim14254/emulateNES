@@ -1,7 +1,8 @@
 #include "net_play.h"
 #include <QNetworkDatagram>
 #include <QtNetwork/qudpsocket.h>
-
+#include <QHostInfo>
+#include <QMessageBox>
 
 
 
@@ -22,17 +23,25 @@ void NetPlay::writeDatagram(const Data &data)
     socket->writeDatagram(array, hostAddress, port);
 }
 
-void NetPlay::connecting(const std::string &host, quint16 port)
+void NetPlay::connecting(const std::string &host, quint16 _port)
 {
+    if(is_connect)
+        socket->disconnect();
+
+    port = _port;
+
     if(firstPlayer)
+    {
         is_connect = socket->bind(QHostAddress::Any, port);
+    }
     else
     {
-        socket->bind();
-        QHostAddress host_addr(host.c_str());
+        hostAddress.setAddress(host.c_str());
 
-        QByteArray hello = "ss";
-        socket->writeDatagram(hello, host_addr, port);
+        is_connect = socket->bind();
+
+        QByteArray hello = QString("ready%1").arg(QHostInfo::localHostName()).toStdString().c_str();
+        socket->writeDatagram(hello, hostAddress, port);
     }
 
 
@@ -100,6 +109,13 @@ void NetPlay::readyRead()
                  << ":" << datagram.senderPort();
 #endif
 
+    }
+
+    if(bytes[0] == 'r' && bytes[1] == 'e' && bytes[2] == 'a'
+        && bytes[3] == 'd' && bytes[4] == 'y')
+    {
+        QMessageBox box(QMessageBox::Icon::Information, "info", QString("Подключился пользователь %1").arg(bytes.mid(5, -1).toStdString().c_str()), QMessageBox::StandardButton::Ok);
+        box.exec();
     }
 
     QDataStream in(bytes);
