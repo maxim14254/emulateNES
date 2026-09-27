@@ -7,11 +7,13 @@
 #include <QUdpSocket>
 #include <map>
 #include <QDataStream>
+#include <optional>
+#include <mutex>
 
 
 struct Data
 {
-    uint64_t frame;
+    quint64 frame;
     uint8_t controller;
     QByteArray startGame;
 
