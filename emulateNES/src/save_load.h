@@ -16,6 +16,7 @@ public:
     void Save();
     void Load();
     void StartGameForNet();
+    void LoadGameForNet(QByteArray& array);
 
 private:
     CPU& cpu;

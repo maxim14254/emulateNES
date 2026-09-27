@@ -56,6 +56,7 @@ public:
     void set_save_callback(const std::function<void()>& callback) { save_callback = callback; }
     void set_load_callback(const std::function<void()>& callback) { load_callback = callback; }
     void set_start_newgame_for_net_callback(const std::function<void()>& callback) { start_newgame_for_net_callback = callback; }
+    void set_load_newgame_for_net_callback(const std::function<void(QByteArray& array)>& callback) { load_newgame_for_net_callback = callback; }
 
     friend QDataStream &operator<<(QDataStream &stream, const CPU &cpu);
     friend QDataStream &operator>>(QDataStream &in, CPU &cpu);
@@ -96,6 +97,7 @@ private:
     std::function<void()> save_callback;
     std::function<void()> load_callback;
     std::function<void()> start_newgame_for_net_callback;
+    std::function<void(QByteArray& array)> load_newgame_for_net_callback;
     std::function<uint8_t&()> chande_slot_callback;
 
     void run();

@@ -6,11 +6,32 @@
 #include <QHostAddress>
 #include <QUdpSocket>
 #include <map>
+#include <QDataStream>
 
 
 struct Data
 {
+    uint64_t frame;
     uint8_t controller;
+    QByteArray startGame;
+
+    friend QDataStream &operator<<(QDataStream &out, const Data &d)
+    {
+        out << d.frame;
+        out << d.controller;
+        out << d.startGame;
+
+        return out;
+    }
+
+    friend QDataStream &operator>>(QDataStream &in, Data &d)
+    {
+        in >> d.frame;
+        in >> d.controller;
+        in >> d.startGame;
+
+        return in;
+    }
 };
 
 
@@ -49,6 +70,9 @@ private:
     std::mutex map_mutex;
 
     void readyRead();
+
+signals:
+    void startGameForNet(QByteArray&);
 };
 
 #endif // NET_PLAY_H

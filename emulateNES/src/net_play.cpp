@@ -4,6 +4,7 @@
 
 
 
+
 NetPlay::NetPlay()
 {
     socket.reset(new QUdpSocket());
@@ -12,12 +13,13 @@ NetPlay::NetPlay()
 }
 
 void NetPlay::writeDatagram(const Data &data)
-{
-    QByteArray bytes;
+{   
+    QByteArray array;
+    QDataStream out(&array, QIODevice::WriteOnly);
 
-    bytes.push_back(data.controller);
+    out << data;
 
-    socket->writeDatagram(bytes, hostAddress, port);
+    socket->writeDatagram(array, hostAddress, port);
 }
 
 void NetPlay::connecting(const std::string &host, quint16 port)
@@ -90,4 +92,15 @@ void NetPlay::readyRead()
 
     }
 
+    QDataStream in(bytes);
+
+    Data d;
+
+    in >> d;
+
+
+    if(d.startGame.count() > 0)
+    {
+        emit startGameForNet(d.startGame);
+    }
 }

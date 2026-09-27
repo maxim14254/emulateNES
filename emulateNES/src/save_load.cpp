@@ -10,6 +10,7 @@
 #include "global.h"
 
 
+
 SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu, APU* _apu, NetPlay& _netPlay, MainWindow& _w) : cpu(_cpu), bus(_bus), ppu(_ppu), apu(_apu), netPlay(_netPlay), w(_w)
 {
     SaveDir = QCoreApplication::applicationDirPath() + "/saves/";
@@ -20,6 +21,8 @@ SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu, APU* _apu, NetPlay& _netPlay
     cpu.set_save_callback(std::bind(&SaveLoad::Save, this));
     cpu.set_load_callback(std::bind(&SaveLoad::Load, this));
     cpu.set_start_newgame_for_net_callback(std::bind(&SaveLoad::StartGameForNet, this));
+    cpu.set_load_newgame_for_net_callback(std::bind(&SaveLoad::LoadGameForNet, this, std::placeholders::_1));
+
     cpu.chande_slot_callback = [&]()->uint8_t& { return saveNumb; };
 }
 
@@ -138,5 +141,52 @@ void SaveLoad::StartGameForNet()
     if(apu)
         out << *apu;
 
+    Data data;
+    data.frame = 0;
+    data.controller = 0;
+    data.startGame = array;
+
+
+    netPlay.writeDatagram(data);
+}
+
+void SaveLoad::LoadGameForNet(QByteArray &array)
+{
+    QDataStream in(&array, QIODevice::ReadOnly);
+
+
+    if(!_update)
+    {
+        std::lock_guard<std::mutex> lg(update_frame_mutex);
+        _update = true;
+
+        cv.notify_one();
+    }
+
+    std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+
+    in >> cpu.path;
+
+    //CPU регистры
+    in >> cpu;
+
+    //PPU регистры
+    in >> ppu;
+
+    //Bus
+    bool status;
+    bus.init_new_cartridge(cpu.path, &status);
+
+    if(status)
+        in >> bus;
+    else
+    {
+        w.show_text(QString("Не удалось загрузить ROM"));
+        return;
+    }
+
+    //APU
+    if(apu)
+        in >> *apu;
 
 }

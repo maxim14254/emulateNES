@@ -75,6 +75,11 @@ CPU::CPU(MainWindow* _window, Bus* _bus, NetPlay* _netPlay) : bus(_bus), netPlay
         slot_init_new_cartridge(_path);
     });
 
+    connect(_netPlay, &NetPlay::startGameForNet, this, [&](QByteArray& array)
+    {
+        load_newgame_for_net_callback(array);
+    });
+
 
     gamepad[0] = 0;
     gamepad[1] = 0;
@@ -470,7 +475,6 @@ bool CPU::slot_init_new_cartridge(const QString& _path)
 
         return true;
     }
-
 }
 
 void CPU::slot_press_key(int key)
