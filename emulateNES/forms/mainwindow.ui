@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1241</width>
+    <width>1268</width>
     <height>750</height>
    </rect>
   </property>
@@ -101,7 +101,7 @@
                 <number>11</number>
                </property>
                <property name="topMargin">
-                <number>0</number>
+                <number>10</number>
                </property>
                <property name="rightMargin">
                 <number>11</number>
@@ -140,8 +140,8 @@
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>592</width>
-                    <height>653</height>
+                    <width>610</width>
+                    <height>644</height>
                    </rect>
                   </property>
                   <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -201,7 +201,7 @@
                 <number>11</number>
                </property>
                <property name="topMargin">
-                <number>0</number>
+                <number>10</number>
                </property>
                <property name="rightMargin">
                 <number>11</number>
@@ -1029,6 +1029,9 @@
                          </item>
                          <item>
                           <spacer name="horizontalSpacer_3">
+                           <property name="orientation">
+                            <enum>Qt::Vertical</enum>
+                           </property>
                            <property name="sizeHint" stdset="0">
                             <size>
                              <width>1</width>
@@ -1099,6 +1102,9 @@
                          </item>
                          <item>
                           <spacer name="horizontalSpacer_4">
+                           <property name="orientation">
+                            <enum>Qt::Vertical</enum>
+                           </property>
                            <property name="sizeType">
                             <enum>QSizePolicy::Fixed</enum>
                            </property>
@@ -1150,10 +1156,13 @@
                  </item>
                  <item>
                   <spacer name="horizontalSpacer_2">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
                    <property name="sizeHint" stdset="0">
                     <size>
-                     <width>40</width>
-                     <height>20</height>
+                     <width>20</width>
+                     <height>40</height>
                     </size>
                    </property>
                   </spacer>
@@ -1903,6 +1912,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </item>
                       <item>
                        <spacer name="horizontalSpacer">
+                        <property name="orientation">
+                         <enum>Qt::Vertical</enum>
+                        </property>
                         <property name="sizeHint" stdset="0">
                          <size>
                           <width>40</width>
@@ -1999,7 +2011,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1241</width>
+     <width>1268</width>
      <height>23</height>
     </rect>
    </property>

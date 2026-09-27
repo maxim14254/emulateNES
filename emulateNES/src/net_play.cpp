@@ -24,13 +24,23 @@ void NetPlay::writeDatagram(const Data &data)
 
 void NetPlay::connecting(const std::string &host, quint16 port)
 {
-    is_connect = socket->bind(QHostAddress(host.c_str()), port);
+    if(firstPlayer)
+        is_connect = socket->bind(QHostAddress::Any, port);
+    else
+    {
+        socket->bind();
+        QHostAddress host_addr(host.c_str());
+
+        QByteArray hello = "ss";
+        socket->writeDatagram(hello, host_addr, port);
+    }
+
 
 #ifdef DEBUG_ON
     if (!is_connect)
     {
-        qDebug() << "Ошибка:" << udp->errorString();
-        qDebug() << "Код ошибки:" << udp->error();
+        qDebug() << "Ошибка:" << socket->errorString();
+        qDebug() << "Код ошибки:" << socket->error();
     }
 #endif
 }
