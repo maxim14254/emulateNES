@@ -69,21 +69,7 @@ int main(int argc, char *argv[])
 
     CPU cpu(&w, &bus, &netPlay);
     bus.init_CPU(&cpu);
-   // bool rez = cpu.slot_init_new_cartridge(":/games/Addams Family, The (USA).nes");
 
-    //:/games/Bomberman (USA).nes
-    //:/games/Tom & Jerry - The Ultimate Game of Cat and Mouse! (USA).nes
-    //:/games/Jackal (USA).nes
-    //:/games/Batman - Return of the Joker (USA).nes
-    //:/games/Captain America and the Avengers (USA).nes
-    //:/games/Chessmaster, The (USA).nes
-    //:/games/Galaxian (Japan).nes
-    //:/games/Jackal (USA).nes
-    //:/games/Jungle Book, The (USA).nes
-    //:/games/Kekkyoku Nankyoku Daibouken (Japan).nes
-    //:/games/Power Blade 2 (USA).nes
-    //:/games/Tetris (USA) (Tengen) (Unl).nes
-    //:/games/Side Pocket (USA).nes
     SaveLoad save_load(cpu, bus, ppu, apu, netPlay, w);
 
     int exec = a.exec();
