@@ -214,6 +214,11 @@ MainWindow::MainWindow(NetPlay* _netPlay, QWidget *parent)
 
     });
 
+    connect(netPlay, &NetPlay::selectGameForNet, this, [&]()
+    {
+        if(ui->stackedWidget->currentIndex() != 1)
+            ui->stackedWidget->setCurrentIndex(1);
+    });
 
     QDir dir(":/games");
     for (const QFileInfo& fi : dir.entryInfoList(QDir::Files))

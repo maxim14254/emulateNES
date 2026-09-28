@@ -154,7 +154,6 @@ void SaveLoad::LoadGameForNet(QByteArray &array)
 {
     QDataStream in(&array, QIODevice::ReadOnly);
 
-
     if(!_update)
     {
         std::lock_guard<std::mutex> lg(update_frame_mutex);

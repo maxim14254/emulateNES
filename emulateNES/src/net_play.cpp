@@ -119,6 +119,8 @@ void NetPlay::readyRead()
     {
         QMessageBox box(QMessageBox::Icon::Information, "info", QString("Подключился пользователь %1").arg(bytes.mid(5, -1).toStdString().c_str()), QMessageBox::StandardButton::Ok);
         box.exec();
+
+        emit selectGameForNet();
         return;
     }
 
@@ -132,5 +134,9 @@ void NetPlay::readyRead()
     if(d.startGame.count() > 0)
     {
         emit startGameForNet(d.startGame);
+    }
+    else
+    {
+        data[d.frame] = d;
     }
 }

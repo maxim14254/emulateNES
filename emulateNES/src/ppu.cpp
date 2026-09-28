@@ -12,6 +12,7 @@
 
 
 
+
 QDataStream &operator<<(QDataStream &out, const PPU &ppu)
 {
     out << ppu.PPUCTRL << ppu.PPUMASK << ppu.PPUSTATUS << ppu.OAMADDR << ppu.OAMDATA << ppu.PPUSCROLL << ppu.PPUDATA;
@@ -773,7 +774,13 @@ void PPU::cooperative_game()
     }
     else
     {
-
+        if(netPlay->getMaxFrameNow() < frame - 3)
+        {
+            while(netPlay->getMaxFrameNow() < frame - 3)
+            {
+                std::this_thread::sleep_for(std::chrono::microseconds(10));
+            }
+        }
     }
 
     if(my_controller != std::nullopt)

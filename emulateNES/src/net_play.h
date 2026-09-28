@@ -57,6 +57,8 @@ public:
     bool isFirstPlayer() { return firstPlayer; }
     void set_player( bool val) { firstPlayer = val; }
 
+    quint64 getMaxFrameNow() { return max_frame_now; }
+
 
 private:
     std::unique_ptr<QUdpSocket> socket;
@@ -68,6 +70,7 @@ private:
 
     std::atomic<bool> firstPlayer = true;     // какой я игрок
     std::atomic<bool> is_connect = false;
+    std::atomic<quint64> max_frame_now;
 
     std::mutex map_mutex;
 
@@ -75,6 +78,7 @@ private:
 
 signals:
     void startGameForNet(QByteArray&);
+    void selectGameForNet();
 };
 
 #endif // NET_PLAY_H
