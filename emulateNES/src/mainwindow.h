@@ -43,6 +43,7 @@ public:
 
 public slots:
     void slot_show_error_message();
+    void on_back_btn_clicked();
 
 protected:
     void keyPressEvent(QKeyEvent* e) override;
@@ -73,7 +74,6 @@ signals:
 private slots:
     void on_toolButton_clicked();
     void on_toolButton_2_clicked();
-    void on_back_btn_clicked();
     void on_back_btn_2_clicked();
 
     void on_toolButton_3_clicked();

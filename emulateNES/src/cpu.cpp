@@ -78,6 +78,7 @@ CPU::CPU(MainWindow* _window, Bus* _bus, NetPlay* _netPlay) : bus(_bus), netPlay
     connect(_netPlay, &NetPlay::startGameForNet, this, [&](QByteArray& array)
     {
         load_newgame_for_net_callback(array);
+        window->on_back_btn_clicked();
     });
 
 

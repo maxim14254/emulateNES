@@ -777,12 +777,9 @@ void PPU::cooperative_game()
     }
     else
     {
-        if(netPlay->getMaxFrameNow() < frame - 3)
+        while(netPlay->getMaxFrameNow() < frame - 3)
         {
-            while(netPlay->getMaxFrameNow() < frame - 3)
-            {
-                std::this_thread::sleep_for(std::chrono::microseconds(10));
-            }
+            std::this_thread::sleep_for(std::chrono::microseconds(10));
         }
     }
 
