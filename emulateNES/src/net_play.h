@@ -63,7 +63,7 @@ public:
 private:
     std::unique_ptr<QUdpSocket> socket;
     quint16 port;
-    QHostAddress hostAddress;
+    QHostAddress Address;
 
     std::map<uint64_t, Data> data;          // данные сетевого игрока
     std::map<uint64_t, uint8_t> localData;  // мои данные

@@ -762,6 +762,9 @@ void PPU::download_asm_buffer(std::map<uint16_t, std::string> &assembler_buf)
 
 void PPU::cooperative_game()
 {
+    if(frame - 3 < 0)
+        return;
+
     auto another_controller = netPlay->getData(frame - 3);
     auto my_controller = netPlay->getLocalData(frame - 3);
 

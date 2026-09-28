@@ -20,7 +20,7 @@ void NetPlay::writeDatagram(const Data &data)
 
     out << data;
 
-    socket->writeDatagram(array, hostAddress, port);
+    socket->writeDatagram(array, Address, port);
 }
 
 void NetPlay::connecting(const std::string &host, quint16 _port)
@@ -39,12 +39,12 @@ void NetPlay::connecting(const std::string &host, quint16 _port)
     }
     else
     {
-        hostAddress.setAddress(host.c_str());
+        Address.setAddress(host.c_str());
 
         is_connect = socket->bind();
 
         QByteArray hello = QString("ready%1").arg(QHostInfo::localHostName()).toStdString().c_str();
-        socket->writeDatagram(hello, hostAddress, port);
+        socket->writeDatagram(hello, Address, port);
     }
 
 
@@ -100,16 +100,19 @@ void NetPlay::readyRead()
 {
     QByteArray bytes = "";
 
+    QHostAddress _sender;
+    quint16 senderPort;
+
     while (socket->hasPendingDatagrams())
     {
-        QNetworkDatagram datagram = socket->receiveDatagram();
+        bytes.resize(int(socket->pendingDatagramSize()));
+        socket->readDatagram(bytes.data(), bytes.size(), &_sender, &senderPort);
 
-        bytes += datagram.data();
 
 #ifdef DEBUG_ON
-        qDebug() << "Получено:" << datagram.data()
-                 << "от" << datagram.senderAddress().toString()
-                 << ":" << datagram.senderPort();
+        qDebug() << "Получено:" << bytes.data()
+                 << "от" << _sender.toString()
+                 << ":" << senderPort;
 #endif
 
     }
@@ -119,6 +122,9 @@ void NetPlay::readyRead()
     {
         QMessageBox box(QMessageBox::Icon::Information, "info", QString("Подключился пользователь %1").arg(bytes.mid(5, -1).toStdString().c_str()), QMessageBox::StandardButton::Ok);
         box.exec();
+
+        Address = _sender;
+        port = senderPort;
 
         emit selectGameForNet();
         return;
