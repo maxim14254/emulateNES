@@ -101,20 +101,12 @@ void NetPlay::readyRead()
     QByteArray bytes = "";
 
     QHostAddress _sender;
-    quint16 senderPort;
+    quint16 senderPort = 0;
 
     while (socket->hasPendingDatagrams())
     {
         bytes.resize(int(socket->pendingDatagramSize()));
         socket->readDatagram(bytes.data(), bytes.size(), &_sender, &senderPort);
-
-
-#ifdef DEBUG_ON
-        qDebug() << "Получено:" << bytes.data()
-                 << "от" << _sender.toString()
-                 << ":" << senderPort;
-#endif
-
     }
 
     if(bytes[0] == 'r' && bytes[1] == 'e' && bytes[2] == 'a'
@@ -133,9 +125,13 @@ void NetPlay::readyRead()
     QDataStream in(bytes);
 
     Data d;
-
     in >> d;
 
+#ifdef DEBUG_ON
+        qDebug() << "Получено:" << d.controller
+                 << "от" << _sender.toString()
+                 << ":" << senderPort;
+#endif
 
     if(d.startGame.count() > 0)
     {
@@ -143,6 +139,7 @@ void NetPlay::readyRead()
     }
     else
     {
+        max_frame_now = d.frame;
         data[d.frame] = d;
     }
 }

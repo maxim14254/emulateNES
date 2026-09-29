@@ -528,7 +528,7 @@ void PPU::run_watch_cpu_instr(uint16_t PC)
     QMetaObject::invokeMethod(window, [&, value]()
                               {
                                   window->render_cpu_debug(value, PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUDATA, PPUADDR,
-                                                           bus->get_PC(), bus->get_SP(), bus->get_statusCPU(), bus->get_A(), bus->get_X(), bus->get_Y(), scanline, cycle);
+                                                           bus->get_PC(), bus->get_SP(), bus->get_statusCPU(), bus->get_A(), bus->get_X(), bus->get_Y(), scanline, cycle, frame);
                               },
                               Qt::QueuedConnection);
 }
@@ -762,7 +762,7 @@ void PPU::download_asm_buffer(std::map<uint16_t, std::string> &assembler_buf)
 
 void PPU::cooperative_game()
 {
-    if(frame - 3 < 0)
+    if(int(frame - 3) < 0)
         return;
 
     auto another_controller = netPlay->getData(frame - 3);
@@ -771,7 +771,10 @@ void PPU::cooperative_game()
     if(another_controller != std::nullopt)
     {
         if(netPlay->isFirstPlayer())
+        {
+            qDebug() << another_controller.value().controller;
             bus->set_cpu_controller(1, another_controller.value().controller);
+        }
         else
             bus->set_cpu_controller(0, another_controller.value().controller);
     }
@@ -783,13 +786,27 @@ void PPU::cooperative_game()
         }
     }
 
-    if(my_controller != std::nullopt)
+    Data d;
+    d.frame = frame;
+    d.startGame = "";
+
+    //if(my_controller != std::nullopt)
     {
+        //d.controller = my_controller.value();
+
         if(netPlay->isFirstPlayer())
-            bus->set_cpu_controller(0, my_controller.value());
+        {
+            d.controller = bus->get_gamepad(0);
+            //bus->set_cpu_controller(0, d.controller);
+        }
         else
-            bus->set_cpu_controller(1, my_controller.value());
+        {
+            d.controller = bus->get_gamepad(1);
+           // bus->set_cpu_controller(1, d.controller);
+        }
     }
+
+    netPlay->writeDatagram(d);
 }
 
 uint8_t PPU::get_sprite(bool& priority, uint8_t& color_index)

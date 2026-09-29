@@ -122,14 +122,21 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     }
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода DMA
     {
-        if(apu)
-            apu->write_registers(addr, data); // APU
+        if (addr >= 0x4000 && addr <= 0x4013) // APU
+             if (apu)
+                 apu->write_registers(addr, data);
+
+        if (addr == 0x4017) // APU
+             if (apu)
+                 apu->write_registers(addr, data);
+
 
         if(addr == 0x4014) // DMA
             ppu->set_oam(data);
-        else if(addr == 0x4016 || addr == 0x4017) // джойстики
+        else if(addr == 0x4016) // джойстики
         {
-            controller[addr & 0x0001] = cpu->get_gamepad(addr & 0x0001);
+            controller[0] = cpu->get_gamepad(0);
+            controller[1] = cpu->get_gamepad(1);
         }
     }
     else if(addr >= 0x5000 && addr <= 0x5FFF) // расширение ПЗУ\ОЗУ
@@ -401,4 +408,9 @@ uint8_t Bus::get_X()
 uint8_t Bus::get_Y()
 {
     return cpu->get_Y();
+}
+
+uint8_t Bus::get_gamepad(uint8_t index)
+{
+    return cpu->get_gamepad(index);
 }

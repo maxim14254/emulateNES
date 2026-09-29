@@ -60,6 +60,8 @@ public:
     uint8_t get_X();
     uint8_t get_Y();
 
+    uint8_t get_gamepad(uint8_t index);
+
     friend QDataStream &operator<<(QDataStream &stream, const Bus &bus);
     friend QDataStream &operator>>(QDataStream &in, Bus &bus);
 

@@ -288,7 +288,7 @@ void MainWindow::render_debug_palettes(std::vector<uint32_t> &frame)
 }
 
 void MainWindow::render_cpu_debug(const QString& text,uint8_t PPUCTRL, uint8_t PPUMASK, uint8_t PPUSTATUS, uint8_t OAMADDR, uint8_t OAMDATA, uint8_t PPUSCROLL, uint8_t PPUDATA, uint16_t PPUADDR,
-                                  uint16_t PC, uint8_t SP, uint8_t status, uint8_t A, uint8_t X, uint8_t Y, int16_t scanline, int16_t cycles)
+                                  uint16_t PC, uint8_t SP, uint8_t status, uint8_t A, uint8_t X, uint8_t Y, int16_t scanline, int16_t cycles, uint64_t frame)
 {
 #ifdef DEBUG_ON
     ui->cpu_debuger->setText(text);
@@ -308,6 +308,7 @@ void MainWindow::render_cpu_debug(const QString& text,uint8_t PPUCTRL, uint8_t P
     ui->label_ppuscroll->setText(QString("%1").arg(PPUSCROLL, 2, 16, QChar('0')).toUpper());
     ui->label_ppudata->setText(QString("%1").arg(PPUDATA, 2, 16, QChar('0')).toUpper());
     ui->label_ppuadr->setText(QString("%1").arg(PPUADDR, 4, 16, QChar('0')).toUpper());
+    ui->label_frame->setText(QString("%1").arg(frame).toUpper());
 
     ui->toolButton_2->setText(QString("%1  %2").arg(">>").arg(scanline));
     ui->lineEdit_2->setText(QString("%1").arg(cycles));

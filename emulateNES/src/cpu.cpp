@@ -491,18 +491,17 @@ void CPU::slot_press_key(int key)
             {
                 static bool flag = true;
 
-                if(flag)
+//                if(flag)
                 {
                     flag = false;
 
                     if(netPlay->isFirstPlayer())
-                        net_gamepad = gamepad[0];
+                        gamepad[0] |= val;
                     else
-                        net_gamepad = gamepad[1];
+                        gamepad[1] |= val;
                 }
 
-                net_gamepad |= val;
-                netPlay->setLocalData(bus->getFrame(), net_gamepad);
+                //netPlay->setLocalData(bus->getFrame(), net_gamepad);
             }
             else
                 gamepad[0] |= val;
@@ -523,18 +522,17 @@ void CPU::slot_release_key(int key)
             {
                 static bool flag = true;
 
-                if(flag)
+               // if(flag)
                 {
                     flag = false;
 
                     if(netPlay->isFirstPlayer())
-                        net_gamepad = gamepad[0];
+                        gamepad[0] &= ~val;
                     else
-                        net_gamepad = gamepad[1];
+                        gamepad[1] &= ~val;
                 }
 
-                net_gamepad &= ~val;
-                netPlay->setLocalData(bus->getFrame(), net_gamepad);
+                //netPlay->setLocalData(bus->getFrame(), net_gamepad);
             }
             else
                 gamepad[0] &= ~val;

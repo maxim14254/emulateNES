@@ -126,8 +126,6 @@ void SaveLoad::StartGameForNet()
     QByteArray array;
     QDataStream out(&array, QIODevice::WriteOnly);
 
-    out << cpu.path;
-
     //CPU регистры
     out << cpu;
 
