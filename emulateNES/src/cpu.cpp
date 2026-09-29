@@ -79,6 +79,12 @@ CPU::CPU(MainWindow* _window, Bus* _bus, NetPlay* _netPlay) : bus(_bus), netPlay
     {
         load_newgame_for_net_callback(array);
         window->on_back_btn_clicked();
+
+        if(run_t.joinable())
+            run_t.join();
+
+        start = true;
+        run_t = std::thread(&CPU::run, this);
     });
 
 

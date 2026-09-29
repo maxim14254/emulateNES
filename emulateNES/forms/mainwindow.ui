@@ -140,7 +140,7 @@
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>85</width>
+                    <width>98</width>
                     <height>85</height>
                    </rect>
                   </property>
@@ -1837,6 +1837,12 @@ p, li { white-space: pre-wrap; }
                          </item>
                          <item row="14" column="1">
                           <widget class="QLabel" name="label_frame">
+                           <property name="font">
+                            <font>
+                             <family>Tahoma</family>
+                             <pointsize>12</pointsize>
+                            </font>
+                           </property>
                            <property name="text">
                             <string/>
                            </property>
