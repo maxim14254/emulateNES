@@ -34,6 +34,9 @@ MainWindow::MainWindow(NetPlay* _netPlay, QWidget *parent)
         settings->setValue("Key_Slot+", Qt::Key::Key_Plus);
         settings->setValue("Key_Slot-", Qt::Key::Key_Minus);
 
+        settings->setValue("IP", "192.168.0.0");
+        settings->setValue("Port", "45454");
+
         settings->sync();
     }
 
@@ -45,6 +48,8 @@ MainWindow::MainWindow(NetPlay* _netPlay, QWidget *parent)
     setParams();
 
     setWindowIcon(QIcon(":/nintendoNES.ico"));
+
+    on_radioButton_2_clicked();
 
     ui->listWidget->setViewMode(QListView::IconMode);
     ui->listWidget->setFlow(QListView::LeftToRight);
@@ -109,6 +114,13 @@ MainWindow::MainWindow(NetPlay* _netPlay, QWidget *parent)
             const_cast<QString&>(value).chop(1);
             ui->lineEdit_4->setText(value);
         }
+
+        settings->setValue("Port", value);
+    });
+
+    connect(ui->lineEdit_3, &QLineEdit::textChanged, this, [&](const QString& value)
+    {
+        settings->setValue("IP",value);
     });
 
     connect(ui->restart, &QAction::triggered, this, [&]()
@@ -500,6 +512,9 @@ void MainWindow::setParams()
         selectKeyWgt->setCurrentButton(ui->toolButton_12, settings->value("Key_Load", Qt::Key::Key_F9).toInt());
         selectKeyWgt->setCurrentButton(ui->toolButton_13, settings->value("Key_Slot+", Qt::Key::Key_Plus).toInt());
         selectKeyWgt->setCurrentButton(ui->toolButton_14, settings->value("Key_Slot-", Qt::Key::Key_Minus).toInt());
+
+        ui->lineEdit_3->setText(settings->value("IP", "192.168.0.0").toString());
+        ui->lineEdit_4->setText(settings->value("Port", "45454").toString());
     }
 
     params.close();
@@ -709,11 +724,13 @@ void MainWindow::on_connect_btn_clicked()
 void MainWindow::on_radioButton_2_clicked()
 {
     netPlay->set_player(true);
+    ui->lineEdit_3->setEnabled(false);
 }
 
 
 void MainWindow::on_radioButton_clicked()
 {
     netPlay->set_player(false);
+    ui->lineEdit_3->setEnabled(true);
 }
 
