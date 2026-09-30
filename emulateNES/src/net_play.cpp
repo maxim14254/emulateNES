@@ -2,6 +2,8 @@
 #include <QHostInfo>
 #include <QMessageBox>
 #include <QDebug>
+#include <QMetaObject>
+
 
 NetPlay::NetPlay()
 {
@@ -30,6 +32,7 @@ void NetPlay::connecting(const std::string& host, quint16 _port)
     if(firstPlayer)
     {
         server->listen(QHostAddress::Any, port);
+        emit connected(true);
     }
     else
     {
@@ -51,7 +54,7 @@ void NetPlay::onNewConnection()
         connect(socket.get(), &QTcpSocket::disconnected, this, &NetPlay::onDisconnected);
 
         is_connect = true;
-
+        emit connected(true);
     }
 }
 
@@ -60,6 +63,7 @@ void NetPlay::onConnected()
     socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
 
     is_connect = true;
+    emit connected(is_connect);
 
     QByteArray hello = "ready" + QHostInfo::localHostName().toUtf8();
     sendMessage(hello);
@@ -81,9 +85,12 @@ void NetPlay::sendMessage(const QByteArray& payload)
     out << quint32(payload.size());
     packet.append(payload);
 
-    socket->write(packet);
+    QMetaObject::invokeMethod(socket.get(), [&, packet]()
+    {
+        socket->write(packet);
+        socket->flush();
 
-    socket->flush();
+    }, Qt::QueuedConnection);
 }
 
 void NetPlay::writeDatagram(const Data &d)
@@ -104,7 +111,7 @@ void NetPlay::onReadyRead()
 
 void NetPlay::processMessages()
 {
-    //while(true)
+    while(true)
     {
         if(recvBuffer.size() < 4)
             return;
@@ -115,7 +122,7 @@ void NetPlay::processMessages()
         lenIn >> len;
 
         if(recvBuffer.size() < int(4 + len))
-            return;   // ещё не всё пришло
+            return;
 
         QByteArray payload = recvBuffer.mid(4, len);
         recvBuffer.remove(0, 4 + len);
@@ -140,6 +147,7 @@ void NetPlay::processMessages()
 
         if(d.startGame.size() > 0)
         {
+            max_frame_now = 0;
             emit startGameForNet(d.startGame);
         }
         else

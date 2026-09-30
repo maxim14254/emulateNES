@@ -61,6 +61,18 @@ CPU::CPU(MainWindow* _window, Bus* _bus, NetPlay* _netPlay) : bus(_bus), netPlay
     connect(window, &MainWindow::signal_release_key, this, &CPU::slot_release_key);
     connect(window, &MainWindow::signal_restart, this, [&]()
     {
+        std::lock_guard<std::mutex> lg(update_frame_mutex);
+        _update = true;
+        cv.notify_one();
+        start = false;
+
+        IRQ = 0;
+        nmi_pending = false;
+        last_vblank = false;
+        gamepad[0] = 0;
+        gamepad[1] = 0;
+        net_gamepad = 0;
+
         slot_init_new_cartridge(path);
     });
 

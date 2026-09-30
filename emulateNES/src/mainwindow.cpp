@@ -242,6 +242,20 @@ MainWindow::MainWindow(NetPlay* _netPlay, QWidget *parent)
         ui->listWidget->addItem(it);
     }
 
+    connect(netPlay, &NetPlay::connected, this, [&](bool value)
+    {
+        if(value)
+        {
+            ui->status_connect->setStyleSheet("QToolButton { border: none; border-radius: 7px; background-color: #2ECC71; padding: 4px; }");
+            ui->status_connect->setText("Подключено");
+        }
+        else
+        {
+            ui->status_connect->setStyleSheet("QToolButton { border: none; border-radius: 7px; background-color: #E74C3C; padding: 4px; }");
+            ui->status_connect->setText("Не подключен");
+        }
+    });
+
 #ifdef DEBUG_ON
     ui->widget_4->setVisible(true);
 
@@ -707,17 +721,6 @@ void MainWindow::on_connect_btn_clicked()
     }
 
     netPlay->connecting(ui->lineEdit_3->text().toStdString(), ui->lineEdit_4->text().toUInt());
-
-    if(netPlay->isConnnection())
-    {
-        ui->status_connect->setStyleSheet("QToolButton { border: none; border-radius: 7px; background-color: #2ECC71; padding: 4px; }");
-        ui->status_connect->setText("Подключено");
-    }
-    else
-    {
-        ui->status_connect->setStyleSheet("QToolButton { border: none; border-radius: 7px; background-color: #E74C3C; padding: 4px; }");
-        ui->status_connect->setText("Не подключен");
-    }
 }
 
 

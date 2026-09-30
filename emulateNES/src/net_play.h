@@ -53,7 +53,7 @@ public:
     bool isFirstPlayer() { return firstPlayer; }
     void set_player(bool val) { firstPlayer = val; }
 
-    quint64 getMaxFrameNow() { return max_frame_now; }
+    quint64 getMaxFrameNow() { return max_frame_now.load(); }
 
     void clearBuffers();
 
@@ -85,6 +85,7 @@ private:
 signals:
     void startGameForNet(QByteArray&);
     void selectGameForNet();
+    void connected(bool value);
 };
 
 #endif // NET_PLAY_H

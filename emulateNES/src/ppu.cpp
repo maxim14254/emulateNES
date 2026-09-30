@@ -779,6 +779,9 @@ void PPU::cooperative_game()
 
         if(!start)
             return;
+
+        if(!netPlay->isConnnection())
+            return;
     }
 
     auto another_controller = netPlay->getData(frame - 3);

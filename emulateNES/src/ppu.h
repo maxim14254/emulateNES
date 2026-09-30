@@ -43,7 +43,7 @@ public:
     void run_watch_palettes();
     void reset();
 
-    uint64_t getFrame() { return frame; }
+    uint64_t& getFrame() { return frame; }
     uint8_t getppustatus(){ return PPUSTATUS; }
     uint8_t static inline PPUMASK;
 
