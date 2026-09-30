@@ -41,7 +41,7 @@ brew install qt@5
 - Один игрок(Игрок №1) создаёт хост, другой(Игрок №2) подключаются по локальному IP.
 - Обмен данными идёт напрямую по локальной сети, без внешнего сервера.
   
-<img width="973" height="854" alt="Безымянный" src="https://github.com/user-attachments/assets/11119ef3-7408-4360-9c84-7c5d189604a5" />
+<img width="600" height="600" alt="Безымянный" src="https://github.com/user-attachments/assets/11119ef3-7408-4360-9c84-7c5d189604a5" />
 
 
 ---
