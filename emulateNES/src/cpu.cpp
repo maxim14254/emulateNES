@@ -71,12 +71,17 @@ CPU::CPU(MainWindow* _window, Bus* _bus, NetPlay* _netPlay) : bus(_bus), netPlay
         last_vblank = false;
         gamepad[0] = 0;
         gamepad[1] = 0;
+        net_gamepad = 0;
 
         slot_init_new_cartridge(_path);
     });
 
     connect(_netPlay, &NetPlay::startGameForNet, this, [&](QByteArray& array)
     {
+        gamepad[0] = 0;
+        gamepad[1] = 0;
+        net_gamepad = 0;
+
         load_newgame_for_net_callback(array);
         window->on_back_btn_clicked();
 
@@ -494,21 +499,7 @@ void CPU::slot_press_key(int key)
         if(val > 0)
         {
             if(netPlay->isConnnection())
-            {
-                static bool flag = true;
-
-//                if(flag)
-                {
-                    flag = false;
-
-                    if(netPlay->isFirstPlayer())
-                        gamepad[0] |= val;
-                    else
-                        gamepad[1] |= val;
-                }
-
-                //netPlay->setLocalData(bus->getFrame(), net_gamepad);
-            }
+                net_gamepad |= val;
             else
                 gamepad[0] |= val;
         }
@@ -525,21 +516,7 @@ void CPU::slot_release_key(int key)
         if(val > 0)
         {
             if(netPlay->isConnnection())
-            {
-                static bool flag = true;
-
-               // if(flag)
-                {
-                    flag = false;
-
-                    if(netPlay->isFirstPlayer())
-                        gamepad[0] &= ~val;
-                    else
-                        gamepad[1] &= ~val;
-                }
-
-                //netPlay->setLocalData(bus->getFrame(), net_gamepad);
-            }
+                net_gamepad &= ~val;
             else
                 gamepad[0] &= ~val;
         }

@@ -140,7 +140,7 @@ void SaveLoad::StartGameForNet()
         out << *apu;
 
     Data data;
-    data.frame = 0;
+    data.frame = ppu.getFrame();
     data.controller = 0;
     data.startGame = array;
 
@@ -161,6 +161,8 @@ void SaveLoad::LoadGameForNet(QByteArray &array)
     }
 
     std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+
+    netPlay.clearBuffers();
 
     in >> cpu.path;
 

@@ -122,14 +122,8 @@ void Bus::write_cpu(uint16_t addr, uint8_t data)
     }
     else if(addr >= 0x4000 && addr <= 0x4017) // APU и ввода/вывода DMA
     {
-        if (addr >= 0x4000 && addr <= 0x4013) // APU
-             if (apu)
-                 apu->write_registers(addr, data);
-
-        if (addr == 0x4017) // APU
-             if (apu)
-                 apu->write_registers(addr, data);
-
+        if (apu)
+            apu->write_registers(addr, data);
 
         if(addr == 0x4014) // DMA
             ppu->set_oam(data);
@@ -413,4 +407,9 @@ uint8_t Bus::get_Y()
 uint8_t Bus::get_gamepad(uint8_t index)
 {
     return cpu->get_gamepad(index);
+}
+
+uint8_t Bus::get_net_gamepad()
+{
+    return cpu->get_net_gamepad();
 }

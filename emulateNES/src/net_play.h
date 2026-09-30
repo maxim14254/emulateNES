@@ -59,6 +59,8 @@ public:
 
     quint64 getMaxFrameNow() { return max_frame_now; }
 
+    void clearBuffers();
+
 
 private:
     std::unique_ptr<QUdpSocket> socket;

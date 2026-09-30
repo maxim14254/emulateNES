@@ -10,6 +10,8 @@ NetPlay::NetPlay()
 {
     socket.reset(new QUdpSocket());
 
+    max_frame_now = 0;
+
     connect(socket.get(), &QUdpSocket::readyRead, this, &NetPlay::readyRead);
 }
 
@@ -96,6 +98,12 @@ void NetPlay::setLocalData(uint64_t frame, uint8_t value)
     localData[frame] = value;
 }
 
+void NetPlay::clearBuffers()
+{
+    data.clear();
+    localData.clear();
+}
+
 void NetPlay::readyRead()
 {
     QByteArray bytes = "";
@@ -127,11 +135,11 @@ void NetPlay::readyRead()
     Data d;
     in >> d;
 
-#ifdef DEBUG_ON
+//#ifdef DEBUG_ON
         qDebug() << "Получено:" << d.controller
                  << "от" << _sender.toString()
                  << ":" << senderPort;
-#endif
+//#endif
 
     if(d.startGame.count() > 0)
     {

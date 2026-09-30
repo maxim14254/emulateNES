@@ -44,6 +44,7 @@ public:
     uint8_t get_Y(){ return Y; }
     int get_IRQ(){ return IRQ; }
     uint8_t& get_gamepad(uint8_t i){ return gamepad[i]; }
+    uint8_t get_net_gamepad() { return net_gamepad; }
 
     void release_irq();
     void request_irq();

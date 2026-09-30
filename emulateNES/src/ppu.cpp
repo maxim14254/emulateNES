@@ -762,51 +762,41 @@ void PPU::download_asm_buffer(std::map<uint16_t, std::string> &assembler_buf)
 
 void PPU::cooperative_game()
 {
-    if(int(frame - 3) < 0)
+    Data d;
+    d.frame = frame;
+    d.startGame = "";
+    d.controller = bus->get_net_gamepad();
+
+    netPlay->setLocalData(frame, d.controller);
+    netPlay->writeDatagram(d);
+
+    if(frame < 3)
         return;
+
+    while(netPlay->getMaxFrameNow() < frame - 3)
+    {
+        std::this_thread::sleep_for(std::chrono::microseconds(3));
+
+        if(!start)
+            return;
+    }
 
     auto another_controller = netPlay->getData(frame - 3);
     auto my_controller = netPlay->getLocalData(frame - 3);
 
-    if(another_controller != std::nullopt)
+    if(another_controller != std::nullopt && my_controller != std::nullopt)
     {
         if(netPlay->isFirstPlayer())
         {
-            qDebug() << another_controller.value().controller;
             bus->set_cpu_controller(1, another_controller.value().controller);
+            bus->set_cpu_controller(0, my_controller.value());
         }
         else
+        {
             bus->set_cpu_controller(0, another_controller.value().controller);
-    }
-    else
-    {
-        while(netPlay->getMaxFrameNow() < frame - 3)
-        {
-            std::this_thread::sleep_for(std::chrono::microseconds(10));
+            bus->set_cpu_controller(1, my_controller.value());
         }
     }
-
-    Data d;
-    d.frame = frame;
-    d.startGame = "";
-
-    //if(my_controller != std::nullopt)
-    {
-        //d.controller = my_controller.value();
-
-        if(netPlay->isFirstPlayer())
-        {
-            d.controller = bus->get_gamepad(0);
-            //bus->set_cpu_controller(0, d.controller);
-        }
-        else
-        {
-            d.controller = bus->get_gamepad(1);
-           // bus->set_cpu_controller(1, d.controller);
-        }
-    }
-
-    netPlay->writeDatagram(d);
 }
 
 uint8_t PPU::get_sprite(bool& priority, uint8_t& color_index)
