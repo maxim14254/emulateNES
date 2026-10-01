@@ -105,38 +105,35 @@ void NetPlay::writeDatagram(const Data &d)
 
 void NetPlay::onReadyRead()
 {
-    recvBuffer.append(socket->readAll());
+    recvBuffer.push_back(socket->readAll());
+
     processMessages();
+
+    recvBuffer.clear();
 }
 
 void NetPlay::processMessages()
 {
-    while(true)
+    if(recvBuffer.size() < 4)
+        return;
+
+
+    if(recvBuffer.startsWith("ready"))
     {
-        if(recvBuffer.size() < 4)
-            return;
+        QMessageBox box(QMessageBox::Icon::Information, "info", QString("Подключился пользователь %1").arg(QString::fromUtf8(recvBuffer.mid(5))), QMessageBox::StandardButton::Ok);
+        box.exec();
 
-        QDataStream lenIn(recvBuffer);
-
-        quint32 len = 0;
-        lenIn >> len;
-
-        if(recvBuffer.size() < int(4 + len))
-            return;
-
-        QByteArray payload = recvBuffer.mid(4, len);
-        recvBuffer.remove(0, 4 + len);
-
-        if(payload.startsWith("ready"))
-        {
-            QMessageBox box(QMessageBox::Icon::Information, "info", QString("Подключился пользователь %1").arg(QString::fromUtf8(payload.mid(5))), QMessageBox::StandardButton::Ok);
-            box.exec();
-
-            emit selectGameForNet();
-            return;
-        }
-
-        QDataStream in(payload);
+        emit selectGameForNet();
+    }
+    else if(recvBuffer.startsWith("load"))
+    {
+        clearBuffers();
+        max_frame_now = 0;
+        load_callback(recvBuffer.mid(4));
+    }
+    else
+    {
+        QDataStream in(recvBuffer);
 
         Data d;
         in >> d;

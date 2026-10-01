@@ -15,6 +15,7 @@ public:
 
     void Save();
     void Load();
+    void LoadSaveForNet(QByteArray&& array);
     void StartGameForNet();
     void LoadGameForNet(QByteArray& array);
 

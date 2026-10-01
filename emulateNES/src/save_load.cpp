@@ -24,6 +24,8 @@ SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu, APU* _apu, NetPlay& _netPlay
     cpu.set_load_newgame_for_net_callback(std::bind(&SaveLoad::LoadGameForNet, this, std::placeholders::_1));
 
     cpu.chande_slot_callback = [&]()->uint8_t& { return saveNumb; };
+
+    netPlay.set_load_callback(std::bind(&SaveLoad::LoadSaveForNet, this, std::placeholders::_1));
 }
 
 void SaveLoad::Save()
@@ -112,6 +114,23 @@ void SaveLoad::Load()
         if(apu)
             in >> *apu;
 
+        if(netPlay.isConnnection())
+        {
+            QByteArray array2;
+            QDataStream out(&array2, QIODevice::WriteOnly);
+
+            out << "load" << array;
+
+            Data d;
+            d.frame = 0;
+            d.controller = 0;
+            d.startGame = array2;
+
+            netPlay.writeDatagram(d);
+
+            //ожидать получение ответа
+        }
+
         w.show_text(QString("Загружен слот:%1").arg(saveNumb));
     }
     else
@@ -119,6 +138,45 @@ void SaveLoad::Load()
         QMessageBox message(QMessageBox::Icon::Information, "Ошибка", QString("Не удалось загрузить файл %1").arg(file.fileName()), QMessageBox::StandardButton::Ok);
         message.exec();
     }
+}
+
+void SaveLoad::LoadSaveForNet(QByteArray &&array)
+{
+    QDataStream in(&array, QIODevice::ReadOnly);
+
+    QString p;
+    in >> p;
+
+    if(p != cpu.path)
+    {
+        w.show_text(QString("Неверный ROM"));
+        return;
+    }
+
+    if(!_update)
+    {
+        std::lock_guard<std::mutex> lg(update_frame_mutex);
+        _update = true;
+
+        cv.notify_one();
+    }
+
+    std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+
+    //CPU регистры
+    in >> cpu;
+
+    //PPU регистры
+    in >> ppu;
+
+    //Bus
+    in >> bus;
+
+    //APU
+    if(apu)
+        in >> *apu;
+
+    w.show_text(QString("Загружен слот:%1").arg(saveNumb));
 }
 
 void SaveLoad::StartGameForNet()
