@@ -58,6 +58,7 @@ public:
     void clearBuffers();
 
     void set_load_callback(std::function<void(QByteArray&& array)> fun) { load_callback = fun; };
+    void set_load_sucsess_callback(std::function<void()> fun) { load_sucsess_callback = fun; };
 
 private slots:
     void onNewConnection();
@@ -82,6 +83,7 @@ private:
     std::mutex map_mutex;
 
     std::function<void(QByteArray&& array)> load_callback;
+    std::function<void()> load_sucsess_callback;
 
     void sendMessage(const QByteArray& payload);
     void processMessages();

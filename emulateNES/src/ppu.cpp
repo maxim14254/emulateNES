@@ -382,9 +382,6 @@ void PPU::run(uint64_t cycles)
                 bus->cpu_request_nmi();
             }
 
-            if(netPlay->isConnnection())
-                cooperative_game();
-
             {
                 std::unique_lock<std::mutex> update_frame(update_frame_mutex);
                 cv.wait(update_frame, [&]{ return _update; });
@@ -402,6 +399,9 @@ void PPU::run(uint64_t cycles)
                                           window->render_frame(outBuffer);
                                       },
                                       Qt::QueuedConnection);
+
+            if(netPlay->isConnnection())
+                cooperative_game();
         }
     }
 }

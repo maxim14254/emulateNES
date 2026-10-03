@@ -8,6 +8,7 @@
 #include "mapper_4.h"
 #include "mainwindow.h"
 #include "global.h"
+#include <future>
 
 
 
@@ -117,9 +118,9 @@ void SaveLoad::Load()
         if(netPlay.isConnnection())
         {
             QByteArray array2;
-            QDataStream out(&array2, QIODevice::WriteOnly);
 
-            out << "load" << array;
+            array2.push_back("load");
+            array2.push_back(array);
 
             Data d;
             d.frame = 0;
@@ -128,6 +129,17 @@ void SaveLoad::Load()
 
             netPlay.clearBuffers();
             netPlay.writeDatagram(d);
+
+            std::promise<int> promise_wait;
+
+            netPlay.set_load_sucsess_callback([&promise_wait]()
+            {
+                promise_wait.set_value(1);
+            });
+
+            promise_wait.get_future().get();
+
+            netPlay.set_load_sucsess_callback(nullptr);
         }
 
         w.show_text(QString("Загружен слот:%1").arg(saveNumb));
@@ -152,6 +164,8 @@ void SaveLoad::LoadSaveFromNet(QByteArray &&array)
         return;
     }
 
+    break_wait = true;
+
     if(!_update)
     {
         std::lock_guard<std::mutex> lg(update_frame_mutex);
@@ -160,7 +174,6 @@ void SaveLoad::LoadSaveFromNet(QByteArray &&array)
         cv.notify_one();
     }
 
-    break_wait = true;
     std::lock_guard<std::mutex> lock(cpu.mutex_stop);
 
     //CPU регистры
@@ -180,6 +193,16 @@ void SaveLoad::LoadSaveFromNet(QByteArray &&array)
 
     break_wait = false;
 
+    QByteArray array2;
+
+    array2.push_back("load_sucsess");
+
+    Data d;
+    d.frame = 0;
+    d.controller = 0;
+    d.startGame = array2;
+
+    netPlay.writeDatagram(d);
 }
 
 void SaveLoad::StartGameForNet()
@@ -204,7 +227,6 @@ void SaveLoad::StartGameForNet()
     data.frame = ppu.getFrame() = 0;
     data.controller = 0;
     data.startGame = array;
-
 
     netPlay.writeDatagram(data);
 }

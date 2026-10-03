@@ -135,9 +135,11 @@ void NetPlay::processMessages()
 
         if(d.startGame.size() > 0)
         {
-            max_frame_now = 0;
-
-            if(d.startGame.startsWith("load"))
+            if(d.startGame.startsWith("load_sucsess"))
+            {
+                load_sucsess_callback();
+            }
+            else if(d.startGame.startsWith("load"))
             {
                 clearBuffers();
                 load_callback(d.startGame.mid(4));
