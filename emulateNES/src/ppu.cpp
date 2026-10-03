@@ -763,8 +763,9 @@ void PPU::download_asm_buffer(std::map<uint16_t, std::string> &assembler_buf)
 void PPU::cooperative_game()
 {
     Data d;
+    d.header = "";
     d.frame = frame;
-    d.startGame = "";
+    d.data = "";
     d.controller = bus->get_net_gamepad();
 
     netPlay->setLocalData(frame, d.controller);

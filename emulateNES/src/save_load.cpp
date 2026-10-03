@@ -79,9 +79,7 @@ void SaveLoad::Load()
 
     if (!file.open(QIODevice::ReadOnly))
     {
-        QMessageBox message(QMessageBox::Icon::Information, "Ошибка",
-                            QString("Не удалось загрузить файл %1").arg(file.fileName()),
-                            QMessageBox::StandardButton::Ok);
+        QMessageBox message(QMessageBox::Icon::Information, "Ошибка", QString("Не удалось загрузить файл %1").arg(file.fileName()), QMessageBox::StandardButton::Ok);
         message.exec();
         return;
     }
@@ -96,7 +94,7 @@ void SaveLoad::Load()
 
     if (p != cpu.path)
     {
-        w.show_text(QString("Неверный ROM"));
+        w.show_text("Неверный ROM");
         return;
     }
 
@@ -104,46 +102,49 @@ void SaveLoad::Load()
     {
         std::lock_guard<std::mutex> lg(update_frame_mutex);
         _update = true;
+
         cv.notify_one();
     }
 
     std::lock_guard<std::mutex> lock(cpu.mutex_stop);
 
-    // --- локальная загрузка ---
+    //CPU регистры
     in >> cpu;
+
+    //PPU регистры
     in >> ppu;
+
+    //Bus
     in >> bus;
-    if (apu)
+
+    //APU
+    if(apu)
         in >> *apu;
 
-    // --- рассылаем пиру ---
     if (netPlay.isConnnection())
     {
-        QByteArray array2;
-        array2.push_back(QByteArray("load"));
-        array2.push_back(array);
 
         Data d;
-        d.frame      = 0;
+        d.header = "load";
+        d.frame = 0;
         d.controller = 0;
-        d.startGame  = array2;
+        d.data = array;
 
         netPlay.clearBuffers();
-        netPlay.writeDatagram(d);
 
-        // Ждём подтверждения, НЕ блокируя GUI-поток.
-        // Иначе socket readyRead никогда не выполнится → дедлок.
         QEventLoop loop;
         QTimer timeout;
         timeout.setSingleShot(true);
         QObject::connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
 
         netPlay.set_load_sucsess_callback([&loop]()
-                                          {
-                                              loop.quit();
-                                          });
+        {
+            loop.quit();
+        });
 
-        timeout.start(5000);   // 5 сек — защита от «зависшего» пира
+        netPlay.writeDatagram(d);
+
+        timeout.start(5000);
         loop.exec();
 
         netPlay.set_load_sucsess_callback(nullptr);
@@ -152,22 +153,22 @@ void SaveLoad::Load()
     w.show_text(QString("Загружен слот:%1").arg(saveNumb));
 }
 
-void SaveLoad::LoadSaveFromNet(QByteArray&& array)
+void SaveLoad::LoadSaveFromNet(QByteArray& array)
 {
     QDataStream in(&array, QIODevice::ReadOnly);
 
     QString p;
     in >> p;
 
-    // Даже при ошибке обязательно отвечаем, иначе хост зависнет.
     if (p != cpu.path)
     {
-        w.show_text(QString("Неверный ROM"));
+        w.show_text("Неверный ROM");
 
         Data d;
-        d.frame      = 0;
+        d.header = "load_fail";
+        d.frame = 0;
         d.controller = 0;
-        d.startGame  = QByteArray("load_fail");
+        d.data = "";
 
         netPlay.writeDatagram(d);
         return;
@@ -179,21 +180,30 @@ void SaveLoad::LoadSaveFromNet(QByteArray&& array)
     {
         std::lock_guard<std::mutex> lg(update_frame_mutex);
         _update = true;
+
         cv.notify_one();
     }
 
     std::lock_guard<std::mutex> lock(cpu.mutex_stop);
 
+    //CPU регистры
     in >> cpu;
+
+    //PPU регистры
     in >> ppu;
+
+    //Bus
     in >> bus;
-    if (apu)
+
+    //APU
+    if(apu)
         in >> *apu;
 
     Data d;
-    d.frame      = 0;
+    d.header = "load_sucsess";
+    d.frame = 0;
     d.controller = 0;
-    d.startGame  = QByteArray("load_sucsess");
+    d.data = "";
 
     netPlay.writeDatagram(d);
 
@@ -220,12 +230,13 @@ void SaveLoad::StartGameForNet()
     if(apu)
         out << *apu;
 
-    Data data;
-    data.frame = ppu.getFrame() = 0;
-    data.controller = 0;
-    data.startGame = array;
+    Data d;
+    d.header = "new_game";
+    d.frame = ppu.getFrame() = 0;
+    d.controller = 0;
+    d.data = array;
 
-    netPlay.writeDatagram(data);
+    netPlay.writeDatagram(d);
 }
 
 void SaveLoad::LoadGameForNet(QByteArray &array)
@@ -263,7 +274,7 @@ void SaveLoad::LoadGameForNet(QByteArray &array)
         in >> bus;
     else
     {
-        w.show_text(QString("Не удалось загрузить ROM"));
+        w.show_text("Не удалось загрузить ROM");
         return;
     }
 

@@ -13,23 +13,26 @@
 
 struct Data
 {
+    QString header;
     quint64 frame;
     uint8_t controller;
-    QByteArray startGame;
+    QByteArray data;
 
     friend QDataStream &operator<<(QDataStream &out, const Data &d)
     {
+        out << d.header;
         out << d.frame;
         out << d.controller;
-        out << d.startGame;
+        out << d.data;
         return out;
     }
 
     friend QDataStream &operator>>(QDataStream &in, Data &d)
     {
+        in >> d.header;
         in >> d.frame;
         in >> d.controller;
-        in >> d.startGame;
+        in >> d.data;
         return in;
     }
 };
@@ -57,7 +60,7 @@ public:
 
     void clearBuffers();
 
-    void set_load_callback(std::function<void(QByteArray&& array)> fun) { load_callback = fun; };
+    void set_load_callback(std::function<void(QByteArray& array)> fun) { load_callback = fun; };
     void set_load_sucsess_callback(std::function<void()> fun) { load_sucsess_callback = fun; };
 
 private slots:
@@ -82,7 +85,7 @@ private:
 
     std::mutex map_mutex;
 
-    std::function<void(QByteArray&& array)> load_callback;
+    std::function<void(QByteArray& array)> load_callback;
     std::function<void()> load_sucsess_callback;
 
     void sendMessage(const QByteArray& payload);

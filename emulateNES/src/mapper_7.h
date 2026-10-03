@@ -2,7 +2,6 @@
 #define MAPPER_7_H
 
 #include <QFile>
-#include <vector>
 #include "mapper.h"
 
 
