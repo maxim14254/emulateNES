@@ -786,7 +786,7 @@ void PPU::cooperative_game()
 
         if(count > 1000)
         {
-            qDebug() << "cooperative_game while(false)";
+            qDebug() << "cooperative_game while(false)" << netPlay->getMaxFrameNow() << "<" << frame - 3;
             break;
         }
     }

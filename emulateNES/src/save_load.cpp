@@ -220,6 +220,8 @@ void SaveLoad::LoadSaveFromNet(QByteArray& array)
     w.show_text(QString("Загружен слот:%1").arg(saveNumb));
 
     break_wait = false;
+
+    cpu.mutex_stop.unlock();
 }
 
 void SaveLoad::StartGameForNet()
