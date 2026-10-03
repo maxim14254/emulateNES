@@ -117,9 +117,9 @@ void SaveLoad::Load()
         if(netPlay.isConnnection())
         {
             QByteArray array2;
-            QDataStream out(&array2, QIODevice::WriteOnly);
 
-            out << "load" << array;
+            array2.push_back("load");
+            array2.push_back(array);
 
             Data d;
             d.frame = 0;
