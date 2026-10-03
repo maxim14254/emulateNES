@@ -8,7 +8,8 @@
 #include "mapper_4.h"
 #include "mainwindow.h"
 #include "global.h"
-#include <future>
+#include <QEventLoop>
+#include <QTimer>
 
 
 
@@ -76,133 +77,129 @@ void SaveLoad::Load()
 {
     QFile file(QString("%1save_%2.sav").arg(SaveDir).arg(saveNumb));
 
-    if (file.open(QIODevice::ReadOnly))
+    if (!file.open(QIODevice::ReadOnly))
     {
-        QByteArray array = file.readAll();
-        file.close();
-
-        QDataStream in(&array, QIODevice::ReadOnly);
-
-        QString p;
-        in >> p;
-
-        if(p != cpu.path)
-        {
-            w.show_text(QString("Неверный ROM"));
-            return;
-        }
-
-        if(!_update)
-        {
-            std::lock_guard<std::mutex> lg(update_frame_mutex);
-            _update = true;
-
-            cv.notify_one();
-        }
-
-        std::lock_guard<std::mutex> lock(cpu.mutex_stop);
-
-        //CPU регистры
-        in >> cpu;
-
-        //PPU регистры
-        in >> ppu;
-
-        //Bus
-        in >> bus;
-
-        //APU
-        if(apu)
-            in >> *apu;
-
-        if(netPlay.isConnnection())
-        {
-            QByteArray array2;
-
-            array2.push_back("load");
-            array2.push_back(array);
-
-            Data d;
-            d.frame = 0;
-            d.controller = 0;
-            d.startGame = array2;
-
-            netPlay.clearBuffers();
-            netPlay.writeDatagram(d);
-
-            std::promise<int> promise_wait;
-
-            netPlay.set_load_sucsess_callback([&promise_wait]()
-            {
-                promise_wait.set_value(1);
-            });
-
-            promise_wait.get_future().get();
-
-            netPlay.set_load_sucsess_callback(nullptr);
-        }
-
-        w.show_text(QString("Загружен слот:%1").arg(saveNumb));
-    }
-    else
-    {
-        QMessageBox message(QMessageBox::Icon::Information, "Ошибка", QString("Не удалось загрузить файл %1").arg(file.fileName()), QMessageBox::StandardButton::Ok);
+        QMessageBox message(QMessageBox::Icon::Information, "Ошибка",
+                            QString("Не удалось загрузить файл %1").arg(file.fileName()),
+                            QMessageBox::StandardButton::Ok);
         message.exec();
+        return;
     }
+
+    QByteArray array = file.readAll();
+    file.close();
+
+    QDataStream in(&array, QIODevice::ReadOnly);
+
+    QString p;
+    in >> p;
+
+    if (p != cpu.path)
+    {
+        w.show_text(QString("Неверный ROM"));
+        return;
+    }
+
+    if (!_update)
+    {
+        std::lock_guard<std::mutex> lg(update_frame_mutex);
+        _update = true;
+        cv.notify_one();
+    }
+
+    std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+
+    // --- локальная загрузка ---
+    in >> cpu;
+    in >> ppu;
+    in >> bus;
+    if (apu)
+        in >> *apu;
+
+    // --- рассылаем пиру ---
+    if (netPlay.isConnnection())
+    {
+        QByteArray array2;
+        array2.push_back(QByteArray("load"));
+        array2.push_back(array);
+
+        Data d;
+        d.frame      = 0;
+        d.controller = 0;
+        d.startGame  = array2;
+
+        netPlay.clearBuffers();
+        netPlay.writeDatagram(d);
+
+        // Ждём подтверждения, НЕ блокируя GUI-поток.
+        // Иначе socket readyRead никогда не выполнится → дедлок.
+        QEventLoop loop;
+        QTimer timeout;
+        timeout.setSingleShot(true);
+        QObject::connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
+
+        netPlay.set_load_sucsess_callback([&loop]()
+                                          {
+                                              loop.quit();
+                                          });
+
+        timeout.start(5000);   // 5 сек — защита от «зависшего» пира
+        loop.exec();
+
+        netPlay.set_load_sucsess_callback(nullptr);
+    }
+
+    w.show_text(QString("Загружен слот:%1").arg(saveNumb));
 }
 
-void SaveLoad::LoadSaveFromNet(QByteArray &&array)
+void SaveLoad::LoadSaveFromNet(QByteArray&& array)
 {
     QDataStream in(&array, QIODevice::ReadOnly);
 
     QString p;
     in >> p;
 
-    if(p != cpu.path)
+    // Даже при ошибке обязательно отвечаем, иначе хост зависнет.
+    if (p != cpu.path)
     {
         w.show_text(QString("Неверный ROM"));
+
+        Data d;
+        d.frame      = 0;
+        d.controller = 0;
+        d.startGame  = QByteArray("load_fail");
+
+        netPlay.writeDatagram(d);
         return;
     }
 
     break_wait = true;
 
-    if(!_update)
+    if (!_update)
     {
         std::lock_guard<std::mutex> lg(update_frame_mutex);
         _update = true;
-
         cv.notify_one();
     }
 
     std::lock_guard<std::mutex> lock(cpu.mutex_stop);
 
-    //CPU регистры
     in >> cpu;
-
-    //PPU регистры
     in >> ppu;
-
-    //Bus
     in >> bus;
-
-    //APU
-    if(apu)
+    if (apu)
         in >> *apu;
+
+    Data d;
+    d.frame      = 0;
+    d.controller = 0;
+    d.startGame  = QByteArray("load_sucsess");
+
+    netPlay.writeDatagram(d);
 
     w.show_text(QString("Загружен слот:%1").arg(saveNumb));
 
     break_wait = false;
-
-    QByteArray array2;
-
-    array2.push_back("load_sucsess");
-
-    Data d;
-    d.frame = 0;
-    d.controller = 0;
-    d.startGame = array2;
-
-    netPlay.writeDatagram(d);
 }
 
 void SaveLoad::StartGameForNet()
