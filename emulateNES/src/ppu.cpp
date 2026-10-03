@@ -777,7 +777,7 @@ void PPU::cooperative_game()
     int count  = 0;
     while(netPlay->getMaxFrameNow() < frame - 3)
     {
-        std::this_thread::sleep_for(std::chrono::microseconds(3));
+        std::this_thread::sleep_for(std::chrono::milliseconds(3));
 
         if(!start || break_wait || !netPlay->isConnnection())
             return;

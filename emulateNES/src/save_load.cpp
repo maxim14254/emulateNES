@@ -32,45 +32,46 @@ SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu, APU* _apu, NetPlay& _netPlay
 
 void SaveLoad::Save()
 {
-    QFile file(QString("%1save_%2.sav").arg(SaveDir).arg(saveNumb));
-
-    if (file.open(QIODevice::WriteOnly))
+    std::thread([&]()
     {
-        QByteArray array;
-        QDataStream out(&array, QIODevice::WriteOnly);
+        QFile file(QString("%1save_%2.sav").arg(SaveDir).arg(saveNumb));
 
-        if(!_update)
+        if (file.open(QIODevice::WriteOnly))
         {
-            std::lock_guard<std::mutex> lg(update_frame_mutex);
-            _update = true;
+            QByteArray array;
+            QDataStream out(&array, QIODevice::WriteOnly);
 
-            cv.notify_one();
+
+            std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+
+            //CPU регистры
+            out << cpu;
+
+            //PPU регистры
+            out << ppu;
+
+            //Bus
+            out << bus;
+
+            //APU
+            if(apu)
+                out << *apu;
+
+            file.write(array);
+            file.close();
+
+            QMetaObject::invokeMethod(&w, [&]()
+            {
+                w.show_text(QString("Сохранено в слот:%1").arg(saveNumb));
+            });
+        }
+        else
+        {
+            QMessageBox message(QMessageBox::Icon::Information, "Ошибка", QString("Не удалось сохранить в файл %1").arg(file.fileName()), QMessageBox::StandardButton::Ok);
+            message.exec();
         }
 
-        std::lock_guard<std::timed_mutex> lock(cpu.mutex_stop);
-        //CPU регистры
-        out << cpu;
-
-        //PPU регистры
-        out << ppu;
-
-        //Bus
-        out << bus;
-
-        //APU
-        if(apu)
-            out << *apu;
-
-        file.write(array);
-        file.close();
-
-        w.show_text(QString("Сохранено в слот:%1").arg(saveNumb));
-    }
-    else
-    {
-        QMessageBox message(QMessageBox::Icon::Information, "Ошибка", QString("Не удалось сохранить в файл %1").arg(file.fileName()), QMessageBox::StandardButton::Ok);
-        message.exec();
-    }
+    }).detach();
 }
 
 void SaveLoad::Load()
@@ -87,141 +88,137 @@ void SaveLoad::Load()
     QByteArray array = file.readAll();
     file.close();
 
-    QDataStream in(&array, QIODevice::ReadOnly);
-
-    QString p;
-    in >> p;
-
-    if (p != cpu.path)
+    std::thread([&](QByteArray&& array)
     {
-        w.show_text("Неверный ROM");
-        return;
-    }
+        QDataStream in(&array, QIODevice::ReadOnly);
 
-    if (!_update)
-    {
-        std::lock_guard<std::mutex> lg(update_frame_mutex);
-        _update = true;
+        QString p;
+        in >> p;
 
-        cv.notify_one();
-    }
-
-    if(!cpu.mutex_stop.try_lock_for(std::chrono::milliseconds(1000)))
-    {
-        qDebug() << "mutex_stop не заблокироваклся";
-        return ;
-    }
-
-    //CPU регистры
-    in >> cpu;
-
-    //PPU регистры
-    in >> ppu;
-
-    //Bus
-    in >> bus;
-
-    //APU
-    if(apu)
-        in >> *apu;
-
-    if (netPlay.isConnnection())
-    {
-
-        Data d;
-        d.header = "load";
-        d.frame = 0;
-        d.controller = 0;
-        d.data = array;
-
-        netPlay.clearBuffers();
-
-        QEventLoop loop;
-        QTimer timeout;
-        timeout.setSingleShot(true);
-        QObject::connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
-
-        netPlay.set_load_sucsess_callback([&loop]()
+        if (p != cpu.path)
         {
-            loop.quit();
+            QMetaObject::invokeMethod(&w, [&]()
+            {
+                w.show_text("Неверный ROM");
+            });
+
+            return;
+        }
+
+        std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+
+        //CPU регистры
+        in >> cpu;
+
+        //PPU регистры
+        in >> ppu;
+
+        //Bus
+        in >> bus;
+
+        //APU
+        if(apu)
+            in >> *apu;
+
+        if (netPlay.isConnnection())
+        {
+
+            Data d;
+            d.header = "load";
+            d.frame = 0;
+            d.controller = 0;
+            d.data = array;
+
+            netPlay.clearBuffers();
+
+            QEventLoop loop;
+            QTimer timeout;
+            timeout.setSingleShot(true);
+            QObject::connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
+
+            netPlay.set_load_sucsess_callback([&loop]()
+            {
+                loop.quit();
+            });
+
+            netPlay.writeDatagram(d);
+
+            timeout.start(5000);
+            loop.exec();
+
+            netPlay.set_load_sucsess_callback(nullptr);
+        }
+
+        QMetaObject::invokeMethod(&w, [&]()
+        {
+            w.show_text(QString("Загружен слот:%1").arg(saveNumb));
         });
 
-        netPlay.writeDatagram(d);
+    }, std::move(array)).detach();
 
-        timeout.start(5000);
-        loop.exec();
-
-        netPlay.set_load_sucsess_callback(nullptr);
-    }
-
-    w.show_text(QString("Загружен слот:%1").arg(saveNumb));
-
-    cpu.mutex_stop.unlock();
 }
 
 void SaveLoad::LoadSaveFromNet(QByteArray& array)
 {
-    QDataStream in(&array, QIODevice::ReadOnly);
-
-    QString p;
-    in >> p;
-
-    if (p != cpu.path)
+    std::thread([&](QByteArray&& array)
     {
-        w.show_text("Неверный ROM");
+        QDataStream in(&array, QIODevice::ReadOnly);
+
+        QString p;
+        in >> p;
+
+        if (p != cpu.path)
+        {
+            QMetaObject::invokeMethod(&w, [&]()
+            {
+                w.show_text("Неверный ROM");
+            });
+
+            Data d;
+            d.header = "load_fail";
+            d.frame = 0;
+            d.controller = 0;
+            d.data = "";
+
+            netPlay.writeDatagram(d);
+            return;
+        }
+
+        break_wait = true;
+
+        std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+
+        //CPU регистры
+        in >> cpu;
+
+        //PPU регистры
+        in >> ppu;
+
+        //Bus
+        in >> bus;
+
+        //APU
+        if(apu)
+            in >> *apu;
 
         Data d;
-        d.header = "load_fail";
+        d.header = "load_sucsess";
         d.frame = 0;
         d.controller = 0;
         d.data = "";
 
         netPlay.writeDatagram(d);
-        return;
-    }
 
-    break_wait = true;
+        QMetaObject::invokeMethod(&w, [&]()
+        {
+            w.show_text(QString("Загружен слот:%1").arg(saveNumb));
+        });
 
-    if (!_update)
-    {
-        std::lock_guard<std::mutex> lg(update_frame_mutex);
-        _update = true;
 
-        cv.notify_one();
-    }
+        break_wait = false;
 
-    if(!cpu.mutex_stop.try_lock_for(std::chrono::milliseconds(1000)))
-    {
-        qDebug() << "mutex_stop не заблокироваклся";
-        return ;
-    }
 
-    //CPU регистры
-    in >> cpu;
-
-    //PPU регистры
-    in >> ppu;
-
-    //Bus
-    in >> bus;
-
-    //APU
-    if(apu)
-        in >> *apu;
-
-    Data d;
-    d.header = "load_sucsess";
-    d.frame = 0;
-    d.controller = 0;
-    d.data = "";
-
-    netPlay.writeDatagram(d);
-
-    w.show_text(QString("Загружен слот:%1").arg(saveNumb));
-
-    break_wait = false;
-
-    cpu.mutex_stop.unlock();
+    }, std::move(array)).detach();
 }
 
 void SaveLoad::StartGameForNet()
@@ -250,7 +247,6 @@ void SaveLoad::StartGameForNet()
 
     netPlay.writeDatagram(d);
 
-    cpu.mutex_stop.unlock();
 }
 
 void SaveLoad::LoadGameForNet(QByteArray &array)
@@ -268,7 +264,7 @@ void SaveLoad::LoadGameForNet(QByteArray &array)
     if(start)
         start = false;
 
-    std::lock_guard<std::timed_mutex> lock(cpu.mutex_stop);
+    std::lock_guard<std::mutex> lock(cpu.mutex_stop);
 
     netPlay.clearBuffers();
 
