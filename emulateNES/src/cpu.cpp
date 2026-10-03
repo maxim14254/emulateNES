@@ -478,7 +478,7 @@ void CPU::handle_irq()
 bool CPU::slot_init_new_cartridge(const QString& _path)
 {
     {
-        std::lock_guard<std::mutex> lock(mutex_stop);
+        std::lock_guard<std::timed_mutex> lock(mutex_stop);
 
         bool status;
         bus->init_new_cartridge(_path, &status);
@@ -559,7 +559,7 @@ void CPU::run()
 {
     while (start.load())
     {
-        std::lock_guard<std::mutex> lock(mutex_stop);
+        std::lock_guard<std::timed_mutex> lock(mutex_stop);
 
         if (nmi_pending)
         {

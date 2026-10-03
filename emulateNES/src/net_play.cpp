@@ -149,8 +149,7 @@ void NetPlay::processMessages()
         if (d.header == "ready")
         {
             QMessageBox box(QMessageBox::Icon::Information, "info", QString("Подключился пользователь %1").arg(QString::fromUtf8(d.data)), QMessageBox::StandardButton::Ok);
-            box.setAttribute(Qt::WA_DeleteOnClose);
-            box.open();
+            box.exec();
 
             emit selectGameForNet();
             continue;

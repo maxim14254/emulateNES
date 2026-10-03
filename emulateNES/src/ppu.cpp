@@ -774,6 +774,7 @@ void PPU::cooperative_game()
     if(frame < 3)
         return;
 
+    int count  = 0;
     while(netPlay->getMaxFrameNow() < frame - 3)
     {
         std::this_thread::sleep_for(std::chrono::microseconds(3));
@@ -781,6 +782,13 @@ void PPU::cooperative_game()
         if(!start || break_wait || !netPlay->isConnnection())
             return;
 
+        ++count;
+
+        if(count > 1000)
+        {
+            qDebug() << "cooperative_game while(false)";
+            break;
+        }
     }
 
     auto another_controller = netPlay->getData(frame - 3);

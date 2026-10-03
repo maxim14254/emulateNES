@@ -85,7 +85,7 @@ private:
     uint16_t RESET = 0;
     int IRQ = 0;
 
-    std::mutex mutex_stop;
+    std::timed_mutex mutex_stop;
     std::once_flag start_once_flag;
     std::thread run_t;
     bool nmi_pending = false;

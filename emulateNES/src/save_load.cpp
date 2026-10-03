@@ -47,7 +47,7 @@ void SaveLoad::Save()
             cv.notify_one();
         }
 
-        std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+        std::lock_guard<std::timed_mutex> lock(cpu.mutex_stop);
         //CPU регистры
         out << cpu;
 
@@ -106,7 +106,11 @@ void SaveLoad::Load()
         cv.notify_one();
     }
 
-    std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+    if(!cpu.mutex_stop.try_lock_for(std::chrono::milliseconds(1000)))
+    {
+        qDebug() << "mutex_stop не заблокироваклся";
+        return ;
+    }
 
     //CPU регистры
     in >> cpu;
@@ -151,6 +155,8 @@ void SaveLoad::Load()
     }
 
     w.show_text(QString("Загружен слот:%1").arg(saveNumb));
+
+    cpu.mutex_stop.unlock();
 }
 
 void SaveLoad::LoadSaveFromNet(QByteArray& array)
@@ -184,7 +190,11 @@ void SaveLoad::LoadSaveFromNet(QByteArray& array)
         cv.notify_one();
     }
 
-    std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+    if(!cpu.mutex_stop.try_lock_for(std::chrono::milliseconds(1000)))
+    {
+        qDebug() << "mutex_stop не заблокироваклся";
+        return ;
+    }
 
     //CPU регистры
     in >> cpu;
@@ -237,6 +247,8 @@ void SaveLoad::StartGameForNet()
     d.data = array;
 
     netPlay.writeDatagram(d);
+
+    cpu.mutex_stop.unlock();
 }
 
 void SaveLoad::LoadGameForNet(QByteArray &array)
@@ -254,7 +266,7 @@ void SaveLoad::LoadGameForNet(QByteArray &array)
     if(start)
         start = false;
 
-    std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+    std::lock_guard<std::timed_mutex> lock(cpu.mutex_stop);
 
     netPlay.clearBuffers();
 
