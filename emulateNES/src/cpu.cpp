@@ -108,6 +108,8 @@ CPU::CPU(MainWindow* _window, Bus* _bus, NetPlay* _netPlay) : bus(_bus), netPlay
     gamepad[0] = 0;
     gamepad[1] = 0;
 
+    break_wait = false;
+
     table_instructions.resize(256);
 
     table_instructions[0x00] = { &CPU::BRK_impl, "BRK", "IMP" };

@@ -80,9 +80,6 @@ void NetPlay::sendMessage(const QByteArray& payload)
         return;
 
     QByteArray packet;
-    QDataStream out(&packet, QIODevice::WriteOnly);
-
-    out << quint32(payload.size());
     packet.append(payload);
 
     QMetaObject::invokeMethod(socket.get(), [&, packet]()
@@ -114,7 +111,7 @@ void NetPlay::onReadyRead()
 
 void NetPlay::processMessages()
 {
-    if(recvBuffer.size() < 4)
+    if(recvBuffer.size() < 0)
         return;
 
 
@@ -124,12 +121,6 @@ void NetPlay::processMessages()
         box.exec();
 
         emit selectGameForNet();
-    }
-    else if(recvBuffer.startsWith("load"))
-    {
-        clearBuffers();
-        max_frame_now = 0;
-        load_callback(recvBuffer.mid(4));
     }
     else
     {
@@ -145,7 +136,14 @@ void NetPlay::processMessages()
         if(d.startGame.size() > 0)
         {
             max_frame_now = 0;
-            emit startGameForNet(d.startGame);
+
+            if(d.startGame.startsWith("load"))
+            {
+                clearBuffers();
+                load_callback(d.startGame.mid(4));
+            }
+            else
+                emit startGameForNet(d.startGame);
         }
         else
         {
@@ -196,6 +194,7 @@ void NetPlay::setLocalData(uint64_t frame, uint8_t value)
 void NetPlay::clearBuffers()
 {
     std::lock_guard<std::mutex> lock(map_mutex);
+    max_frame_now = 0;
     data.clear();
     localData.clear();
     recvBuffer.clear();

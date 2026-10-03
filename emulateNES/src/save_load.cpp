@@ -25,7 +25,7 @@ SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu, APU* _apu, NetPlay& _netPlay
 
     cpu.chande_slot_callback = [&]()->uint8_t& { return saveNumb; };
 
-    netPlay.set_load_callback(std::bind(&SaveLoad::LoadSaveForNet, this, std::placeholders::_1));
+    netPlay.set_load_callback(std::bind(&SaveLoad::LoadSaveFromNet, this, std::placeholders::_1));
 }
 
 void SaveLoad::Save()
@@ -126,9 +126,8 @@ void SaveLoad::Load()
             d.controller = 0;
             d.startGame = array2;
 
+            netPlay.clearBuffers();
             netPlay.writeDatagram(d);
-
-            //ожидать получение ответа
         }
 
         w.show_text(QString("Загружен слот:%1").arg(saveNumb));
@@ -140,7 +139,7 @@ void SaveLoad::Load()
     }
 }
 
-void SaveLoad::LoadSaveForNet(QByteArray &&array)
+void SaveLoad::LoadSaveFromNet(QByteArray &&array)
 {
     QDataStream in(&array, QIODevice::ReadOnly);
 
@@ -161,6 +160,7 @@ void SaveLoad::LoadSaveForNet(QByteArray &&array)
         cv.notify_one();
     }
 
+    break_wait = true;
     std::lock_guard<std::mutex> lock(cpu.mutex_stop);
 
     //CPU регистры
@@ -177,6 +177,9 @@ void SaveLoad::LoadSaveForNet(QByteArray &&array)
         in >> *apu;
 
     w.show_text(QString("Загружен слот:%1").arg(saveNumb));
+
+    break_wait = false;
+
 }
 
 void SaveLoad::StartGameForNet()

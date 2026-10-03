@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
@@ -10,7 +9,6 @@
 #include <mutex>
 #include <atomic>
 #include <condition_variable>
-#include <cmath>
 
 class CPU;
 
@@ -25,6 +23,7 @@ struct INSTRUCTION
 inline std::vector<INSTRUCTION<CPU>> table_instructions;
 
 inline std::atomic<bool> start;
+inline std::atomic<bool> break_wait;
 
 inline std::mutex update_frame_mutex;
 inline bool _update = true;

@@ -777,11 +777,9 @@ void PPU::cooperative_game()
     {
         std::this_thread::sleep_for(std::chrono::microseconds(3));
 
-        if(!start)
+        if(!start || break_wait || !netPlay->isConnnection())
             return;
 
-        if(!netPlay->isConnnection())
-            return;
     }
 
     auto another_controller = netPlay->getData(frame - 3);
