@@ -17,6 +17,7 @@ struct Data
     quint64 frame;
     uint8_t controller;
     QByteArray data;
+    QByteArray check_sum;
 
     friend QDataStream &operator<<(QDataStream &out, const Data &d)
     {
@@ -24,6 +25,7 @@ struct Data
         out << d.frame;
         out << d.controller;
         out << d.data;
+        out << d.check_sum;
         return out;
     }
 
@@ -33,6 +35,7 @@ struct Data
         in >> d.frame;
         in >> d.controller;
         in >> d.data;
+        in >> d.check_sum;
         return in;
     }
 };
@@ -44,14 +47,14 @@ class NetPlay : public QObject
 public:
     NetPlay();
 
-    void writeDatagram(const Data& data);   // имя оставил для совместимости с PPU
+    void writeDatagram(const Data& data);
 
     void connecting(const std::string& host, quint16 port);
     bool isConnnection() { return is_connect; }
 
     std::optional<Data> getData(uint64_t frame);
-    std::optional<uint8_t> getLocalData(uint64_t frame);
-    void setLocalData(uint64_t frame, uint8_t value);
+    std::optional<Data> getLocalData(uint64_t frame);
+    void setLocalData(uint64_t frame, const Data& value);
 
     bool isFirstPlayer() { return firstPlayer; }
     void set_player(bool val) { firstPlayer = val; }
@@ -62,6 +65,7 @@ public:
 
     void set_load_callback(std::function<void(QByteArray& array)> fun) { load_callback = fun; };
     void set_load_sucsess_callback(std::function<void()> fun) { load_sucsess_callback = fun; };
+    void set_full_synch_callback(std::function<void(QByteArray& array)> fun) { full_synch_callback = fun; }
 
 private slots:
     void onNewConnection();
@@ -70,14 +74,14 @@ private slots:
     void onDisconnected();
 
 private:
-    std::unique_ptr<QTcpServer> server;   // только у хоста
-    std::unique_ptr<QTcpSocket> socket;   // у клиента — свой; у хоста — подключённый
+    std::unique_ptr<QTcpServer> server;
+    std::unique_ptr<QTcpSocket> socket;
 
     quint16 port = 0;
     QByteArray recvBuffer;   // накопитель для фрейминга
 
     std::map<uint64_t, Data> data;
-    std::map<uint64_t, uint8_t> localData;
+    std::map<uint64_t, Data> localData;
 
     std::atomic<bool> firstPlayer = true;
     std::atomic<bool> is_connect = false;
@@ -87,6 +91,7 @@ private:
 
     std::function<void(QByteArray& array)> load_callback;
     std::function<void()> load_sucsess_callback;
+    std::function<void(QByteArray& array)> full_synch_callback;
 
     void sendMessage(const QByteArray& payload);
     void processMessages();

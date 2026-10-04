@@ -28,6 +28,9 @@ SaveLoad::SaveLoad(CPU& _cpu, Bus& _bus, PPU& _ppu, APU* _apu, NetPlay& _netPlay
     cpu.chande_slot_callback = [&]()->uint8_t& { return saveNumb; };
 
     netPlay.set_load_callback(std::bind(&SaveLoad::LoadSaveFromNet, this, std::placeholders::_1));
+    netPlay.set_full_synch_callback(std::bind(&SaveLoad::LoadFullSynchronization, this, std::placeholders::_1));
+
+    bus.set_fullSynchronization(std::bind(&SaveLoad::StartFullSynchronization, this));
 }
 
 void SaveLoad::Save()
@@ -43,6 +46,9 @@ void SaveLoad::Save()
 
 
             std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+
+            cpu.serializationCycles = true;
+            ppu.serializationFrame = true;
 
             //CPU регистры
             out << cpu;
@@ -107,6 +113,9 @@ void SaveLoad::Load()
 
         std::lock_guard<std::mutex> lock(cpu.mutex_stop);
 
+        cpu.serializationCycles = true;
+        ppu.serializationFrame = true;
+
         //CPU регистры
         in >> cpu;
 
@@ -122,37 +131,46 @@ void SaveLoad::Load()
 
         if (netPlay.isConnnection())
         {
-
             Data d;
             d.header = "load";
             d.frame = 0;
             d.controller = 0;
             d.data = array;
+            d.check_sum = "";
 
             netPlay.clearBuffers();
 
             QEventLoop loop;
             QTimer timeout;
             timeout.setSingleShot(true);
-            QObject::connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
 
-            netPlay.set_load_sucsess_callback([&loop]()
+            QObject::connect(&timeout, &QTimer::timeout, &loop, [&loop, this]()
             {
+                QMetaObject::invokeMethod(&w, [&]()
+                {
+                    w.show_text(QString("Ошибка загрузки"));
+                });
+
+                loop.quit();
+            });
+
+            netPlay.set_load_sucsess_callback([&loop, this]()
+            {
+                QMetaObject::invokeMethod(&w, [&]()
+                {
+                    w.show_text(QString("Загружен слот:%1").arg(saveNumb));
+                });
+
                 loop.quit();
             });
 
             netPlay.writeDatagram(d);
 
-            timeout.start(5000);
+            timeout.start(3000);
             loop.exec();
 
             netPlay.set_load_sucsess_callback(nullptr);
         }
-
-        QMetaObject::invokeMethod(&w, [&]()
-        {
-            w.show_text(QString("Загружен слот:%1").arg(saveNumb));
-        });
 
     }, std::move(array)).detach();
 
@@ -179,6 +197,7 @@ void SaveLoad::LoadSaveFromNet(QByteArray& array)
             d.frame = 0;
             d.controller = 0;
             d.data = "";
+            d.check_sum = "";
 
             netPlay.writeDatagram(d);
             return;
@@ -187,6 +206,9 @@ void SaveLoad::LoadSaveFromNet(QByteArray& array)
         break_wait = true;
 
         std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+
+        cpu.serializationCycles = true;
+        ppu.serializationFrame = true;
 
         //CPU регистры
         in >> cpu;
@@ -206,6 +228,7 @@ void SaveLoad::LoadSaveFromNet(QByteArray& array)
         d.frame = 0;
         d.controller = 0;
         d.data = "";
+        d.check_sum = "";
 
         netPlay.writeDatagram(d);
 
@@ -214,9 +237,7 @@ void SaveLoad::LoadSaveFromNet(QByteArray& array)
             w.show_text(QString("Загружен слот:%1").arg(saveNumb));
         });
 
-
         break_wait = false;
-
 
     }, std::move(array)).detach();
 }
@@ -225,6 +246,9 @@ void SaveLoad::StartGameForNet()
 {
     QByteArray array;
     QDataStream out(&array, QIODevice::WriteOnly);
+
+    cpu.serializationCycles = true;
+    ppu.serializationFrame = true;
 
     //CPU регистры
     out << cpu;
@@ -244,6 +268,7 @@ void SaveLoad::StartGameForNet()
     d.frame = ppu.getFrame() = 0;
     d.controller = 0;
     d.data = array;
+    d.check_sum = "";
 
     netPlay.writeDatagram(d);
 
@@ -265,6 +290,9 @@ void SaveLoad::LoadGameForNet(QByteArray &array)
         start = false;
 
     std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+
+    cpu.serializationCycles = true;
+    ppu.serializationFrame = true;
 
     netPlay.clearBuffers();
 
@@ -293,3 +321,74 @@ void SaveLoad::LoadGameForNet(QByteArray &array)
         in >> *apu;
 
 }
+
+void SaveLoad::StartFullSynchronization()
+{
+    std::thread([&]()
+    {
+        QByteArray array;
+        QDataStream out(&array, QIODevice::WriteOnly);
+
+        std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+
+        cpu.serializationCycles = true;
+        ppu.serializationFrame = true;
+
+        //CPU регистры
+        out << cpu;
+
+        //PPU регистры
+        out << ppu;
+
+        //Bus
+        out << bus;
+
+        //APU
+        if(apu)
+            out << *apu;
+
+        Data d;
+        d.header = "full_synch";
+        d.frame = ppu.getFrame();
+        d.controller = 0;
+        d.data = array;
+        d.check_sum = "";
+
+        netPlay.writeDatagram(d);
+
+    }).detach();
+}
+
+void SaveLoad::LoadFullSynchronization(QByteArray &array)
+{
+    std::thread([&](QByteArray&& array)
+    {
+        QDataStream in(&array, QIODevice::ReadOnly);
+
+        break_wait = true;
+
+        std::lock_guard<std::mutex> lock(cpu.mutex_stop);
+
+        cpu.serializationCycles = true;
+        ppu.serializationFrame = true;
+
+        in >> cpu.path;
+
+        //CPU регистры
+        in >> cpu;
+
+        //PPU регистры
+        in >> ppu;
+
+        //Bus
+        in >> bus;
+
+        //APU
+        if(apu)
+            in >> *apu;
+
+        break_wait = false;
+
+    }, std::move(array)).detach();
+}
+

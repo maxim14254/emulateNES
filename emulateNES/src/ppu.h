@@ -46,6 +46,7 @@ public:
     uint64_t& getFrame() { return frame; }
     uint8_t getppustatus(){ return PPUSTATUS; }
     uint8_t static inline PPUMASK;
+    bool serializationFrame = true;
 
     friend QDataStream &operator<<(QDataStream &stream, const PPU &ppu);
     friend QDataStream &operator>>(QDataStream &in, PPU &ppu);

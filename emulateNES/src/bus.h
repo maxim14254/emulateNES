@@ -63,6 +63,12 @@ public:
     uint8_t get_gamepad(uint8_t index);
     uint8_t get_net_gamepad();
 
+    QByteArray GenerateCheckSum();
+
+    void runFullSynchronization();
+
+    void set_fullSynchronization(std::function<void()> fun) { FullSynchronization = fun; }
+
     friend QDataStream &operator<<(QDataStream &stream, const Bus &bus);
     friend QDataStream &operator>>(QDataStream &in, Bus &bus);
 
@@ -80,6 +86,8 @@ private:
 
     bool apu_irq_level = false;
     bool apu_mapper_level = false;
+
+    std::function<void()> FullSynchronization;
 
     uint64_t old_cycles = 0;
     uint64_t old_cycles1 = 0;

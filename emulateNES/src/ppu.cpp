@@ -20,7 +20,10 @@ QDataStream &operator<<(QDataStream &out, const PPU &ppu)
     out << ppu.numb_pixelX << ppu.ppu_data_buffer << ppu.openBus;
     out << ppu.w;
     out << ppu.scanline << ppu.cycle;
-    out << static_cast<quint64>(ppu.frame);
+
+    if(ppu.serializationFrame)
+        out << static_cast<quint64>(ppu.frame);
+
     out << ppu.shift_tile_lsb << ppu.shift_tile_msb << ppu.shift_attrib_lsb << ppu.shift_attrib_msb;
 
     for (int i = 0; i < 8; ++i)
@@ -46,8 +49,13 @@ QDataStream &operator>>(QDataStream &in, PPU &ppu)
     in >> ppu.numb_pixelX >> ppu.ppu_data_buffer >> ppu.openBus;
     in >> ppu.w;
     in >> ppu.scanline >> ppu.cycle;
-    in >> f;
-    ppu.frame = f;
+
+    if(ppu.serializationFrame)
+    {
+        in >> f;
+        ppu.frame = f;
+    }
+
     in >> ppu.shift_tile_lsb >> ppu.shift_tile_msb >> ppu.shift_attrib_lsb >> ppu.shift_attrib_msb;
 
     for (int i = 0; i < 8; ++i)
@@ -395,10 +403,10 @@ void PPU::run(uint64_t cycles)
             _update = false;
 
             QMetaObject::invokeMethod(window, [&]()
-                                      {
-                                          window->render_frame(outBuffer);
-                                      },
-                                      Qt::QueuedConnection);
+            {
+                window->render_frame(outBuffer);
+
+            },Qt::QueuedConnection);
 
             if(netPlay->isConnnection())
                 cooperative_game();
@@ -762,49 +770,57 @@ void PPU::download_asm_buffer(std::map<uint16_t, std::string> &assembler_buf)
 
 void PPU::cooperative_game()
 {
+    static auto start_time = std::chrono::steady_clock::now();
+
     Data d;
     d.header = "";
     d.frame = frame;
     d.data = "";
     d.controller = bus->get_net_gamepad();
+    d.check_sum = "";
 
-    netPlay->setLocalData(frame, d.controller);
+
+    if(frame % 60 == 0)
+    {
+        start_time = std::chrono::steady_clock::now();
+        d.check_sum = bus->GenerateCheckSum();
+    }
+    else
+        d.check_sum = "";
+
+    netPlay->setLocalData(frame, d);
     netPlay->writeDatagram(d);
 
     if(frame < 3)
         return;
 
-    int count  = 0;
     while(netPlay->getMaxFrameNow() < frame - 3)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(3));
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
 
         if(!start || break_wait || !netPlay->isConnnection())
             return;
-
-        ++count;
-
-        if(count > 1000)
-        {
-            qDebug() << "cooperative_game while(false)" << netPlay->getMaxFrameNow() << "<" << frame - 3;
-            break;
-        }
     }
 
     auto another_controller = netPlay->getData(frame - 3);
     auto my_controller = netPlay->getLocalData(frame - 3);
 
     if(another_controller != std::nullopt && my_controller != std::nullopt)
-    {
+    {   
         if(netPlay->isFirstPlayer())
         {
+            if(another_controller->check_sum != my_controller->check_sum)
+            {
+                bus->runFullSynchronization();
+            }
+
             bus->set_cpu_controller(1, another_controller.value().controller);
-            bus->set_cpu_controller(0, my_controller.value());
+            bus->set_cpu_controller(0, my_controller.value().controller);
         }
         else
         {
             bus->set_cpu_controller(0, another_controller.value().controller);
-            bus->set_cpu_controller(1, my_controller.value());
+            bus->set_cpu_controller(1, my_controller.value().controller);
         }
     }
 }

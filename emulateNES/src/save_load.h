@@ -18,6 +18,8 @@ public:
     void LoadSaveFromNet(QByteArray& array);
     void StartGameForNet();
     void LoadGameForNet(QByteArray& array);
+    void StartFullSynchronization();
+    void LoadFullSynchronization(QByteArray& array);
 
 private:
     CPU& cpu;

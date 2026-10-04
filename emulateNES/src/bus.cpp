@@ -3,6 +3,7 @@
 #include <QString>
 #include <QDir>
 #include <QDebug>
+#include <QtCore/qcryptographichash.h>
 #include "ppu.h"
 #include "cpu.h"
 #include "global.h"
@@ -413,3 +414,29 @@ uint8_t Bus::get_net_gamepad()
 {
     return cpu->get_net_gamepad();
 }
+
+QByteArray Bus::GenerateCheckSum()
+{
+    QByteArray buf;
+    QDataStream out(&buf, QIODevice::WriteOnly);
+
+    cpu->serializationCycles = false;
+    ppu->serializationFrame = false;
+
+    //CPU регистры
+    out << *cpu;
+
+    //PPU регистры
+    out << *ppu;
+
+    //Bus
+    out << *this;
+
+    return QCryptographicHash::hash(buf, QCryptographicHash::Md5);
+}
+
+void Bus::runFullSynchronization()
+{
+    FullSynchronization();
+}
+

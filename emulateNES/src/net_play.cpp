@@ -73,6 +73,7 @@ void NetPlay::onConnected()
     d.controller = 0;
     d.frame = 0;
     d.data = QHostInfo::localHostName().toUtf8();
+    d.check_sum = "";
 
     writeDatagram(d);
 }
@@ -81,7 +82,6 @@ void NetPlay::onDisconnected()
 {
     is_connect = false;
 }
-
 
 void NetPlay::sendMessage(const QByteArray& payload)
 {
@@ -174,6 +174,12 @@ void NetPlay::processMessages()
                 max_frame_now = 0;
                 emit startGameForNet(d.data);
             }
+            else if(d.header == "full_synch")
+            {
+                max_frame_now = d.frame;
+                clearBuffers();
+                full_synch_callback(d.data);
+            }
         }
         else
         {
@@ -200,14 +206,14 @@ std::optional<Data> NetPlay::getData(uint64_t frame)
     return std::nullopt;
 }
 
-std::optional<uint8_t> NetPlay::getLocalData(uint64_t frame)
+std::optional<Data> NetPlay::getLocalData(uint64_t frame)
 {
     std::lock_guard<std::mutex> lock(map_mutex);
     auto it = localData.find(frame);
 
     if (it != localData.end())
     {
-        auto res = std::optional<uint8_t>(it->second);
+        auto res = std::optional<Data>(it->second);
         localData.erase(it);
         return res;
     }
@@ -215,7 +221,7 @@ std::optional<uint8_t> NetPlay::getLocalData(uint64_t frame)
     return std::nullopt;
 }
 
-void NetPlay::setLocalData(uint64_t frame, uint8_t value)
+void NetPlay::setLocalData(uint64_t frame, const Data& value)
 {
     std::lock_guard<std::mutex> lock(map_mutex);
     localData[frame] = value;

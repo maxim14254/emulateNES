@@ -50,6 +50,7 @@ public:
     void request_irq();
 
     uint64_t cycles = 0;     // счетчик циклов
+    bool serializationCycles = true;
 
     //static uint64_t get_cycles(){ return cycles; }
     uint64_t get_PC(){ return PC; }

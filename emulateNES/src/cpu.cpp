@@ -28,7 +28,10 @@ QDataStream &operator<<(QDataStream &out, const CPU &cpu)
     out << cpu.status;
     out << cpu.PC;
     out << cpu.IRQ;
-    out << static_cast<quint64>(cpu.cycles);
+
+    if(cpu.serializationCycles)
+        out << static_cast<quint64>(cpu.cycles);
+
     out << cpu.nmi_pending;
     out << cpu.last_vblank;
 
@@ -38,6 +41,7 @@ QDataStream &operator<<(QDataStream &out, const CPU &cpu)
 QDataStream &operator>>(QDataStream &in, CPU &cpu)
 {
     quint64 c = 0;
+
     in >> cpu.A;
     in >> cpu.X;
     in >> cpu.Y;
@@ -45,11 +49,15 @@ QDataStream &operator>>(QDataStream &in, CPU &cpu)
     in >> cpu.status;
     in >> cpu.PC;
     in >> cpu.IRQ;
-    in >> c;
+
+    if(cpu.serializationCycles)
+    {
+        in >> c;
+        cpu.cycles = c;
+    }
+
     in >> cpu.nmi_pending;
     in >> cpu.last_vblank;
-
-    cpu.cycles = c;
 
     return in;
 }
