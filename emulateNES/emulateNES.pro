@@ -32,7 +32,3 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RESOURCES += \
     res.qrc
 
-DISTFILES += \
-    games/Battletoads-Double Dragon (USA).nes \
-    games/RoboCop 3 (USA).nes
-
